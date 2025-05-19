@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model User {
+  userId     Int         @id @default(autoincrement())
+  fullName   String
+  email      String      @unique
+  phone      String
+  password   String
+  role       Role
+  createdAt  DateTime    @default(now())
+  doctor     Doctor?
+  appointments Appointment[]
+}
+
+model Doctor {
+  doctorId    Int         @id @default(autoincrement())
+  user        User        @relation(fields: [userId], references: [userId])
+  userId      Int         @unique
+  specialty   Specialty   @relation(fields: [specialtyId], references: [specialtyId])
+  specialtyId Int
+  hospital    Hospital    @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId  Int
+  phone       String
+  rating      Float?
+  appointments Appointment[]
+}
+
+model Hospital {
+  hospitalId Int       @id @default(autoincrement())
+  name       String
+  address    String
+  phone      String
+  description String?
+  doctors    Doctor[]
+  appointments Appointment[]
+}
+
+model Specialty {
+  specialtyId Int     @id @default(autoincrement())
+  name        String
+  description String?
+  doctors     Doctor[]
+}
+
+model Appointment {
+  appointmentId Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [userId])
+  userId        Int
+  doctor        Doctor    @relation(fields: [doctorId], references: [doctorId])
+  doctorId      Int
+  hospital      Hospital  @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId    Int
+  scheduledTime DateTime
+  note          String?
+  payment       Payment?
+  medicalRecord MedicalRecord?
+}
+
+model Payment {
+  paymentId      Int             @id @default(autoincrement())
+  appointment    Appointment     @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId  Int             @unique
+  price          Float
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus
+}
+
+model MedicalRecord {
+  medicalRecordId Int         @id @default(autoincrement())
+  appointment     Appointment @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId   Int         @unique
+  diagnosis       String
+  prescription    String
+  testResult      String?
+  doctorNotes     String?
+}
