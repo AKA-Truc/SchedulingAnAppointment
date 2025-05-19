@@ -10,7 +10,7 @@ datasource db {
 enum Role {
   ADMIN
   DOCTOR
-  PATIENT
+  USER
 }
 
 enum PaymentMethod {
@@ -25,16 +25,34 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum Gender {
+  Male
+  FeMale
+}
+
 model User {
   userId     Int         @id @default(autoincrement())
   fullName   String
   email      String      @unique
   phone      String
   password   String
+  gender     Gender
   role       Role
   createdAt  DateTime    @default(now())
   doctor     Doctor?
   appointments Appointment[]
+  tokens     Token[]
+}
+
+model Token {
+  id             Int      @id @default(autoincrement())
+  accessToken    String   // hash access token (hoặc có thể không hash)
+  refreshToken   String   // hash refresh token
+  user           User     @relation(fields: [userId], references: [userId])
+  userId         Int
+  createdAt      DateTime @default(now())
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
 }
 
 model Doctor {

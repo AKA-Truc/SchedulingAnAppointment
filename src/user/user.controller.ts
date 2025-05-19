@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './DTO';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
@@ -12,6 +13,8 @@ export class UserController {
     }
 
     @Get()
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllUsers(
         @Query('page') page?: string,
         @Query('limit') limit?: string,
