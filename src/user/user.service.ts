@@ -11,7 +11,7 @@ export class UserService {
     //create
     async createUser(data: CreateUserDto) {
         const emailExists = await this.prisma.user.findUnique({
-            where: { email: data.email },
+            where: { Email: data.email },
         });
 
         if (emailExists) {
@@ -19,7 +19,7 @@ export class UserService {
         }
 
         const phoneExists = await this.prisma.user.findFirst({
-            where: { phone: data.phone },
+            where: { Phone: data.phone },
         });
 
         if (phoneExists) {
@@ -30,19 +30,23 @@ export class UserService {
 
         const user = await this.prisma.user.create({
             data: {
-                ...data,
-                password: hashedPassword,
+                Full_Name: data.fullName,
+                Email: data.email,
+                Phone: data.phone,
+                Password: hashedPassword,
+                Gender: data.gender,
+                Role: data.role,
             },
         });
 
         return {
             message: 'User created successfully.',
             user: {
-                userId: user.userId,
-                email: user.email,
-                fullName: user.fullName,
-                role: user.role,
-                createdAt: user.createdAt,
+                userId: user.User_ID,
+                email: user.Email,
+                fullName: user.Full_Name,
+                role: user.Role,
+                createdAt: user.Created_at,
             },
         };
     }
@@ -77,7 +81,7 @@ export class UserService {
     //Get1
     async getUserById(id: number) {
         const user = await this.prisma.user.findUnique({
-            where: { userId: id },
+            where: { User_ID: id },
             include: {
                 doctor: true,
                 appointments: true,
@@ -94,7 +98,7 @@ export class UserService {
     //update
     async updateUser(id: number, dto: UpdateUserDto) {
         const user = await this.prisma.user.findUnique({
-            where: { userId: id },
+            where: { User_ID: id },
         });
 
         if (!user) {
@@ -102,9 +106,9 @@ export class UserService {
         }
 
         // Nếu cập nhật email thì check trùng
-        if (dto.email && dto.email !== user.email) {
+        if (dto.email && dto.email !== user.Email) {
             const emailTaken = await this.prisma.user.findUnique({
-                where: { email: dto.email },
+                where: { Email: dto.email },
             });
             if (emailTaken) {
                 throw new BadRequestException('Email is already in use.');
@@ -112,9 +116,9 @@ export class UserService {
         }
 
         // Nếu cập nhật phone
-        if (dto.phone && dto.phone !== user.phone) {
+        if (dto.phone && dto.phone !== user.Phone) {
             const phoneTaken = await this.prisma.user.findFirst({
-                where: { phone: dto.phone },
+                where: { Phone: dto.phone },
             });
             if (phoneTaken) {
                 throw new BadRequestException('Phone number is already registered.');
@@ -122,7 +126,7 @@ export class UserService {
         }
 
         return this.prisma.user.update({
-            where: { userId: id },
+            where: { User_ID: id },
             data: dto,
         });
     }
@@ -130,7 +134,7 @@ export class UserService {
     //delete
     async deleteUser(id: number) {
         const user = await this.prisma.user.findUnique({
-            where: { userId: id },
+            where: { User_ID: id },
         });
 
         if (!user) {
@@ -138,7 +142,7 @@ export class UserService {
         }
 
         return this.prisma.user.delete({
-            where: { userId: id },
+            where: { User_ID: id },
         });
     }
 }

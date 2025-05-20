@@ -1,6 +1,6 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Role, Gender } from '@prisma/client';
+import { RoleEnum, GenderEmun } from '@prisma/client';
 
 export class UpdateUserDto {
     @ApiPropertyOptional({
@@ -25,7 +25,7 @@ export class UpdateUserDto {
     })
     @IsOptional()
     @IsString()
-    phone?: string;
+    phone?: number;
 
     @ApiPropertyOptional({
         example: 'NewPass123',
@@ -38,19 +38,19 @@ export class UpdateUserDto {
     password?: string;
 
     @ApiPropertyOptional({
-        example: Gender.Male,
-        enum: Gender,
+        example: GenderEmun.Male,
+        enum: GenderEmun,
         description: 'Giới tính người dùng',
     })
-    @IsEnum(Gender)
-    gender: Gender;
+    @IsEnum(GenderEmun)
+    gender: GenderEmun;
 
     @ApiPropertyOptional({
-        example: Role.ADMIN,
-        enum: Role,
+        example: RoleEnum.ADMIN,
+        enum: RoleEnum,
         description: 'Vai trò mới của người dùng',
     })
     @IsOptional()
-    @IsEnum(Role)
-    role?: Role;
+    @IsEnum(RoleEnum)
+    role?: RoleEnum;
 }

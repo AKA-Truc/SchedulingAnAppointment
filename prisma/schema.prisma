@@ -3,117 +3,219 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // hoặc "mysql" tùy theo hệ quản trị bạn dùng
   url      = env("DATABASE_URL")
 }
 
-enum Role {
+model User {
+  User_ID    Int       @id @default(autoincrement())
+  Full_Name  String
+  Email      String    @unique
+  Phone      Int
+  Password   String
+  Role       RoleEnum
+  Gender     GenderEmun
+  Created_at DateTime  @default(now())
+
+  doctor          Doctor?
+  patientProfile  PatientProfile?
+  appointments    Appointment[]
+  tokens     Token[]
+}
+
+model Token {
+  Token_ID             Int      @id @default(autoincrement())
+  AccessToken    String   // hash access token (hoặc có thể không hash)
+  RefreshToken   String   // hash refresh token
+  User           User     @relation(fields: [User_ID], references: [User_ID])
+  User_ID         Int
+  CreatedAt      DateTime @default(now())
+  AccessExpiresAt  DateTime
+  RefreshExpiresAt DateTime
+}
+
+model Doctor {
+  Doctor_ID         Int        @id @default(autoincrement())
+  User              User       @relation(fields: [User_ID], references: [User_ID])
+  User_ID           Int        @unique
+  Specialty         Specialty  @relation(fields: [Specialty_ID], references: [Specialty_ID])
+  Specialty_ID      Int
+  Hospital          Hospital   @relation(fields: [Hospital_ID], references: [Hospital_ID])
+  Hospital_ID       Int
+  Phone             Int
+  Rating            Float
+  Bio               String
+  yearsOfExperience String
+  certifications    String
+  website           String?
+
+  schedules         DoctorSchedule[]
+  leaves            DoctorLeave[]
+  appointments      Appointment[]
+}
+
+model PatientProfile {
+  Profile_ID          Int     @id @default(autoincrement())
+  User_ID             Int     @unique
+  User                User    @relation(fields: [User_ID], references: [User_ID])
+  Gender              String
+  DateOfBirth         DateTime
+  Address             String
+  Insurance           String
+  Allergies           String
+  ChronicDiseases     String
+  obstetricHistory    String
+  surgicalHistory     String
+  familyHistory       String
+  socialHistory       String
+  medicationHistory   String
+}
+
+model Specialty {
+  Specialty_ID Int      @id @default(autoincrement())
+  Name         String
+  Description  String
+
+  doctors      Doctor[]
+}
+
+model Hospital {
+  Hospital_ID     Int      @id @default(autoincrement())
+  Name            String
+  Address         String
+  Phone           Int
+  Description     String
+  Email           String
+  establishYear   Int
+  Type            String // public/private
+
+  doctors         Doctor[]
+  appointments    Appointment[]
+}
+
+model Appointment {
+  Appointment_ID  Int       @id @default(autoincrement())
+  Doctor          Doctor    @relation(fields: [Doctor_ID], references: [Doctor_ID])
+  Doctor_ID       Int
+  User            User      @relation(fields: [User_ID], references: [User_ID])
+  User_ID         Int
+  Hospital        Hospital  @relation(fields: [Hospital_ID], references: [Hospital_ID])
+  Hospital_ID     Int
+  Scheduled_time  DateTime
+  Note            String?
+
+  reminder        AppointmentReminder?
+  feedback        Feedback?
+  medicalRecord   MedicalRecord?
+  followUps       FollowUp[]
+  payments        Payment[]
+}
+
+model AppointmentReminder {
+  reminder_ID   Int       @id @default(autoincrement())
+  appointment   Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
+  appointment_ID Int      @unique
+  startDate     DateTime
+  remindAt      DateTime
+  sent          Boolean
+}
+
+model Feedback {
+  feedback_ID     Int        @id @default(autoincrement())
+  appointment     Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
+  appointment_ID  Int       @unique
+  rating          Int
+  comment         String
+  createdAt       DateTime @default(now())
+}
+
+model MedicalRecord {
+  MedicalRecord_ID  Int        @id @default(autoincrement())
+  appointment       Appointment @relation(fields: [Appointment_ID], references: [Appointment_ID])
+  Appointment_ID    Int        @unique
+  Diagnosis         String
+  Prescription      String
+  Test_Result       String
+  Doctor_notes      String
+  ChiefComplaint    String
+  historyPresentIllness String
+  physicalExam      String
+  treatmentGoals    String
+  assessment        String
+  treatmentPlan     String
+  nonDrugPlan       String
+  education         String
+
+  prescriptions     PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  Item_ID           Int      @id @default(autoincrement())
+  medicalRecord     MedicalRecord @relation(fields: [MedicalRecord_ID], references: [MedicalRecord_ID])
+  MedicalRecord_ID  Int
+  medicineName      String
+  dosage            String
+  frequency         String
+  duration          String
+  notes             String
+}
+
+model DoctorSchedule {
+  schedule_ID   Int     @id @default(autoincrement())
+  doctor        Doctor  @relation(fields: [doctor_ID], references: [Doctor_ID])
+  doctor_ID     Int
+  dayOfWeek     Int
+  startTime     String
+  endTime       String
+}
+
+model DoctorLeave {
+  leave_ID      Int     @id @default(autoincrement())
+  doctor        Doctor  @relation(fields: [doctor_ID], references: [Doctor_ID])
+  doctor_ID     Int
+  startDate     DateTime
+  endDate       DateTime
+  reason        String
+}
+
+model Payment {
+  Payment_ID     Int        @id @default(autoincrement())
+  Appointment    Appointment @relation(fields: [Appointment_ID], references: [Appointment_ID])
+  Appointment_ID Int
+  Price          Float
+  Payment_Method PaymentMethodEnum
+  Payment_Status PaymentStatusEnum
+}
+
+model FollowUp {
+  followUp_ID    Int        @id @default(autoincrement())
+  appointment    Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
+  appointment_ID Int
+  nextDate       DateTime
+  reason         String
+  createdAt      DateTime @default(now())
+}
+
+enum RoleEnum {
   ADMIN
   DOCTOR
   USER
 }
 
-enum PaymentMethod {
+enum PaymentMethodEnum {
   CASH
   CARD
-  TRANSFER
+  BANK_TRANSFER
+  MOMO
 }
 
-enum PaymentStatus {
-  PENDING
+enum PaymentStatusEnum {
   PAID
-  CANCELLED
+  UNPAID
+  PENDING
 }
 
-enum Gender {
+enum GenderEmun {
   Male
   FeMale
-}
-
-model User {
-  userId     Int         @id @default(autoincrement())
-  fullName   String
-  email      String      @unique
-  phone      String
-  password   String
-  gender     Gender
-  role       Role
-  createdAt  DateTime    @default(now())
-  doctor     Doctor?
-  appointments Appointment[]
-  tokens     Token[]
-}
-
-model Token {
-  id             Int      @id @default(autoincrement())
-  accessToken    String   // hash access token (hoặc có thể không hash)
-  refreshToken   String   // hash refresh token
-  user           User     @relation(fields: [userId], references: [userId])
-  userId         Int
-  createdAt      DateTime @default(now())
-  accessExpiresAt  DateTime
-  refreshExpiresAt DateTime
-}
-
-model Doctor {
-  doctorId    Int         @id @default(autoincrement())
-  user        User        @relation(fields: [userId], references: [userId])
-  userId      Int         @unique
-  specialty   Specialty   @relation(fields: [specialtyId], references: [specialtyId])
-  specialtyId Int
-  hospital    Hospital    @relation(fields: [hospitalId], references: [hospitalId])
-  hospitalId  Int
-  phone       String
-  rating      Float?
-  appointments Appointment[]
-}
-
-model Hospital {
-  hospitalId Int       @id @default(autoincrement())
-  name       String
-  address    String
-  phone      String
-  description String?
-  doctors    Doctor[]
-  appointments Appointment[]
-}
-
-model Specialty {
-  specialtyId Int     @id @default(autoincrement())
-  name        String
-  description String?
-  doctors     Doctor[]
-}
-
-model Appointment {
-  appointmentId Int       @id @default(autoincrement())
-  user          User      @relation(fields: [userId], references: [userId])
-  userId        Int
-  doctor        Doctor    @relation(fields: [doctorId], references: [doctorId])
-  doctorId      Int
-  hospital      Hospital  @relation(fields: [hospitalId], references: [hospitalId])
-  hospitalId    Int
-  scheduledTime DateTime
-  note          String?
-  payment       Payment?
-  medicalRecord MedicalRecord?
-}
-
-model Payment {
-  paymentId      Int             @id @default(autoincrement())
-  appointment    Appointment     @relation(fields: [appointmentId], references: [appointmentId])
-  appointmentId  Int             @unique
-  price          Float
-  paymentMethod  PaymentMethod
-  paymentStatus  PaymentStatus
-}
-
-model MedicalRecord {
-  medicalRecordId Int         @id @default(autoincrement())
-  appointment     Appointment @relation(fields: [appointmentId], references: [appointmentId])
-  appointmentId   Int         @unique
-  diagnosis       String
-  prescription    String
-  testResult      String?
-  doctorNotes     String?
 }

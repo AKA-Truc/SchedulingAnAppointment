@@ -1,6 +1,6 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Gender, Role } from '@prisma/client';
+import { GenderEmun, RoleEnum } from '@prisma/client';
 
 export class CreateUserDto {
     @ApiProperty({
@@ -22,9 +22,9 @@ export class CreateUserDto {
         example: '0909123456',
         description: 'Số điện thoại người dùng',
     })
-    @IsString()
+    @IsInt()
     @IsNotEmpty()
-    phone: string;
+    phone: number;
 
     @ApiProperty({
         example: 'StrongPass123',
@@ -36,18 +36,18 @@ export class CreateUserDto {
     password: string;
 
     @ApiProperty({
-        example: Gender.Male,
-        enum: Gender,
+        example: GenderEmun.Male,
+        enum: GenderEmun,
         description: 'Giới tính người dùng',
     })
-    @IsEnum(Gender)
-    gender: Gender;
+    @IsEnum(GenderEmun)
+    gender: GenderEmun;
 
     @ApiProperty({
-        example: Role.USER,
-        enum: Role,
+        example: RoleEnum.USER,
+        enum: RoleEnum,
         description: 'Vai trò của người dùng',
     })
-    @IsEnum(Role)
-    role: Role;
+    @IsEnum(RoleEnum)
+    role: RoleEnum;
 }
