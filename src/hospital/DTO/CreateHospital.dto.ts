@@ -1,53 +1,37 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsString, IsInt, IsEmail, IsNotEmpty } from 'class-validator';
 
-export class CreatePatientProfile {
-    @ApiProperty({ example: 1, description: 'ID của người dùng (User_ID)' })
-    @IsInt()
-    userId: number;
-
-    @ApiProperty({ example: 'Male', description: 'Giới tính' })
+export class CreateHospital {
+    @ApiProperty({ example: 'Bệnh viện Chợ Rẫy' })
     @IsString()
     @IsNotEmpty()
-    gender: string;
+    Name: string;
 
-    @ApiProperty({ example: '1990-05-15', description: 'Ngày sinh (yyyy-mm-dd)' })
-    @IsDateString()
-    dateOfBirth: Date;
-
-    @ApiProperty({ example: '123 Trần Hưng Đạo, Quận 1, TP.HCM', description: 'Địa chỉ' })
+    @ApiProperty({ example: '201B Nguyễn Chí Thanh, Quận 5, TP.HCM' })
     @IsString()
-    address: string;
+    @IsNotEmpty()
+    Address: string;
 
-    @ApiProperty({ example: 'Bảo hiểm y tế quốc gia', description: 'Thông tin bảo hiểm' })
-    @IsString()
-    insurance: string;
+    @ApiProperty({ example: 842838552792 })
+    @IsInt()
+    @IsNotEmpty()
+    Phone: number;
 
-    @ApiProperty({ example: 'Penicillin', description: 'Dị ứng' })
+    @ApiProperty({ example: 'Bệnh viện đa khoa tuyến trung ương' })
     @IsString()
-    allergies: string;
+    @IsNotEmpty()
+    Description: string;
 
-    @ApiProperty({ example: 'Tiểu đường, Tăng huyết áp', description: 'Bệnh mãn tính' })
-    @IsString()
-    chronicDiseases: string;
+    @ApiProperty({ example: 'choray@hospital.vn' })
+    @IsEmail()
+    Email: string;
 
-    @ApiProperty({ example: 'Sinh thường năm 2015', description: 'Tiền sử sản khoa' })
-    @IsString()
-    obstetricHistory: string;
+    @ApiProperty({ example: 1900 })
+    @IsInt()
+    establishYear: number;
 
-    @ApiProperty({ example: 'Phẫu thuật ruột thừa năm 2010', description: 'Tiền sử phẫu thuật' })
+    @ApiProperty({ example: 'public' })
     @IsString()
-    surgicalHistory: string;
-
-    @ApiProperty({ example: 'Bố bị cao huyết áp, mẹ tiểu đường', description: 'Tiền sử gia đình' })
-    @IsString()
-    familyHistory: string;
-
-    @ApiProperty({ example: 'Hút thuốc nhẹ, không uống rượu', description: 'Tiền sử xã hội' })
-    @IsString()
-    socialHistory: string;
-
-    @ApiProperty({ example: 'Metformin, Losartan', description: 'Lịch sử dùng thuốc' })
-    @IsString()
-    medicationHistory: string;
+    @IsNotEmpty()
+    Type: string;
 }

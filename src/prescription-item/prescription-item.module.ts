@@ -6,4 +6,4 @@ import { PrescriptionItemService } from './prescription-item.service';
   controllers: [PrescriptionItemController],
   providers: [PrescriptionItemService]
 })
-export class PrescriptionItemModule {}
+export class PrescriptionItemModule { }

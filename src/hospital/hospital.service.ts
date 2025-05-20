@@ -8,7 +8,7 @@ export class HospitalService {
 
     async createHospital(data: CreateHospital) {
         const emailExists = await this.prisma.hospital.findFirst({
-            where: { Email: data.email },
+            where: { Email: data.Email },
         });
 
         if (emailExists) {
@@ -17,13 +17,13 @@ export class HospitalService {
 
         const hospital = await this.prisma.hospital.create({
             data: {
-                Name: data.name,
-                Address: data.address,
-                Phone: data.phone,
-                Description: data.description,
-                Email: data.email,
+                Name: data.Name,
+                Address: data.Address,
+                Phone: data.Phone,
+                Description: data.Description,
+                Email: data.Email,
                 establishYear: data.establishYear,
-                Type: data.type,
+                Type: data.Type,
             },
         });
 
@@ -84,9 +84,9 @@ export class HospitalService {
             throw new NotFoundException(`Hospital with ID ${id} not found`);
         }
 
-        if (dto.email && dto.email !== hospital.Email) {
+        if (dto.Email && dto.Email !== hospital.Email) {
             const emailExists = await this.prisma.hospital.findFirst({
-                where: { Email: dto.email },
+                where: { Email: dto.Email },
             });
             if (emailExists) {
                 throw new BadRequestException('Email already exists.');

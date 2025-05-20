@@ -13,7 +13,7 @@ export class AuthService {
 
     // Tạo access + refresh token
     async generateTokens(user: User) {
-        const payload = { sub: user.userId, email: user.email, role: user.role };
+        const payload = { sub: user.User_ID, email: user.Email, role: user.Role };
         const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
         const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
@@ -29,21 +29,21 @@ export class AuthService {
 
         return this.prisma.token.create({
             data: {
-                userId,
-                accessToken, // có thể lưu plaintext hoặc hash, tuỳ chọn
-                refreshToken: hashedRefreshToken,
-                accessExpiresAt: new Date(decodedAccess.exp * 1000),
-                refreshExpiresAt: new Date(decodedRefresh.exp * 1000),
+                User_ID: userId,
+                AccessToken: accessToken,
+                RefreshToken: hashedRefreshToken,
+                AccessExpiresAt: new Date(decodedAccess.exp * 1000),
+                RefreshExpiresAt: new Date(decodedRefresh.exp * 1000),
             },
         });
     }
 
     // Validate user login
     async validateUser(email: string, password: string): Promise<User | null> {
-        const user = await this.prisma.user.findUnique({ where: { email } });
+        const user = await this.prisma.user.findUnique({ where: { Email: email } });
         if (!user) return null;
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.Password);
         if (!isPasswordValid) return null;
 
         return user;
@@ -55,24 +55,24 @@ export class AuthService {
         if (!user) throw new UnauthorizedException('Invalid credentials');
 
         const { accessToken, refreshToken } = await this.generateTokens(user);
-        await this.saveTokens(user.userId, accessToken, refreshToken);
+        await this.saveTokens(user.User_ID, accessToken, refreshToken);
 
         return { accessToken, refreshToken };
     }
 
     // Refresh token
     async refreshTokens(userId: number, refreshToken: string) {
-        const tokens = await this.prisma.token.findMany({ where: { userId } });
+        const tokens = await this.prisma.token.findMany({ where: { User_ID: userId } });
         for (const tokenRecord of tokens) {
-            const isMatch = await bcrypt.compare(refreshToken, tokenRecord.refreshToken);
+            const isMatch = await bcrypt.compare(refreshToken, tokenRecord.RefreshToken);
             if (isMatch) {
-                if (tokenRecord.refreshExpiresAt < new Date()) {
+                if (tokenRecord.RefreshExpiresAt < new Date()) {
                     throw new UnauthorizedException('Refresh token expired');
                 }
-                const user = await this.prisma.user.findUnique({ where: { userId } });
+                const user = await this.prisma.user.findUnique({ where: { User_ID: userId } });
                 if (!user) throw new UnauthorizedException('User not found');
                 const { accessToken, refreshToken: newRefreshToken } = await this.generateTokens(user);
-                await this.prisma.token.delete({ where: { id: tokenRecord.id } });
+                await this.prisma.token.delete({ where: { Token_ID: tokenRecord.Token_ID } });
                 await this.saveTokens(userId, accessToken, newRefreshToken);
 
                 return { accessToken, refreshToken: newRefreshToken };
@@ -84,11 +84,11 @@ export class AuthService {
 
     // Logout (xoá refresh token)
     async logout(userId: number, refreshToken: string) {
-        const tokens = await this.prisma.token.findMany({ where: { userId } });
+        const tokens = await this.prisma.token.findMany({ where: { User_ID: userId } });
         for (const tokenRecord of tokens) {
-            const isMatch = await bcrypt.compare(refreshToken, tokenRecord.refreshToken);
+            const isMatch = await bcrypt.compare(refreshToken, tokenRecord.RefreshToken);
             if (isMatch) {
-                await this.prisma.token.delete({ where: { id: tokenRecord.id } });
+                await this.prisma.token.delete({ where: { Token_ID: tokenRecord.Token_ID } });
                 return;
             }
         }

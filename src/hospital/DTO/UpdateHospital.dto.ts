@@ -1,39 +1,39 @@
-import { IsInt, IsOptional, IsString, IsEmail } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsInt, IsEmail, IsOptional } from 'class-validator';
 
 export class UpdateHospital {
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 'Bệnh viện Chợ Rẫy', required: false })
     @IsString()
     @IsOptional()
-    name?: string;
+    Name?: string;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: '201B Nguyễn Chí Thanh, Quận 5, TP.HCM', required: false })
     @IsString()
     @IsOptional()
-    address?: string;
+    Address?: string;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 842838552792, required: false })
     @IsInt()
     @IsOptional()
-    phone?: number;
+    Phone?: number;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 'Bệnh viện đa khoa tuyến trung ương', required: false })
     @IsString()
     @IsOptional()
-    description?: string;
+    Description?: string;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 'choray@hospital.vn', required: false })
     @IsEmail()
     @IsOptional()
-    email?: string;
+    Email?: string;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 1900, required: false })
     @IsInt()
     @IsOptional()
     establishYear?: number;
 
-    @ApiProperty({ required: false })
+    @ApiProperty({ example: 'public', required: false })
     @IsString()
     @IsOptional()
-    type?: string;
+    Type?: string;
 }
