@@ -48,7 +48,8 @@ model Doctor {
   yearsOfExperience String
   certifications    String
   website           String?
-
+  education         String
+  achievements    Achievement[] // 1 doctor có nhiều achievements
   schedules         DoctorSchedule[]
   leaves            DoctorLeave[]
   appointments      Appointment[]
@@ -88,9 +89,10 @@ model Hospital {
   Email           String
   establishYear   Int
   Type            String // public/private
-
+  achievements    Achievement[] // 1 hospital có nhiều achievements
   doctors         Doctor[]
   appointments    Appointment[]
+  website         String?
 }
 
 model Appointment {
@@ -196,6 +198,21 @@ model FollowUp {
   createdAt      DateTime @default(now())
 }
 
+
+model Achievement {
+  Achievement_ID  Int       @id @default(autoincrement())
+  Title           String
+  Description     String?
+  DateAchieved    DateTime?
+
+  Doctor          Doctor?   @relation(fields: [Doctor_ID], references: [Doctor_ID])
+  Doctor_ID       Int?
+
+  Hospital        Hospital? @relation(fields: [Hospital_ID], references: [Hospital_ID])
+  Hospital_ID     Int?
+}
+
+
 enum RoleEnum {
   ADMIN
   DOCTOR
@@ -215,7 +232,7 @@ enum PaymentStatusEnum {
   PENDING
 }
 
-enum GenderEmun {
+enum GenderEnum {
   Male
-  FeMale
+  Female
 }
