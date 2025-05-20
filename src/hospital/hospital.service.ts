@@ -117,6 +117,22 @@ export class HospitalService {
         if (!hospital) {
             throw new NotFoundException(`Hospital with ID ${id} not found`);
         }
+         const doctorsCount = await this.prisma.doctor.count({
+            where: { Hospital_ID: id },
+        });
+
+        if (doctorsCount > 0) {
+            throw new BadRequestException('Cannot delete hospital with existing doctors.');
+        }
+
+        const appointmentsCount = await this.prisma.appointment.count({
+            where: { Hospital_ID: id },
+        });
+
+        if (appointmentsCount > 0) {
+            throw new BadRequestException('Cannot delete hospital with existing appointments.');
+        }
+
 
         return this.prisma.hospital.delete({
             where: { Hospital_ID: id },

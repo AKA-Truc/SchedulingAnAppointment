@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsUrl, Min, Max, IsPositive } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsUrl, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateDoctor {
@@ -75,4 +75,12 @@ export class CreateDoctor {
     @IsOptional()
     @IsUrl()
     website?: string;
+
+    @ApiProperty({
+        example: 'Tốt nghiệp Đại học Y Dược TP.HCM, chuyên ngành Nội tổng quát',
+        description: 'Thông tin học vấn của bác sĩ',
+    })
+    @IsString()
+    @IsNotEmpty()
+    education: string;
 }

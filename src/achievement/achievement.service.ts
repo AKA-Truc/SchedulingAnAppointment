@@ -9,7 +9,13 @@ export class AchievementService {
 
     async create(dto: CreateAchievementDto) {
         const achievement = await this.prisma.achievement.create({
-            data: dto,
+            data: {
+                Title: dto.Title,
+                Description: dto.Description,
+                DateAchieved: dto.DateAchieved,
+                Doctor_ID: dto.Doctor_ID,
+                Hospital_ID: dto.Hospital_ID,
+            },
         });
 
         return {
@@ -25,7 +31,11 @@ export class AchievementService {
                 skip,
                 take: limit,
                 include: {
-                    Doctor: true,
+                    Doctor: {
+                        include: {
+                            User: true,
+                        },
+                    },
                     Hospital: true,
                 },
             }),
@@ -47,7 +57,11 @@ export class AchievementService {
         const achievement = await this.prisma.achievement.findUnique({
             where: { Achievement_ID: id },
             include: {
-                Doctor: true,
+                Doctor: {
+                    include: {
+                        User: true,
+                    },
+                },
                 Hospital: true,
             },
         });
@@ -70,7 +84,17 @@ export class AchievementService {
 
         return this.prisma.achievement.update({
             where: { Achievement_ID: id },
-            data: dto,
+            data: {
+                Title: dto.Title,
+                Description: dto.Description,
+                DateAchieved: dto.DateAchieved,
+                Doctor_ID: dto.Doctor_ID,
+                Hospital_ID: dto.Hospital_ID,
+            },
+            include: {
+                Doctor: true,
+                Hospital: true,
+            },
         });
     }
 
@@ -85,6 +109,10 @@ export class AchievementService {
 
         return this.prisma.achievement.delete({
             where: { Achievement_ID: id },
+            include: {
+                Doctor: true,
+                Hospital: true,
+            },
         });
     }
 }

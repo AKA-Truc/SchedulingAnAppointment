@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsInt, IsEmail, IsNotEmpty } from 'class-validator';
+import { IsString, IsInt, IsEmail, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
 
 export class CreateHospital {
     @ApiProperty({ example: 'Bệnh viện Chợ Rẫy' })
@@ -34,4 +34,13 @@ export class CreateHospital {
     @IsString()
     @IsNotEmpty()
     Type: string;
+
+    @ApiProperty({
+        example: 'https://choray.vn',
+        description: 'Website chính thức của bệnh viện (tùy chọn)',
+        required: false,
+    })
+    @IsOptional()
+    @IsUrl()
+    website?: string;
 }
