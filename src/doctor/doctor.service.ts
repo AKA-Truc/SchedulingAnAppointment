@@ -30,7 +30,11 @@ export class DoctorService {
                 yearsOfExperience: data.yearsOfExperience,
                 certifications: data.certifications,
                 website: data.website,
+                education: data.education
             },
+            include: {
+                achievements: true
+            }
         });
 
         return {
@@ -54,6 +58,7 @@ export class DoctorService {
                     schedules: true,
                     leaves: true,
                     appointments: true,
+                    achievements: true
                 },
             }),
             this.prisma.doctor.count(),
@@ -81,6 +86,7 @@ export class DoctorService {
                 schedules: true,
                 leaves: true,
                 appointments: true,
+                achievements: true
             },
         });
 
@@ -114,6 +120,9 @@ export class DoctorService {
         return this.prisma.doctor.update({
             where: { Doctor_ID: id },
             data: dto,
+            include: {
+                achievements: true
+            }
         });
     }
 
@@ -129,6 +138,9 @@ export class DoctorService {
 
         return this.prisma.doctor.delete({
             where: { Doctor_ID: id },
+            include: {
+                achievements: true
+            }
         });
     }
 }

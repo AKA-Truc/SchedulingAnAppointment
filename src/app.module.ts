@@ -17,9 +17,10 @@ import { DoctorScheduleModule } from './doctor-schedule/doctor-schedule.module';
 import { DoctorLeaveModule } from './doctor-leave/doctor-leave.module';
 import { PaymentModule } from './payment/payment.module';
 import { FollowUpModule } from './follow-up/follow-up.module';
+import { AchievementModule } from './achievement/achievement.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, SpecialtyModule, HospitalModule, PatientProfileModule, AppointmentModule, AppointmentReminderModule, FeedbackModule, MedicalRecordModule, PrescriptionItemModule, DoctorScheduleModule, DoctorLeaveModule, PaymentModule, FollowUpModule],
+  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, SpecialtyModule, HospitalModule, PatientProfileModule, AppointmentModule, AppointmentReminderModule, FeedbackModule, MedicalRecordModule, PrescriptionItemModule, DoctorScheduleModule, DoctorLeaveModule, PaymentModule, FollowUpModule, AchievementModule],
   controllers: [AppController],
   providers: [AppService],
 })

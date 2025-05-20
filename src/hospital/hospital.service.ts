@@ -24,7 +24,11 @@ export class HospitalService {
                 Email: data.Email,
                 establishYear: data.establishYear,
                 Type: data.Type,
+                website: data.website
             },
+            include: {
+                achievements: true
+            }
         });
 
         return {
@@ -43,6 +47,7 @@ export class HospitalService {
                 include: {
                     doctors: true,
                     appointments: true,
+                    achievements: true
                 },
             }),
             this.prisma.hospital.count(),
@@ -65,6 +70,7 @@ export class HospitalService {
             include: {
                 doctors: true,
                 appointments: true,
+                achievements: true
             },
         });
 
@@ -84,6 +90,7 @@ export class HospitalService {
             throw new NotFoundException(`Hospital with ID ${id} not found`);
         }
 
+        // Nếu update email, kiểm tra email đã tồn tại chưa
         if (dto.Email && dto.Email !== hospital.Email) {
             const emailExists = await this.prisma.hospital.findFirst({
                 where: { Email: dto.Email },
@@ -96,6 +103,9 @@ export class HospitalService {
         return this.prisma.hospital.update({
             where: { Hospital_ID: id },
             data: dto,
+            include: {
+                achievements: true
+            }
         });
     }
 
@@ -108,24 +118,11 @@ export class HospitalService {
             throw new NotFoundException(`Hospital with ID ${id} not found`);
         }
 
-        const doctorsCount = await this.prisma.doctor.count({
-            where: { Hospital_ID: id },
-        });
-
-        if (doctorsCount > 0) {
-            throw new BadRequestException('Cannot delete hospital with existing doctors.');
-        }
-
-        const appointmentsCount = await this.prisma.appointment.count({
-            where: { Hospital_ID: id },
-        });
-
-        if (appointmentsCount > 0) {
-            throw new BadRequestException('Cannot delete hospital with existing appointments.');
-        }
-
         return this.prisma.hospital.delete({
             where: { Hospital_ID: id },
+            include: {
+                achievements: true
+            }
         });
     }
 }
