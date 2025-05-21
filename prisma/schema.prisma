@@ -18,10 +18,12 @@ model User {
   createdAt      DateTime        @default(now())
   avatar         String?
   doctor         Doctor?
+
   patientProfile PatientProfile?
   appointments   Appointment[]
   tokens         Token[]
   notifications  Notification[]
+  medicalRecord  MedicalRecord?
 }
 
 model Token {
@@ -50,7 +52,6 @@ model Doctor {
   certifications    Certification[]
   achievements      Achievement[]
   schedules         DoctorSchedule[]
-  leaves            DoctorLeave[]
   appointments      Appointment[]
 }
 
@@ -105,13 +106,11 @@ model Appointment {
   hospitalId     Int
   scheduledTime  DateTime
   note           String?
+  status         AppointmentStatus
 
-  reminder       AppointmentReminder?
   feedback       Feedback?
-  medicalRecord  MedicalRecord?
   followUps      FollowUp[]
   payments       Payment[]
-  notifications  Notification[]
 }
 
 model Feedback {
@@ -125,23 +124,17 @@ model Feedback {
 
 model MedicalRecord {
   medicalRecordId        Int         @id @default(autoincrement())
-  appointment            Appointment @relation(fields: [appointmentId], references: [appointmentId])
-  appointmentId          Int         @unique
+  user                   User @relation(fields: [userId], references: [userId])
+  userId          Int    @unique
+  historyPresentIllness  String
+  chiefComplaint         String
   diagnosis              String
-  prescription           String
   testResult             String
   doctorNotes            String
-  chiefComplaint         String
-  historyPresentIllness  String
-  physicalExam           String
-  treatmentGoals         String
-  assessment             String
   treatmentPlan          String
-  nonDrugPlan            String
-  education              String
-
+  treatmentGoals         String
+  
   prescriptions  PrescriptionItem[]
-  notifications  Notification[]
 }
 
 model PrescriptionItem {
@@ -171,6 +164,7 @@ model Payment {
   price         Float
   paymentMethod PaymentMethodEnum
   paymentStatus PaymentStatusEnum
+  createdAt     DateTime          @default(now())
 }
 
 model FollowUp {
@@ -180,7 +174,6 @@ model FollowUp {
   nextDate      DateTime
   reason        String
   createdAt     DateTime    @default(now())
-  notifications Notification[]
 }
 
 model Achievement {
@@ -205,45 +198,22 @@ model Certification {
 }
 
 model Notification {
-  id              Int                   @id @default(autoincrement())
-  type            NotificationType
-  method          NotificationMethod
-  title           String
-  content         String
+  notificationId  Int                   @id @default(autoincrement())
   user            User                 @relation(fields: [userId], references: [userId])
   userId          Int
+  type            NotificationType
+  title           String
+  content         String
   remindAt        DateTime
   sent            Boolean              @default(false)
   createdAt       DateTime             @default(now())
-  targetType      NotificationTargetType
-  targetId        Int
-
-  appointment     Appointment?         @relation(fields: [appointmentId], references: [appointmentId])
-  appointmentId   Int?
-
-  followUp        FollowUp?            @relation(fields: [followUpId], references: [followUpId])
-  followUpId      Int?
-
-  medicalRecord   MedicalRecord?       @relation(fields: [medicalRecordId], references: [medicalRecordId])
-  medicalRecordId Int?
+  scheduledTime   DateTime             
 }
 
 enum NotificationType {
   APPOINTMENT
   FOLLOW_UP
   VACCINE
-  CUSTOM
-}
-
-enum NotificationMethod {
-  email
-  SMS
-  PUSH
-}
-
-enum NotificationTargetType {
-  APPOINTMENT
-  FOLLOW_UP
   CUSTOM
 }
 
@@ -269,4 +239,11 @@ enum PaymentStatusEnum {
 enum GenderEnum {
   Male
   Female
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
 }

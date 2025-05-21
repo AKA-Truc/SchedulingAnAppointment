@@ -66,7 +66,6 @@ export class DoctorService {
                     specialty: true,
                     hospital: true,
                     schedules: true,
-                    leaves: true,
                     appointments: true,
                     achievements: true
                 },
@@ -94,7 +93,6 @@ export class DoctorService {
                 specialty: true,
                 hospital: true,
                 schedules: true,
-                leaves: true,
                 appointments: true,
                 achievements: true
             },

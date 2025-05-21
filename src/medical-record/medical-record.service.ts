@@ -9,7 +9,7 @@ export class MedicalRecordService {
     async createMedicalRecord(dto: CreateMedicalRecord) {
         // Kiểm tra xem appointmentId đã tồn tại MedicalRecord chưa (vì unique)
         const exists = await this.prisma.medicalRecord.findUnique({
-            where: { appointmentId: dto.appointmentId },
+            where: { userId: dto.userId },
         });
         if (exists) {
             throw new BadRequestException('Bản ghi y tế cho cuộc hẹn này đã tồn tại.');
@@ -33,7 +33,7 @@ export class MedicalRecordService {
                 skip,
                 take: limit,
                 include: {
-                    appointment: true,
+                    user: true,
                     prescriptions: true,
                 },
             }),
@@ -55,7 +55,7 @@ export class MedicalRecordService {
         const record = await this.prisma.medicalRecord.findUnique({
             where: { medicalRecordId: id },
             include: {
-                appointment: true,
+                user: true,
                 prescriptions: true,
             },
         });
@@ -76,9 +76,9 @@ export class MedicalRecordService {
         }
 
         // Nếu cập nhật appointmentId thì kiểm tra trùng
-        if (dto.appointmentId && dto.appointmentId !== record.appointmentId) {
+        if (dto.userId && dto.userId !== record.userId) {
             const appointmentTaken = await this.prisma.medicalRecord.findUnique({
-                where: { appointmentId: dto.appointmentId },
+                where: { userId: dto.userId },
             });
             if (appointmentTaken) {
                 throw new BadRequestException('Bản ghi y tế cho cuộc hẹn này đã tồn tại.');

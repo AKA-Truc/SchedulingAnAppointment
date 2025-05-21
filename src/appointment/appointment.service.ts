@@ -1,15 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAppointment, UpdateAppointment } from './DTO';
 
+enum ReminderOffset {
+    BEFORE_30_MINUTES = 30,
+    BEFORE_1_HOUR = 60,
+    BEFORE_1_DAY = 1440,
+}
+
 @Injectable()
 export class AppointmentService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+    ) { }
 
     async create(data: CreateAppointment) {
-        return this.prisma.appointment.create({
-            data,
+        const conflict = await this.prisma.appointment.findFirst({
+            where: {
+                doctorId: data.doctorId,
+                scheduledTime: data.scheduledTime
+            },
         });
+        if (conflict) {
+            throw new BadRequestException('Doctor already has an appointment at this time')
+        }
+
+        const appointment = await this.prisma.appointment.create({
+            data: {
+                doctorId: data.doctorId,
+                userId: data.userId,
+                hospitalId: data.hospitalId,
+                scheduledTime: data.scheduledTime,
+                note: data.note,
+                status: 'SCHEDULED',
+            },
+        });
+
+        const reminderAt = new Date(data.scheduledTime);
+        reminderAt.setHours(reminderAt.getHours() - 24);
+        const reminderAtString = reminderAt.toISOString();
+
+        return appointment;
     }
 
     async findAll() {
@@ -18,9 +49,7 @@ export class AppointmentService {
                 doctor: true,
                 user: true,
                 hospital: true,
-                reminder: true,
                 feedback: true,
-                medicalRecord: true,
                 followUps: true,
                 payments: true,
             },
@@ -34,9 +63,7 @@ export class AppointmentService {
                 doctor: true,
                 user: true,
                 hospital: true,
-                reminder: true,
                 feedback: true,
-                medicalRecord: true,
                 followUps: true,
                 payments: true,
             },

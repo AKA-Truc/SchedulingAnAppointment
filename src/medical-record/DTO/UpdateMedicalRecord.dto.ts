@@ -2,20 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class UpdateMedicalRecord {
-    @ApiProperty({ example: 1, description: 'ID cuộc hẹn', required: false })
-    @IsInt()
+    @ApiProperty({ example: 'Triệu chứng xuất hiện từ 2 tuần trước và ngày càng nặng', description: 'Tiền sử bệnh hiện tại', required: false })
+    @IsString()
     @IsOptional()
-    appointmentId?: number;
+    historyPresentIllness?: string;
 
-    @ApiProperty({ example: 'Bệnh nhân bị tăng huyết áp', description: 'Chẩn đoán bệnh', required: false })
+    @ApiProperty({ example: 1, description: 'ID người dùng' })
+    @IsInt()
+    userId: number;
+
+    @ApiProperty({ example: 'Đau đầu và chóng mặt', description: 'Triệu chứng chính', required: false })
+    @IsString()
+    @IsOptional()
+    chiefComplaint?: string;
+
+    @ApiProperty({ example: 'Tăng huyết áp giai đoạn 2', description: 'Chẩn đoán bệnh', required: false })
     @IsString()
     @IsOptional()
     diagnosis?: string;
-
-    @ApiProperty({ example: 'Thuốc Lisinopril 10mg mỗi ngày', description: 'Đơn thuốc', required: false })
-    @IsString()
-    @IsOptional()
-    prescription?: string;
 
     @ApiProperty({ example: 'Xét nghiệm máu và điện tim bình thường', description: 'Kết quả xét nghiệm', required: false })
     @IsString()
@@ -27,43 +31,13 @@ export class UpdateMedicalRecord {
     @IsOptional()
     doctorNotes?: string;
 
-    @ApiProperty({ example: 'Đau đầu và chóng mặt', description: 'Triệu chứng chính', required: false })
-    @IsString()
-    @IsOptional()
-    chiefComplaint?: string;
-
-    @ApiProperty({ example: 'Triệu chứng xuất hiện từ 2 tuần trước và ngày càng nặng', description: 'Tiền sử bệnh hiện tại', required: false })
-    @IsString()
-    @IsOptional()
-    historyPresentIllness?: string;
-
-    @ApiProperty({ example: 'Huyết áp 160/100, mạch 80 lần/phút', description: 'Khám thể chất', required: false })
-    @IsString()
-    @IsOptional()
-    physicalExam?: string;
-
-    @ApiProperty({ example: 'Kiểm soát huyết áp về mức bình thường', description: 'Mục tiêu điều trị', required: false })
-    @IsString()
-    @IsOptional()
-    treatmentGoals?: string;
-
-    @ApiProperty({ example: 'Tăng huyết áp giai đoạn 2', description: 'Đánh giá bệnh', required: false })
-    @IsString()
-    @IsOptional()
-    assessment?: string;
-
     @ApiProperty({ example: 'Bắt đầu dùng thuốc và thay đổi lối sống', description: 'Kế hoạch điều trị', required: false })
     @IsString()
     @IsOptional()
     treatmentPlan?: string;
 
-    @ApiProperty({ example: 'Chế độ ăn giảm muối, tập thể dục đều đặn', description: 'Kế hoạch không dùng thuốc', required: false })
+    @ApiProperty({ example: 'Kiểm soát huyết áp về mức bình thường', description: 'Mục tiêu điều trị', required: false })
     @IsString()
     @IsOptional()
-    nonDrugPlan?: string;
-
-    @ApiProperty({ example: 'Cung cấp tài liệu giáo dục về bệnh tăng huyết áp', description: 'Giáo dục bệnh nhân', required: false })
-    @IsString()
-    @IsOptional()
-    education?: string;
+    treatmentGoals?: string;
 }
