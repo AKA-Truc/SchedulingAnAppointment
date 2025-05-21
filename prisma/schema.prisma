@@ -11,12 +11,12 @@ model User {
   User_ID    Int       @id @default(autoincrement())
   Full_Name  String
   Email      String    @unique
-  Phone      Int
+  Phone      String
   Password   String
   Role       RoleEnum
-  Gender     GenderEmun
+  Gender     GenderEnum
   Created_at DateTime  @default(now())
-
+  Avatar    String?
   doctor          Doctor?
   patientProfile  PatientProfile?
   appointments    Appointment[]
@@ -42,7 +42,7 @@ model Doctor {
   Specialty_ID      Int
   Hospital          Hospital   @relation(fields: [Hospital_ID], references: [Hospital_ID])
   Hospital_ID       Int
-  Phone             Int
+  Phone             String
   Rating            Float
   Bio               String
   yearsOfExperience String
@@ -84,7 +84,7 @@ model Hospital {
   Hospital_ID     Int      @id @default(autoincrement())
   Name            String
   Address         String
-  Phone           Int
+  Phone           String
   Description     String
   Email           String
   establishYear   Int
