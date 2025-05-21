@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsDateString, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsDateString, IsOptional, IsString, IsEnum } from 'class-validator';
+import { AppointmentStatus } from '@prisma/client';
 
 export class CreateAppointment {
     @ApiProperty({ example: 1, description: 'ID bác sĩ' })
@@ -22,4 +23,12 @@ export class CreateAppointment {
     @IsOptional()
     @IsString()
     Note?: string;
+
+    @ApiProperty({
+            example: AppointmentStatus.SCHEDULED,
+            enum: AppointmentStatus,
+            description: 'Tình trạng đặt lịch',
+        })
+    @IsEnum(AppointmentStatus)
+    status: AppointmentStatus
 }

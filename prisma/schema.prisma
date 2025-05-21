@@ -107,7 +107,7 @@ model Appointment {
   Hospital_ID    Int
   Scheduled_time DateTime
   Note           String?
-
+  status        AppointmentStatus @default(SCHEDULED)
   reminder      AppointmentReminder?
   feedback      Feedback?
   medicalRecord MedicalRecord?
@@ -235,4 +235,17 @@ enum PaymentStatusEnum {
 enum GenderEnum {
   Male
   Female
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+enum ReminderType {
+  BEFORE_30_MINUTES = 30,
+  BEFORE_1_HOUR = 60,
+  BEFORE_1_DAY = 1440,
 }
