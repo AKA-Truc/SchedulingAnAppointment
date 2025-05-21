@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,7 @@ async function bootstrap() {
     forbidNonWhitelisted: true,// báo lỗi nếu có field không nằm trong DTO
     transform: true,           // tự động chuyển kiểu dữ liệu (string -> number...) dựa trên DTO
   }));
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   //swagger
   const config = new DocumentBuilder()

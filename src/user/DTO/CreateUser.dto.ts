@@ -22,7 +22,7 @@ export class CreateUserDto {
         example: '0909123456',
         description: 'Số điện thoại người dùng',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
     phone: string;
 
