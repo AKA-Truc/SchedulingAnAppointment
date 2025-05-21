@@ -12,10 +12,6 @@ export class CreateAppointment {
     @IsInt()
     userId: number;
 
-    @ApiProperty({ example: 1, description: 'ID bệnh viện' })
-    @IsInt()
-    hospitalId: number;
-
     @ApiProperty({ example: '2025-05-21T09:00:00Z', description: 'Thời gian hẹn khám' })
     @IsDateString()
     scheduledTime: string;

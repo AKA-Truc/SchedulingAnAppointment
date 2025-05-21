@@ -29,7 +29,6 @@ export class AppointmentService {
             data: {
                 doctorId: data.doctorId,
                 userId: data.userId,
-                hospitalId: data.hospitalId,
                 scheduledTime: data.scheduledTime,
                 note: data.note,
                 status: 'SCHEDULED',
@@ -48,7 +47,6 @@ export class AppointmentService {
             include: {
                 doctor: true,
                 user: true,
-                hospital: true,
                 feedback: true,
                 followUps: true,
                 payments: true,
@@ -62,7 +60,6 @@ export class AppointmentService {
             include: {
                 doctor: true,
                 user: true,
-                hospital: true,
                 feedback: true,
                 followUps: true,
                 payments: true,

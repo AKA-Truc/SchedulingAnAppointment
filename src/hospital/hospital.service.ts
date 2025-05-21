@@ -54,7 +54,6 @@ export class HospitalService {
                 take: limit,
                 include: {
                     doctors: true,
-                    appointments: true,
                     achievements: true,
                 },
             }),
@@ -78,7 +77,6 @@ export class HospitalService {
             where: { hospitalId: id },
             include: {
                 doctors: true,
-                appointments: true,
                 achievements: true,
             },
         });
@@ -140,16 +138,6 @@ export class HospitalService {
         if (doctorsCount > 0) {
             throw new BadRequestException(
                 'Cannot delete hospital with existing doctors.',
-            );
-        }
-
-        const appointmentsCount = await this.prisma.appointment.count({
-            where: { hospitalId: id },
-        });
-
-        if (appointmentsCount > 0) {
-            throw new BadRequestException(
-                'Cannot delete hospital with existing appointments.',
             );
         }
 

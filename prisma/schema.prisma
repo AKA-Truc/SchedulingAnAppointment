@@ -90,10 +90,10 @@ model Hospital {
   logo           String
   workScheduling String
   type           String
+  website        String?
+
   achievements   Achievement[]
   doctors        Doctor[]
-  appointments   Appointment[]
-  website        String?
 }
 
 model Appointment {
@@ -102,8 +102,6 @@ model Appointment {
   doctorId       Int
   user           User     @relation(fields: [userId], references: [userId])
   userId         Int
-  hospital       Hospital @relation(fields: [hospitalId], references: [hospitalId])
-  hospitalId     Int
   scheduledTime  DateTime
   note           String?
   status         AppointmentStatus
