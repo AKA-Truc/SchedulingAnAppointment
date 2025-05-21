@@ -192,7 +192,11 @@ model Payment {
   Price          Float
   Payment_Method PaymentMethodEnum
   Payment_Status PaymentStatusEnum
+  PaymentDate    DateTime          @default(now())
+  CreatedAt      DateTime          @default(now())
+  UpdatedAt      DateTime          @updatedAt
 }
+
 
 model FollowUp {
   followUp_ID    Int         @id @default(autoincrement())
@@ -260,12 +264,6 @@ enum NotificationMethod {
   EMAIL
   SMS
   PUSH
-}
-
-enum NotificationTargetType {
-  APPOINTMENT
-  FOLLOW_UP
-  CUSTOM
 }
 
 
