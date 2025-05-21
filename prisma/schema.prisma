@@ -21,6 +21,7 @@ model User {
   patientProfile PatientProfile?
   appointments   Appointment[]
   tokens         Token[]
+  notifications  Notification[]
 }
 
 model Token {
@@ -46,10 +47,10 @@ model Doctor {
   Rating            Float
   Bio               String
   yearsOfExperience String
-  certifications    String
   website           String?
   education         String
-  achievements      Achievement[] // 1 doctor có nhiều achievements
+  certifications    Certification[]
+  achievements      Achievement[]
   schedules         DoctorSchedule[]
   leaves            DoctorLeave[]
   appointments      Appointment[]
@@ -107,12 +108,13 @@ model Appointment {
   Hospital_ID    Int
   Scheduled_time DateTime
   Note           String?
-
+  
   reminder      AppointmentReminder?
   feedback      Feedback?
   medicalRecord MedicalRecord?
   followUps     FollowUp[]
   payments      Payment[]
+  notifications Notification[]
 }
 
 model AppointmentReminder {
@@ -150,7 +152,8 @@ model MedicalRecord {
   nonDrugPlan           String
   education             String
 
-  prescriptions PrescriptionItem[]
+  prescriptions  PrescriptionItem[]
+  notifications  Notification[]
 }
 
 model PrescriptionItem {
@@ -198,6 +201,7 @@ model FollowUp {
   nextDate       DateTime
   reason         String
   createdAt      DateTime    @default(now())
+  notifications  Notification[]
 }
 
 model Achievement {
@@ -212,6 +216,61 @@ model Achievement {
   Hospital    Hospital? @relation(fields: [Hospital_ID], references: [Hospital_ID])
   Hospital_ID Int?
 }
+
+model Certification {
+  Certification_ID Int      @id @default(autoincrement())
+  Title            String
+  Description      String?
+  IssuedBy         String
+  DateIssued       DateTime
+
+  doctor    Doctor  @relation(fields: [Doctor_ID], references: [Doctor_ID])
+  Doctor_ID Int
+}
+
+model Notification {
+  id              Int                 @id @default(autoincrement())
+  type            NotificationType
+  method          NotificationMethod
+  title           String
+  content         String
+  user            User                @relation(fields: [userId], references: [User_ID])
+  userId          Int
+  remindAt        DateTime
+  sent            Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  targetType      NotificationTargetType
+  targetId        Int                 // ID liên quan (Appointment_ID, FollowUp_ID, v.v.)
+
+  appointment     Appointment?        @relation(fields: [appointmentId], references: [Appointment_ID])
+  appointmentId   Int?
+
+  followUp        FollowUp?           @relation(fields: [followUpId], references: [followUp_ID])
+  followUpId      Int?
+
+  medicalRecord   MedicalRecord?      @relation(fields: [medicalRecordId], references: [MedicalRecord_ID])
+  medicalRecordId Int?
+}
+
+enum NotificationType {
+  APPOINTMENT
+  FOLLOW_UP
+  VACCINE
+  CUSTOM
+}
+
+enum NotificationMethod {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotificationTargetType {
+  APPOINTMENT
+  FOLLOW_UP
+  CUSTOM
+}
+
 
 enum RoleEnum {
   ADMIN
