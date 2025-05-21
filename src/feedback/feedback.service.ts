@@ -9,7 +9,7 @@ export class FeedbackService {
     async create(data: CreateFeedback) {
         return await this.prisma.feedback.create({
             data: {
-                appointment_ID: data.appointment_ID,
+                appointmentId: data.appointmentId,
                 rating: data.rating,
                 comment: data.comment,
             },
@@ -26,7 +26,7 @@ export class FeedbackService {
 
     async findOne(id: number) {
         const feedback = await this.prisma.feedback.findUnique({
-            where: { feedback_ID: id },
+            where: { feedbackId: id },
             include: { appointment: true },
         });
 
@@ -39,7 +39,7 @@ export class FeedbackService {
 
     async update(id: number, data: UpdateFeedback) {
         const feedback = await this.prisma.feedback.findUnique({
-            where: { feedback_ID: id },
+            where: { feedbackId: id },
         });
 
         if (!feedback) {
@@ -47,14 +47,14 @@ export class FeedbackService {
         }
 
         return await this.prisma.feedback.update({
-            where: { feedback_ID: id },
+            where: { feedbackId: id },
             data,
         });
     }
 
     async remove(id: number) {
         const feedback = await this.prisma.feedback.findUnique({
-            where: { feedback_ID: id },
+            where: { feedbackId: id },
         });
 
         if (!feedback) {
@@ -62,7 +62,7 @@ export class FeedbackService {
         }
 
         return await this.prisma.feedback.delete({
-            where: { feedback_ID: id },
+            where: { feedbackId: id },
         });
     }
 }

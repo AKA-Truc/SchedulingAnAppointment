@@ -1,2 +1,2 @@
-export * from './CreateDocter.dto';
+export * from './CreateDoctor.dto';
 export * from './UpdateDocter.dto';

@@ -5,16 +5,16 @@ import { UpdateAchievementDto } from './dto/update-achievement.dto';
 
 @Injectable()
 export class AchievementService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async create(dto: CreateAchievementDto) {
         const achievement = await this.prisma.achievement.create({
             data: {
-                Title: dto.Title,
-                Description: dto.Description,
-                DateAchieved: dto.DateAchieved,
-                Doctor_ID: dto.Doctor_ID,
-                Hospital_ID: dto.Hospital_ID,
+                title: dto.title,
+                description: dto.description,
+                dateAchieved: dto.dateAchieved,
+                doctorId: dto.doctorId,
+                hospitalId: dto.hospitalId,
             },
         });
 
@@ -31,12 +31,12 @@ export class AchievementService {
                 skip,
                 take: limit,
                 include: {
-                    Doctor: {
+                    doctor: {
                         include: {
-                            User: true,
+                            user: true,
                         },
                     },
-                    Hospital: true,
+                    hospital: true,
                 },
             }),
             this.prisma.achievement.count(),
@@ -55,14 +55,14 @@ export class AchievementService {
 
     async findOne(id: number) {
         const achievement = await this.prisma.achievement.findUnique({
-            where: { Achievement_ID: id },
+            where: { achievementId: id },
             include: {
-                Doctor: {
+                doctor: {
                     include: {
-                        User: true,
+                        user: true,
                     },
                 },
-                Hospital: true,
+                hospital: true,
             },
         });
 
@@ -75,7 +75,7 @@ export class AchievementService {
 
     async update(id: number, dto: UpdateAchievementDto) {
         const achievement = await this.prisma.achievement.findUnique({
-            where: { Achievement_ID: id },
+            where: { achievementId: id },
         });
 
         if (!achievement) {
@@ -83,24 +83,24 @@ export class AchievementService {
         }
 
         return this.prisma.achievement.update({
-            where: { Achievement_ID: id },
+            where: { achievementId: id },
             data: {
-                Title: dto.Title,
-                Description: dto.Description,
-                DateAchieved: dto.DateAchieved,
-                Doctor_ID: dto.Doctor_ID,
-                Hospital_ID: dto.Hospital_ID,
+                title: dto.title,
+                description: dto.description,
+                dateAchieved: dto.dateAchieved,
+                doctorId: dto.doctorId,
+                hospitalId: dto.hospitalId,
             },
             include: {
-                Doctor: true,
-                Hospital: true,
+                doctor: true,
+                hospital: true,
             },
         });
     }
 
     async remove(id: number) {
         const achievement = await this.prisma.achievement.findUnique({
-            where: { Achievement_ID: id },
+            where: { achievementId: id },
         });
 
         if (!achievement) {
@@ -108,10 +108,10 @@ export class AchievementService {
         }
 
         return this.prisma.achievement.delete({
-            where: { Achievement_ID: id },
+            where: { achievementId: id },
             include: {
-                Doctor: true,
-                Hospital: true,
+                doctor: true,
+                hospital: true,
             },
         });
     }

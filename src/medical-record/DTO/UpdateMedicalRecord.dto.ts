@@ -5,32 +5,32 @@ export class UpdateMedicalRecord {
     @ApiProperty({ example: 1, description: 'ID cuộc hẹn', required: false })
     @IsInt()
     @IsOptional()
-    Appointment_ID?: number;
+    appointmentId?: number;
 
     @ApiProperty({ example: 'Bệnh nhân bị tăng huyết áp', description: 'Chẩn đoán bệnh', required: false })
     @IsString()
     @IsOptional()
-    Diagnosis?: string;
+    diagnosis?: string;
 
     @ApiProperty({ example: 'Thuốc Lisinopril 10mg mỗi ngày', description: 'Đơn thuốc', required: false })
     @IsString()
     @IsOptional()
-    Prescription?: string;
+    prescription?: string;
 
     @ApiProperty({ example: 'Xét nghiệm máu và điện tim bình thường', description: 'Kết quả xét nghiệm', required: false })
     @IsString()
     @IsOptional()
-    Test_Result?: string;
+    testResult?: string;
 
     @ApiProperty({ example: 'Bác sĩ khuyên bệnh nhân nên giảm muối và tập thể dục', description: 'Ghi chú của bác sĩ', required: false })
     @IsString()
     @IsOptional()
-    Doctor_notes?: string;
+    doctorNotes?: string;
 
     @ApiProperty({ example: 'Đau đầu và chóng mặt', description: 'Triệu chứng chính', required: false })
     @IsString()
     @IsOptional()
-    ChiefComplaint?: string;
+    chiefComplaint?: string;
 
     @ApiProperty({ example: 'Triệu chứng xuất hiện từ 2 tuần trước và ngày càng nặng', description: 'Tiền sử bệnh hiện tại', required: false })
     @IsString()

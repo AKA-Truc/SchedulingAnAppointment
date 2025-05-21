@@ -2,22 +2,22 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMedicalRecord {
     @ApiProperty({ example: 1, description: 'ID cuộc hẹn' })
-    Appointment_ID: number;
+    appointmentId: number;
 
     @ApiProperty({ example: 'Bệnh nhân bị tăng huyết áp', description: 'Chẩn đoán bệnh' })
-    Diagnosis: string;
+    diagnosis: string;
 
     @ApiProperty({ example: 'Thuốc Lisinopril 10mg mỗi ngày', description: 'Đơn thuốc' })
-    Prescription: string;
+    prescription: string;
 
     @ApiProperty({ example: 'Xét nghiệm máu và điện tim bình thường', description: 'Kết quả xét nghiệm' })
-    Test_Result: string;
+    testResult: string;
 
     @ApiProperty({ example: 'Bác sĩ khuyên bệnh nhân nên giảm muối và tập thể dục', description: 'Ghi chú của bác sĩ' })
-    Doctor_notes: string;
+    doctorNotes: string;
 
     @ApiProperty({ example: 'Đau đầu và chóng mặt', description: 'Triệu chứng chính' })
-    ChiefComplaint: string;
+    chiefComplaint: string;
 
     @ApiProperty({ example: 'Triệu chứng xuất hiện từ 2 tuần trước và ngày càng nặng', description: 'Tiền sử bệnh hiện tại' })
     historyPresentIllness: string;

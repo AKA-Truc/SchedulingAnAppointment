@@ -11,42 +11,42 @@ export class UserService {
     //create
     async createUser(data: CreateUserDto) {
         const emailExists = await this.prisma.user.findUnique({
-            where: { Email: data.email },
+            where: { email: data.email },
         });
 
         if (emailExists) {
-            throw new BadRequestException('Email is already exists')
+            throw new BadRequestException('email is already exists')
         }
 
         const phoneExists = await this.prisma.user.findFirst({
-            where: { Phone: data.phone },
+            where: { phone: data.phone },
         });
 
         if (phoneExists) {
-            throw new BadRequestException('Phone number is already registered.');
+            throw new BadRequestException('phone number is already registered.');
         }
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
 
         const user = await this.prisma.user.create({
             data: {
-                Full_Name: data.fullName,
-                Email: data.email,
-                Phone: data.phone,
-                Password: hashedPassword,
-                Gender: data.gender,
-                Role: data.role,
+                fullName: data.fullName,
+                email: data.email,
+                phone: data.phone,
+                password: hashedPassword,
+                gender: data.gender,
+                role: data.role,
             },
         });
 
         return {
             message: 'User created successfully.',
             user: {
-                userId: user.User_ID,
-                email: user.Email,
-                fullName: user.Full_Name,
-                role: user.Role,
-                createdAt: user.Created_at,
+                userId: user.userId,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+                createdAt: user.createdAt,
             },
         };
     }
@@ -81,7 +81,7 @@ export class UserService {
     //Get1
     async getUserById(id: number) {
         const user = await this.prisma.user.findUnique({
-            where: { User_ID: id },
+            where: { userId: id },
             include: {
                 doctor: true,
                 appointments: true,
@@ -98,7 +98,7 @@ export class UserService {
     //update
     async updateUser(id: number, dto: UpdateUserDto) {
         const user = await this.prisma.user.findUnique({
-            where: { User_ID: id },
+            where: { userId: id },
         });
 
         if (!user) {
@@ -106,27 +106,27 @@ export class UserService {
         }
 
         // Nếu cập nhật email thì check trùng
-        if (dto.email && dto.email !== user.Email) {
+        if (dto.email && dto.email !== user.email) {
             const emailTaken = await this.prisma.user.findUnique({
-                where: { Email: dto.email },
+                where: { email: dto.email },
             });
             if (emailTaken) {
-                throw new BadRequestException('Email is already in use.');
+                throw new BadRequestException('email is already in use.');
             }
         }
 
         // Nếu cập nhật phone
-        if (dto.phone && dto.phone !== user.Phone) {
+        if (dto.phone && dto.phone !== user.phone) {
             const phoneTaken = await this.prisma.user.findFirst({
-                where: { Phone: dto.phone },
+                where: { phone: dto.phone },
             });
             if (phoneTaken) {
-                throw new BadRequestException('Phone number is already registered.');
+                throw new BadRequestException('phone number is already registered.');
             }
         }
 
         return this.prisma.user.update({
-            where: { User_ID: id },
+            where: { userId: id },
             data: dto,
         });
     }
@@ -134,7 +134,7 @@ export class UserService {
     //delete
     async deleteUser(id: number) {
         const user = await this.prisma.user.findUnique({
-            where: { User_ID: id },
+            where: { userId: id },
         });
 
         if (!user) {
@@ -142,7 +142,7 @@ export class UserService {
         }
 
         return this.prisma.user.delete({
-            where: { User_ID: id },
+            where: { userId: id },
         });
     }
 }

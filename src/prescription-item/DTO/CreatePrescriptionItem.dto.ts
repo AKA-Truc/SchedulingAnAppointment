@@ -5,7 +5,7 @@ export class CreatePrescriptionItem {
     @ApiProperty({ example: 1, description: 'ID bản ghi y tế' })
     @IsInt()
     @IsNotEmpty()
-    MedicalRecord_ID: number;
+    medicalRecordId: number;
 
     @ApiProperty({ example: 'Paracetamol', description: 'Tên thuốc' })
     @IsString()

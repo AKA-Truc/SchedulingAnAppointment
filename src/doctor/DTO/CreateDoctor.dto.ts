@@ -27,14 +27,6 @@ export class CreateDoctor {
     hospitalId: number;
 
     @ApiProperty({
-        example: 909123456,
-        description: 'Số điện thoại của bác sĩ',
-    })
-    @IsInt()
-    @IsNotEmpty()
-    phone: number;
-
-    @ApiProperty({
         example: 4.5,
         description: 'Đánh giá bác sĩ từ 0.0 đến 5.0',
     })
@@ -58,23 +50,6 @@ export class CreateDoctor {
     @IsString()
     @IsNotEmpty()
     yearsOfExperience: string;
-
-    @ApiProperty({
-        example: 'Chứng chỉ chuyên khoa tim mạch, đào tạo y học cổ truyền',
-        description: 'Chứng chỉ, bằng cấp của bác sĩ',
-    })
-    @IsString()
-    @IsNotEmpty()
-    certifications: string;
-
-    @ApiProperty({
-        example: 'https://doctorwebsite.com',
-        description: 'Website cá nhân của bác sĩ',
-        required: false,
-    })
-    @IsOptional()
-    @IsUrl()
-    website?: string;
 
     @ApiProperty({
         example: 'Tốt nghiệp Đại học Y Dược TP.HCM, chuyên ngành Nội tổng quát',

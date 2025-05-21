@@ -9,10 +9,10 @@ export class PaymentService {
     async create(dto: CreatePayment) {
         const payment = await this.prisma.payment.create({
             data: {
-                Appointment_ID: dto.Appointment_ID,
-                Price: dto.Price,
-                Payment_Method: dto.Payment_Method,
-                Payment_Status: dto.Payment_Status,
+                appointmentId: dto.appointmentId,
+                price: dto.price,
+                paymentMethod: dto.paymentMethod,
+                paymentStatus: dto.paymentStatus,
             },
         });
         return {
@@ -27,7 +27,7 @@ export class PaymentService {
             this.prisma.payment.findMany({
                 skip,
                 take: limit,
-                include: { Appointment: true },
+                include: { appointment: true },
             }),
             this.prisma.payment.count(),
         ]);
@@ -45,8 +45,8 @@ export class PaymentService {
 
     async findOne(id: number) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
-            include: { Appointment: true },
+            where: { paymentId: id },
+            include: { appointment: true },
         });
 
         if (!payment) {
@@ -57,7 +57,7 @@ export class PaymentService {
 
     async update(id: number, dto: UpdatePayment) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
 
         if (!payment) {
@@ -65,14 +65,14 @@ export class PaymentService {
         }
 
         return this.prisma.payment.update({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
             data: dto,
         });
     }
 
     async remove(id: number) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
 
         if (!payment) {
@@ -80,7 +80,7 @@ export class PaymentService {
         }
 
         return this.prisma.payment.delete({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
     }
 }

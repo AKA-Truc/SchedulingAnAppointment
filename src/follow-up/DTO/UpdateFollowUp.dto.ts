@@ -5,7 +5,7 @@ export class UpdateFollowUp {
     @ApiProperty({ example: 1, description: 'ID cuộc hẹn', required: false })
     @IsInt()
     @IsOptional()
-    appointment_ID?: number;
+    appointmentId?: number;
 
     @ApiProperty({ example: '2025-06-01T10:00:00Z', description: 'Ngày tái khám', required: false })
     @IsDateString()

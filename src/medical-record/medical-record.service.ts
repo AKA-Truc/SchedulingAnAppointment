@@ -7,9 +7,9 @@ export class MedicalRecordService {
     constructor(private readonly prisma: PrismaService) { }
 
     async createMedicalRecord(dto: CreateMedicalRecord) {
-        // Kiểm tra xem Appointment_ID đã tồn tại MedicalRecord chưa (vì unique)
+        // Kiểm tra xem appointmentId đã tồn tại MedicalRecord chưa (vì unique)
         const exists = await this.prisma.medicalRecord.findUnique({
-            where: { Appointment_ID: dto.Appointment_ID },
+            where: { appointmentId: dto.appointmentId },
         });
         if (exists) {
             throw new BadRequestException('Bản ghi y tế cho cuộc hẹn này đã tồn tại.');
@@ -53,7 +53,7 @@ export class MedicalRecordService {
 
     async getMedicalRecordById(id: number) {
         const record = await this.prisma.medicalRecord.findUnique({
-            where: { MedicalRecord_ID: id },
+            where: { medicalRecordId: id },
             include: {
                 appointment: true,
                 prescriptions: true,
@@ -69,16 +69,16 @@ export class MedicalRecordService {
 
     async updateMedicalRecord(id: number, dto: UpdateMedicalRecord) {
         const record = await this.prisma.medicalRecord.findUnique({
-            where: { MedicalRecord_ID: id },
+            where: { medicalRecordId: id },
         });
         if (!record) {
             throw new NotFoundException(`Không tìm thấy bản ghi y tế với ID ${id}`);
         }
 
-        // Nếu cập nhật Appointment_ID thì kiểm tra trùng
-        if (dto.Appointment_ID && dto.Appointment_ID !== record.Appointment_ID) {
+        // Nếu cập nhật appointmentId thì kiểm tra trùng
+        if (dto.appointmentId && dto.appointmentId !== record.appointmentId) {
             const appointmentTaken = await this.prisma.medicalRecord.findUnique({
-                where: { Appointment_ID: dto.Appointment_ID },
+                where: { appointmentId: dto.appointmentId },
             });
             if (appointmentTaken) {
                 throw new BadRequestException('Bản ghi y tế cho cuộc hẹn này đã tồn tại.');
@@ -86,21 +86,21 @@ export class MedicalRecordService {
         }
 
         return this.prisma.medicalRecord.update({
-            where: { MedicalRecord_ID: id },
+            where: { medicalRecordId: id },
             data: { ...dto },
         });
     }
 
     async deleteMedicalRecord(id: number) {
         const record = await this.prisma.medicalRecord.findUnique({
-            where: { MedicalRecord_ID: id },
+            where: { medicalRecordId: id },
         });
         if (!record) {
             throw new NotFoundException(`Không tìm thấy bản ghi y tế với ID ${id}`);
         }
 
         return this.prisma.medicalRecord.delete({
-            where: { MedicalRecord_ID: id },
+            where: { medicalRecordId: id },
         });
     }
 }

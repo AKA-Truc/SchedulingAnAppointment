@@ -10,7 +10,7 @@ export class SpecialtyService {
     async createSpecialty(data: CreateSpecialty) {
         // Kiểm tra xem tên Specialty có tồn tại chưa (nếu muốn)
         const exists = await this.prisma.specialty.findFirst({
-            where: { Name: data.name },
+            where: { name: data.name },
         });
         if (exists) {
             throw new BadRequestException(`Specialty with name "${data.name}" already exists.`);
@@ -18,8 +18,8 @@ export class SpecialtyService {
 
         const specialty = await this.prisma.specialty.create({
             data: {
-                Name: data.name,
-                Description: data.description,
+                name: data.name,
+                description: data.description,
             },
         });
 
@@ -58,7 +58,7 @@ export class SpecialtyService {
     // Get specialty by id
     async getSpecialtyById(id: number) {
         const specialty = await this.prisma.specialty.findUnique({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
             include: {
                 doctors: true,
             },
@@ -74,7 +74,7 @@ export class SpecialtyService {
     // Update specialty
     async updateSpecialty(id: number, dto: UpdateSpecialty) {
         const specialty = await this.prisma.specialty.findUnique({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
         });
 
         if (!specialty) {
@@ -82,9 +82,9 @@ export class SpecialtyService {
         }
 
         // Nếu muốn check tên không trùng với specialty khác
-        if (dto.name && dto.name !== specialty.Name) {
+        if (dto.name && dto.name !== specialty.name) {
             const nameTaken = await this.prisma.specialty.findFirst({
-                where: { Name: dto.name },
+                where: { name: dto.name },
             });
             if (nameTaken) {
                 throw new BadRequestException(`Specialty with name "${dto.name}" already exists.`);
@@ -92,10 +92,10 @@ export class SpecialtyService {
         }
 
         return this.prisma.specialty.update({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
             data: {
-                Name: dto.name,
-                Description: dto.description,
+                name: dto.name,
+                description: dto.description,
             },
         });
     }
@@ -103,7 +103,7 @@ export class SpecialtyService {
     // Delete specialty
     async deleteSpecialty(id: number) {
         const specialty = await this.prisma.specialty.findUnique({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
         });
 
         if (!specialty) {
@@ -112,14 +112,14 @@ export class SpecialtyService {
 
         // Nếu muốn kiểm tra xem specialty có doctor chưa rồi mới xoá
         const doctorsCount = await this.prisma.doctor.count({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
         });
         if (doctorsCount > 0) {
             throw new BadRequestException('Cannot delete specialty because there are doctors associated.');
         }
 
         return this.prisma.specialty.delete({
-            where: { Specialty_ID: id },
+            where: { specialtyId: id },
         });
     }
 }

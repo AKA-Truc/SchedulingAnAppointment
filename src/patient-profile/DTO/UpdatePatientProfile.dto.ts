@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class UpdatePatientProfile {
-    @ApiProperty({ example: 1, description: 'ID của người dùng (User_ID)' })
+    @ApiProperty({ example: 1, description: 'ID của người dùng (userId)' })
     @IsOptional()
     @IsInt()
     userId?: number;

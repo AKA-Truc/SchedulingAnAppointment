@@ -15,9 +15,9 @@ export class AppointmentService {
     async findAll() {
         return this.prisma.appointment.findMany({
             include: {
-                Doctor: true,
-                User: true,
-                Hospital: true,
+                doctor: true,
+                user: true,
+                hospital: true,
                 reminder: true,
                 feedback: true,
                 medicalRecord: true,
@@ -29,11 +29,11 @@ export class AppointmentService {
 
     async findOne(id: number) {
         const appointment = await this.prisma.appointment.findUnique({
-            where: { Appointment_ID: id },
+            where: { appointmentId: id },
             include: {
-                Doctor: true,
-                User: true,
-                Hospital: true,
+                doctor: true,
+                user: true,
+                hospital: true,
                 reminder: true,
                 feedback: true,
                 medicalRecord: true,
@@ -53,7 +53,7 @@ export class AppointmentService {
         await this.findOne(id); // Kiểm tra tồn tại
 
         return this.prisma.appointment.update({
-            where: { Appointment_ID: id },
+            where: { appointmentId: id },
             data: dto,
         });
     }
@@ -62,7 +62,7 @@ export class AppointmentService {
         await this.findOne(id); // Kiểm tra tồn tại
 
         return this.prisma.appointment.delete({
-            where: { Appointment_ID: id },
+            where: { appointmentId: id },
         });
     }
 }

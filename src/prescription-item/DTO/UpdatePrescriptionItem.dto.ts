@@ -5,7 +5,7 @@ export class UpdatePrescriptionItem {
     @ApiProperty({ example: 1, description: 'ID bản ghi y tế', required: false })
     @IsInt()
     @IsOptional()
-    MedicalRecord_ID?: number;
+    medicalRecordId?: number;
 
     @ApiProperty({ example: 'Paracetamol', description: 'Tên thuốc', required: false })
     @IsString()

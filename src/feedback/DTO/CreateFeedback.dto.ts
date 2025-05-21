@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateFeedback {
     @ApiProperty({ example: 1, description: 'ID cuộc hẹn' })
     @IsInt()
-    appointment_ID: number;
+    appointmentId: number;
 
     @ApiProperty({ example: 5, description: 'Đánh giá (1-5)' })
     @IsInt()

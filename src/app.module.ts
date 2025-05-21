@@ -9,19 +9,20 @@ import { SpecialtyModule } from './specialty/specialty.module';
 import { HospitalModule } from './hospital/hospital.module';
 import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
-import { AppointmentReminderModule } from './appointment-reminder/appointment-reminder.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { MedicalRecordModule } from './medical-record/medical-record.module';
 import { PrescriptionItemModule } from './prescription-item/prescription-item.module';
-import { DoctorScheduleModule } from './doctor-schedule/doctor-schedule.module';
-import { DoctorLeaveModule } from './doctor-leave/doctor-leave.module';
+import { DoctorScheduleModule } from './doctorSchedule/doctor-schedule.module';
 import { PaymentModule } from './payment/payment.module';
 import { FollowUpModule } from './follow-up/follow-up.module';
 import { AchievementModule } from './achievement/achievement.module';
+import { CertificationModule } from './certification/certification.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, SpecialtyModule, HospitalModule, PatientProfileModule, AppointmentModule, AppointmentReminderModule, FeedbackModule, MedicalRecordModule, PrescriptionItemModule, DoctorScheduleModule, DoctorLeaveModule, PaymentModule, FollowUpModule, AchievementModule],
+  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, SpecialtyModule, HospitalModule, PatientProfileModule,
+    AppointmentModule, FeedbackModule, MedicalRecordModule, PrescriptionItemModule,
+    DoctorScheduleModule, PaymentModule, FollowUpModule, AchievementModule, CertificationModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

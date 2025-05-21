@@ -8,28 +8,38 @@ export class DoctorService {
 
     // Create doctor
     async createDoctor(data: CreateDoctor) {
-        // Kiểm tra userId đã có bác sĩ chưa (do User_ID là unique)
+        // Kiểm tra userId đã có bác sĩ chưa (do userId là unique)
         const existingDoctor = await this.prisma.doctor.findUnique({
-            where: { User_ID: data.userId },
+            where: { userId: data.userId },
         });
         if (existingDoctor) {
             throw new BadRequestException(`Doctor with userId ${data.userId} already exists.`);
         }
 
-        // Có thể kiểm tra Specialty_ID, Hospital_ID tồn tại (tuỳ bạn có muốn)
-        // ...
+        //Kiểm tra Specialty_ID tồn tại
+        const specialty = await this.prisma.specialty.findUnique({
+            where: { specialtyId: data.specialtyId },
+        });
+        if (!specialty) {
+            throw new BadRequestException(`Specialty with ID ${data.specialtyId} does not exist.`);
+        }
+
+        //Kiểm tra hospitalId tồn tại
+        const hospital = await this.prisma.hospital.findUnique({
+            where: { hospitalId: data.hospitalId },
+        });
+        if (!hospital) {
+            throw new BadRequestException(`Hospital with ID ${data.hospitalId} does not exist.`);
+        }
 
         const doctor = await this.prisma.doctor.create({
             data: {
-                User_ID: data.userId,
-                Specialty_ID: data.specialtyId,
-                Hospital_ID: data.hospitalId,
-                Phone: data.phone,
-                Rating: data.rating,
-                Bio: data.bio,
+                userId: data.userId,
+                specialtyId: data.specialtyId,
+                hospitalId: data.hospitalId,
+                rating: data.rating,
+                bio: data.bio,
                 yearsOfExperience: data.yearsOfExperience,
-                certifications: data.certifications,
-                website: data.website,
                 education: data.education
             },
             include: {
@@ -52,9 +62,9 @@ export class DoctorService {
                 skip,
                 take: limit,
                 include: {
-                    User: true,
-                    Specialty: true,
-                    Hospital: true,
+                    user: true,
+                    specialty: true,
+                    hospital: true,
                     schedules: true,
                     leaves: true,
                     appointments: true,
@@ -78,11 +88,11 @@ export class DoctorService {
     // Get doctor by id
     async getDoctorById(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
-            where: { Doctor_ID: id },
+            where: { doctorId: id },
             include: {
-                User: true,
-                Specialty: true,
-                Hospital: true,
+                user: true,
+                specialty: true,
+                hospital: true,
                 schedules: true,
                 leaves: true,
                 appointments: true,
@@ -100,36 +110,72 @@ export class DoctorService {
     // Update doctor
     async updateDoctor(id: number, dto: UpdateDoctor) {
         const doctor = await this.prisma.doctor.findUnique({
-            where: { Doctor_ID: id },
+            where: { doctorId: id },
         });
 
         if (!doctor) {
             throw new NotFoundException(`Doctor with ID ${id} not found`);
         }
 
-        // Nếu update userId, kiểm tra đã có doctor với userId đó chưa (unique)
-        if (dto.userId && dto.userId !== doctor.User_ID) {
+        // Nếu update userId, kiểm tra đã tồn tại chưa
+        if (dto.userId && dto.userId !== doctor.userId) {
             const userIdTaken = await this.prisma.doctor.findUnique({
-                where: { User_ID: dto.userId },
+                where: { userId: dto.userId },
             });
             if (userIdTaken) {
                 throw new BadRequestException(`Doctor with userId ${dto.userId} already exists.`);
             }
         }
 
-        return this.prisma.doctor.update({
-            where: { Doctor_ID: id },
-            data: dto,
+        // Nếu update Specialty_ID, kiểm tra có tồn tại không
+        if (dto.specialtyId) {
+            const specialty = await this.prisma.specialty.findUnique({
+                where: { specialtyId: dto.specialtyId },
+            });
+            if (!specialty) {
+                throw new BadRequestException(`Specialty with ID ${dto.specialtyId} does not exist.`);
+            }
+        }
+
+        // Nếu update hospitalId, kiểm tra có tồn tại không
+        if (dto.hospitalId) {
+            const hospital = await this.prisma.hospital.findUnique({
+                where: { hospitalId: dto.hospitalId },
+            });
+            if (!hospital) {
+                throw new BadRequestException(`Hospital with ID ${dto.hospitalId} does not exist.`);
+            }
+        }
+
+        // Chuẩn bị object data để cập nhật
+        const updateData: any = {};
+
+        if (dto.userId) updateData.userId = dto.userId;
+        if (dto.specialtyId) updateData.Specialty_ID = dto.specialtyId;
+        if (dto.hospitalId) updateData.hospitalId = dto.hospitalId;
+        if (dto.rating !== undefined) updateData.Rating = dto.rating;
+        if (dto.bio !== undefined) updateData.Bio = dto.bio;
+        if (dto.yearsOfExperience !== undefined) updateData.yearsOfExperience = dto.yearsOfExperience;
+
+        const updatedDoctor = await this.prisma.doctor.update({
+            where: { doctorId: id },
+            data: updateData,
             include: {
                 achievements: true
             }
         });
+
+        return {
+            message: 'Doctor updated successfully.',
+            doctor: updatedDoctor
+        };
     }
+
 
     // Delete doctor
     async deleteDoctor(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
-            where: { Doctor_ID: id },
+            where: { doctorId: id },
         });
 
         if (!doctor) {
@@ -137,7 +183,7 @@ export class DoctorService {
         }
 
         return this.prisma.doctor.delete({
-            where: { Doctor_ID: id },
+            where: { doctorId: id },
             include: {
                 achievements: true
             }

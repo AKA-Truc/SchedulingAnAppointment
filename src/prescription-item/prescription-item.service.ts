@@ -40,7 +40,7 @@ export class PrescriptionItemService {
 
     async getPrescriptionItemById(id: number) {
         const item = await this.prisma.prescriptionItem.findUnique({
-            where: { Item_ID: id },
+            where: { itemId: id },
             include: { medicalRecord: true },
         });
         if (!item) {
@@ -51,28 +51,28 @@ export class PrescriptionItemService {
 
     async updatePrescriptionItem(id: number, dto: UpdatePrescriptionItem) {
         const item = await this.prisma.prescriptionItem.findUnique({
-            where: { Item_ID: id },
+            where: { itemId: id },
         });
         if (!item) {
             throw new NotFoundException(`Không tìm thấy mục đơn thuốc với ID ${id}`);
         }
 
         return this.prisma.prescriptionItem.update({
-            where: { Item_ID: id },
+            where: { itemId: id },
             data: { ...dto },
         });
     }
 
     async deletePrescriptionItem(id: number) {
         const item = await this.prisma.prescriptionItem.findUnique({
-            where: { Item_ID: id },
+            where: { itemId: id },
         });
         if (!item) {
             throw new NotFoundException(`Không tìm thấy mục đơn thuốc với ID ${id}`);
         }
 
         return this.prisma.prescriptionItem.delete({
-            where: { Item_ID: id },
+            where: { itemId: id },
         });
     }
 }

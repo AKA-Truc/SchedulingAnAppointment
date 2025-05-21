@@ -2,21 +2,21 @@ import { IsString, IsOptional, IsNumber, IsDate } from 'class-validator';
 
 export class CreateAchievementDto {
     @IsString()
-    Title: string;
+    title: string;
 
     @IsString()
     @IsOptional()
-    Description?: string;
+    description?: string;
 
     @IsDate()
     @IsOptional()
-    DateAchieved?: Date;
+    dateAchieved?: Date;
 
     @IsNumber()
     @IsOptional()
-    Doctor_ID?: number;
+    doctorId?: number;
 
     @IsNumber()
     @IsOptional()
-    Hospital_ID?: number;
+    hospitalId?: number;
 }

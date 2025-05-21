@@ -9,7 +9,7 @@ export class FollowUpService {
     async create(dto: CreateFollowUp) {
         const followUp = await this.prisma.followUp.create({
             data: {
-                appointment_ID: dto.appointment_ID,
+                appointmentId: dto.appointmentId,
                 nextDate: new Date(dto.nextDate),
                 reason: dto.reason,
             },
@@ -46,7 +46,7 @@ export class FollowUpService {
 
     async findOne(id: number) {
         const followUp = await this.prisma.followUp.findUnique({
-            where: { followUp_ID: id },
+            where: { followUpId: id },
             include: { appointment: true },
         });
 
@@ -59,7 +59,7 @@ export class FollowUpService {
 
     async update(id: number, dto: UpdateFollowUp) {
         const existing = await this.prisma.followUp.findUnique({
-            where: { followUp_ID: id },
+            where: { followUpId: id },
         });
 
         if (!existing) {
@@ -67,7 +67,7 @@ export class FollowUpService {
         }
 
         return this.prisma.followUp.update({
-            where: { followUp_ID: id },
+            where: { followUpId: id },
             data: {
                 ...dto,
                 nextDate: dto.nextDate ? new Date(dto.nextDate) : undefined,
@@ -77,7 +77,7 @@ export class FollowUpService {
 
     async remove(id: number) {
         const existing = await this.prisma.followUp.findUnique({
-            where: { followUp_ID: id },
+            where: { followUpId: id },
         });
 
         if (!existing) {
@@ -85,7 +85,7 @@ export class FollowUpService {
         }
 
         return this.prisma.followUp.delete({
-            where: { followUp_ID: id },
+            where: { followUpId: id },
         });
     }
 }
