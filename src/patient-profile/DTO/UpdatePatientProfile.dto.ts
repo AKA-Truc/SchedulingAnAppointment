@@ -1,64 +1,67 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsOptional, IsString } from 'class-validator';
+// src/patient-profile/dto/UpdatePatientProfile.dto.ts
+import { IsInt, IsString, IsOptional, IsDate } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class UpdatePatientProfile {
-    @ApiProperty({ example: 1, description: 'ID của người dùng (userId)' })
-    @IsOptional()
-    @IsInt()
-    userId?: number;
+  @ApiPropertyOptional({ description: 'User ID của bệnh nhân', example: 123 })
+  @IsOptional()
+  @IsInt()
+  userId?: number;
 
-    @ApiProperty({ example: 'Male', description: 'Giới tính' })
-    @IsOptional()
-    @IsString()
-    gender?: string;
+  @ApiPropertyOptional({ description: 'Giới tính', example: 'Male' })
+  @IsOptional()
+  @IsString()
+  gender?: string;
 
-    @ApiProperty({ example: '1990-05-15', description: 'Ngày sinh (yyyy-mm-dd)' })
-    @IsOptional()
-    @IsDateString()
-    dateOfBirth?: Date;
+  @ApiPropertyOptional({ description: 'Ngày sinh', type: String, example: '1980-01-01' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  dateOfBirth?: Date;
 
-    @ApiProperty({ example: '123 Trần Hưng Đạo, Quận 1, TP.HCM', description: 'Địa chỉ' })
-    @IsOptional()
-    @IsString()
-    address?: string;
+  @ApiPropertyOptional({ description: 'Địa chỉ', example: '123 Đường A, Quận B' })
+  @IsOptional()
+  @IsString()
+  address?: string;
 
-    @ApiProperty({ example: 'Bảo hiểm y tế quốc gia', description: 'Thông tin bảo hiểm' })
-    @IsOptional()
-    @IsString()
-    insurance?: string;
+  @ApiPropertyOptional({ description: 'Số bảo hiểm y tế' })
+  @IsOptional()
+  @IsString()
+  insurance?: string;
 
-    @ApiProperty({ example: 'Penicillin', description: 'Dị ứng' })
-    @IsOptional()
-    @IsString()
-    allergies?: string;
+  @ApiPropertyOptional({ description: 'Dị ứng' })
+  @IsOptional()
+  @IsString()
+  allergies?: string;
 
-    @ApiProperty({ example: 'Tiểu đường, Tăng huyết áp', description: 'Bệnh mãn tính' })
-    @IsOptional()
-    @IsString()
-    chronicDiseases?: string;
+  @ApiPropertyOptional({ description: 'Bệnh mãn tính' })
+  @IsOptional()
+  @IsString()
+  chronicDiseases?: string;
 
-    @ApiProperty({ example: 'Sinh thường năm 2015', description: 'Tiền sử sản khoa' })
-    @IsOptional()
-    @IsString()
-    obstetricHistory?: string;
+  @ApiPropertyOptional({ description: 'Tiền sử sản khoa' })
+  @IsOptional()
+  @IsString()
+  obstetricHistory?: string;
 
-    @ApiProperty({ example: 'Phẫu thuật ruột thừa năm 2010', description: 'Tiền sử phẫu thuật' })
-    @IsOptional()
-    @IsString()
-    surgicalHistory?: string;
+  @ApiPropertyOptional({ description: 'Tiền sử phẫu thuật' })
+  @IsOptional()
+  @IsString()
+  surgicalHistory?: string;
 
-    @ApiProperty({ example: 'Bố bị cao huyết áp, mẹ tiểu đường', description: 'Tiền sử gia đình' })
-    @IsOptional()
-    @IsString()
-    familyHistory?: string;
+  @ApiPropertyOptional({ description: 'Tiền sử gia đình' })
+  @IsOptional()
+  @IsString()
+  familyHistory?: string;
 
-    @ApiProperty({ example: 'Hút thuốc nhẹ, không uống rượu', description: 'Tiền sử xã hội' })
-    @IsOptional()
-    @IsString()
-    socialHistory?: string;
+  @ApiPropertyOptional({ description: 'Tiền sử xã hội' })
+  @IsOptional()
+  @IsString()
+  socialHistory?: string;
 
-    @ApiProperty({ example: 'Metformin, Losartan', description: 'Lịch sử dùng thuốc' })
-    @IsOptional()
-    @IsString()
-    medicationHistory?: string;
+  @ApiPropertyOptional({ description: 'Tiền sử dùng thuốc' })
+  @IsOptional()
+  @IsString()
+  medicationHistory?: string;
 }
