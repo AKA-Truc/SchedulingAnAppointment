@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId         Int             @id @default(autoincrement())
+  fullName       String
+  email          String          @unique
+  phone          String
+  password       String
+  role           RoleEnum
+  gender         GenderEnum
+  createdAt      DateTime        @default(now())
+  avatar         String?
+  doctor         Doctor?
+
+  patientProfile PatientProfile?
+  appointments   Appointment[]
+  tokens         Token[]
+  notifications  Notification[]
+  medicalRecord  MedicalRecord?
+}
+
+model Token {
+  tokenId          Int      @id @default(autoincrement())
+  accessToken      String
+  refreshToken     String
+  user             User     @relation(fields: [userId], references: [userId])
+  userId           Int
+  createdAt        DateTime @default(now())
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
+}
+
+model Doctor {
+  doctorId          Int              @id @default(autoincrement())
+  user              User             @relation(fields: [userId], references: [userId])
+  userId            Int              @unique
+  specialty         Specialty        @relation(fields: [specialtyId], references: [specialtyId])
+  specialtyId       Int
+  hospital          Hospital         @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId        Int
+  rating            Float
+  bio               String
+  yearsOfExperience String
+  education         String
+  clinic            String
+  certifications    Certification[]
+  achievements      Achievement[]
+  schedules         DoctorSchedule[]
+  appointments      Appointment[]
+}
+
+model PatientProfile {
+  profileId         Int      @id @default(autoincrement())
+  userId            Int      @unique
+  user              User     @relation(fields: [userId], references: [userId])
+  gender            String
+  dateOfBirth       DateTime
+  address           String
+  insurance         String
+  allergies         String
+  chronicDiseases   String
+  obstetricHistory  String
+  surgicalHistory   String
+  familyHistory     String
+  socialHistory     String
+  medicationHistory String
+}
+
+model Specialty {
+  specialtyId Int    @id @default(autoincrement())
+  name        String
+  description String
+  doctors     Doctor[]
+}
+
+model Hospital {
+  hospitalId     Int           @id @default(autoincrement())
+  name           String
+  address        String
+  phone          String
+  description    String
+  email          String
+  establishYear  Int
+  logo           String
+  workScheduling String
+  type           String
+  website        String?
+
+  achievements   Achievement[]
+  doctors        Doctor[]
+}
+
+model Appointment {
+  appointmentId  Int      @id @default(autoincrement())
+  doctor         Doctor   @relation(fields: [doctorId], references: [doctorId])
+  doctorId       Int
+  user           User     @relation(fields: [userId], references: [userId])
+  userId         Int
+  service        Service  @relation(fields: [serviceId], references: [serviceId])
+  serviceId      Int
+  scheduledTime  DateTime
+  note           String?
+  status         AppointmentStatus
+
+  feedback       Feedback?
+  followUps      FollowUp[]
+  payments       Payment[]
+  notifications  Notification[]
+}
+
+model Service {
+  serviceId      Int      @id @default(autoincrement())
+  name           String
+  price          Int
+  calender       String
+
+  appointment    Appointment[]
+}
+
+model Feedback {
+  feedbackId     Int         @id @default(autoincrement())
+  appointment    Appointment @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId  Int         @unique
+  rating         Int
+  comment        String
+  createdAt      DateTime    @default(now())
+}
+
+model MedicalRecord {
+  medicalRecordId        Int         @id @default(autoincrement())
+  user                   User @relation(fields: [userId], references: [userId])
+  userId          Int    @unique
+  historyPresentIllness  String
+  chiefComplaint         String
+  diagnosis              String
+  testResult             String
+  doctorNotes            String
+  treatmentPlan          String
+  treatmentGoals         String
+  
+  prescriptions  PrescriptionItem[]
+}
+
+model PrescriptionItem {
+  itemId          Int           @id @default(autoincrement())
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [medicalRecordId])
+  medicalRecordId Int
+  medicineName    String
+  dosage          String
+  frequency       String
+  duration        String
+  notes           String
+}
+
+model DoctorSchedule {
+  scheduleId Int    @id @default(autoincrement())
+  doctor     Doctor @relation(fields: [doctorId], references: [doctorId])
+  doctorId   Int
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
+}
+
+model Payment {
+  paymentId     Int               @id @default(autoincrement())
+  appointment   Appointment       @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId Int
+  price         Float
+  paymentMethod PaymentMethodEnum
+  paymentStatus PaymentStatusEnum
+  createdAt     DateTime          @default(now())
+}
+
+model FollowUp {
+  followUpId    Int         @id @default(autoincrement())
+  appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId Int
+  nextDate      DateTime
+  reason        String
+  createdAt     DateTime    @default(now())
+}
+
+model Achievement {
+  achievementId Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  dateAchieved  DateTime?
+
+  doctor        Doctor?   @relation(fields: [doctorId], references: [doctorId])
+  doctorId      Int?
+
+  hospital      Hospital? @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId    Int?
+}
+
+model Certification {
+  certificationId Int     @id @default(autoincrement())
+  fileUrl         String
+
+  doctor          Doctor  @relation(fields: [doctorId], references: [doctorId])
+  doctorId        Int
+}
+
+model Notification {
+  notificationId  Int                  @id @default(autoincrement())
+  user            User                 @relation(fields: [userId], references: [userId])
+  userId          Int
+  appointment     Appointment          @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId   Int
+  type            NotificationType
+  title           String
+  content         String
+  remindAt        DateTime
+  sent            Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  scheduledTime   DateTime             
+}
+
+enum NotificationType {
+  APPOINTMENT
+  FOLLOW_UP
+  VACCINE
+  CUSTOM
+}
+
+enum RoleEnum {
+  ADMIN
+  DOCTOR
+  USER
+}
+
+enum PaymentMethodEnum {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOMO
+}
+
+enum PaymentStatusEnum {
+  PAID
+  UNPAID
+  PENDING
+}
+
+enum GenderEnum {
+  Male
+  Female
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
