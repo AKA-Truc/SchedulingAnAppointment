@@ -49,6 +49,7 @@ model Doctor {
   bio               String
   yearsOfExperience String
   education         String
+  clinic            String
   certifications    Certification[]
   achievements      Achievement[]
   schedules         DoctorSchedule[]
@@ -102,6 +103,8 @@ model Appointment {
   doctorId       Int
   user           User     @relation(fields: [userId], references: [userId])
   userId         Int
+  service        Service  @relation(fields: [serviceId], references: [serviceId])
+  serviceId      Int
   scheduledTime  DateTime
   note           String?
   status         AppointmentStatus
@@ -109,6 +112,15 @@ model Appointment {
   feedback       Feedback?
   followUps      FollowUp[]
   payments       Payment[]
+}
+
+model Service {
+  serviceId      Int      @id @default(autoincrement())
+  name           String
+  price          Int
+  calender       String
+
+  appointment    Appointment[]
 }
 
 model Feedback {

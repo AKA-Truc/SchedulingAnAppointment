@@ -36,6 +36,7 @@ export class AppointmentService {
             data: {
                 doctorId: data.doctorId,
                 userId: data.userId,
+                serviceId: data.serviceId,
                 scheduledTime: data.scheduledTime,
                 note: data.note,
                 status: 'SCHEDULED',
