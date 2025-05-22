@@ -9,16 +9,30 @@ import { HospitalModule } from './hospital/hospital.module';
 import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { ConfigModule } from '@nestjs/config';
 import * as path from 'path';
 
+
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, HospitalModule, PatientProfileModule,
-    AppointmentModule, PaymentModule,
+  imports: [
+    RedisModule.forRoot({
+      type: 'single',
+      url: 'redis://localhost:6379',
+    }),
+    UserModule,
+    PrismaModule,
+    AuthModule,
+    DoctorModule,
+    HospitalModule,
+    PatientProfileModule,
+    AppointmentModule,
+    PaymentModule,
     ConfigModule.forRoot({
       envFilePath: path.resolve(__dirname, '../.env'),
       isGlobal: true,
-    }),],
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
