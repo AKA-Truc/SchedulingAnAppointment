@@ -131,7 +131,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\code\\SchedulingAnAppointment\\prisma\\generated\\mongodb",
+      "value": "D:\\SchedulingAnAppointment\\prisma\\generated\\mongodb",
       "fromEnvVar": null
     },
     "config": {
@@ -145,11 +145,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\code\\SchedulingAnAppointment\\prisma\\mongo\\schema.prisma",
+    "sourceFilePath": "D:\\SchedulingAnAppointment\\prisma\\mongo\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../../mongo",
