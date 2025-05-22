@@ -45,7 +45,8 @@ export class DoctorService {
                 rating: data.rating,
                 bio: data.bio,
                 yearsOfExperience: data.yearsOfExperience,
-                education: data.education
+                education: data.education,
+                clinic: data.clinic,
             },
             include: {
                 achievements: true

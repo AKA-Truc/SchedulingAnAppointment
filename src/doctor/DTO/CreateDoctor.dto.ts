@@ -58,4 +58,12 @@ export class CreateDoctor {
     @IsString()
     @IsNotEmpty()
     education: string;
+
+    @ApiProperty({
+        example: 'A001',
+        description: 'Phong khám của bác sĩ',
+    })
+    @IsString()
+    @IsNotEmpty()
+    clinic: string;
 }

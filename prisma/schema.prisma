@@ -112,6 +112,7 @@ model Appointment {
   feedback       Feedback?
   followUps      FollowUp[]
   payments       Payment[]
+  notifications  Notification[]
 }
 
 model Service {
@@ -208,9 +209,11 @@ model Certification {
 }
 
 model Notification {
-  notificationId  Int                   @id @default(autoincrement())
+  notificationId  Int                  @id @default(autoincrement())
   user            User                 @relation(fields: [userId], references: [userId])
   userId          Int
+  appointment     Appointment          @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId   Int
   type            NotificationType
   title           String
   content         String
