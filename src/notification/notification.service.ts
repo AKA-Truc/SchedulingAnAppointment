@@ -14,6 +14,7 @@ export class NotificationService {
                 title: dto.title,
                 content: dto.content,
                 userId: dto.userId,
+                appointmentId: dto.appointmentId,
                 remindAt: dto.remindAt,
                 sent: dto.sent,
                 scheduledTime: dto.scheduledTime,

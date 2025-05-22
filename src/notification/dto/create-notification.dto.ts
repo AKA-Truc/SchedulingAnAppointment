@@ -14,6 +14,9 @@ export class CreateNotificationDto {
     @IsInt()
     userId: number;
 
+    @IsInt()
+    appointmentId: number;
+
     @IsDate()
     remindAt: Date;
 

@@ -21,70 +21,70 @@ export class AppointmentService {
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
-    async create(data: CreateAppointment) {
-        const conflict = await this.prisma.appointment.findFirst({
-            where: {
-                doctorId: data.doctorId,
-                scheduledTime: data.scheduledTime,
-            },
-        });
-            if (conflict) {
-            throw new BadRequestException('Doctor already has an appointment at this time');
-        }
+    // async create(data: CreateAppointment) {
+    //     const conflict = await this.prisma.appointment.findFirst({
+    //         where: {
+    //             doctorId: data.doctorId,
+    //             scheduledTime: data.scheduledTime,
+    //         },
+    //     });
+    //         if (conflict) {
+    //         throw new BadRequestException('Doctor already has an appointment at this time');
+    //     }
 
-        const appointment = await this.prisma.appointment.create({
-            data: {
-                doctorId: data.doctorId,
-                userId: data.userId,
-                serviceId: data.serviceId,
-                scheduledTime: data.scheduledTime,
-                note: data.note,
-                status: 'SCHEDULED',
-            },
-        });
+    //     const appointment = await this.prisma.appointment.create({
+    //         data: {
+    //             doctorId: data.doctorId,
+    //             userId: data.userId,
+    //             serviceId: data.serviceId,
+    //             scheduledTime: data.scheduledTime,
+    //             note: data.note,
+    //             status: 'SCHEDULED',
+    //         },
+    //     });
 
-        const scheduledTime = new Date(data.scheduledTime).getTime();
+    //     const scheduledTime = new Date(data.scheduledTime).getTime();
 
-        for (const offsetMinutes of Object.values(ReminderOffset).keys()) {
-            const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
+    //     for (const offsetMinutes of Object.values(ReminderOffset).keys()) {
+    //         const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
 
-            if (remindAtTimestamp > Date.now()) {
-                const remindAt = new Date(remindAtTimestamp);
+    //         if (remindAtTimestamp > Date.now()) {
+    //             const remindAt = new Date(remindAtTimestamp);
 
-                // Create a notification in the database
-                const dbNotification = await this.prisma.notification.create({
-                data: {
-                    userId: data.userId,
-                    type: 'APPOINTMENT',
-                    title: 'Nhắc lịch khám',
-                    content: `Bạn có lịch khám vào lúc ${data.scheduledTime}`,
-                    remindAt,
-                    scheduledTime: new Date(data.scheduledTime),
-                },
-                });
+    //             // Create a notification in the database
+    //             const dbNotification = await this.prisma.notification.create({
+    //             data: {
+    //                 userId: data.userId,
+    //                 type: 'APPOINTMENT',
+    //                 title: 'Nhắc lịch khám',
+    //                 content: `Bạn có lịch khám vào lúc ${data.scheduledTime}`,
+    //                 remindAt,
+    //                 scheduledTime: new Date(data.scheduledTime),
+    //             },
+    //             });
 
-                // Add the notification to Redis sorted set
-                const redisNotification = {
-                id: dbNotification.notificationId,
-                userId: dbNotification.userId,
-                title: dbNotification.title,
-                content: dbNotification.content,
-                remindAt: dbNotification.remindAt.toISOString(),
-                type: dbNotification.type,
-                scheduledTime: dbNotification.scheduledTime.toISOString(),
-                };
+    //             // Add the notification to Redis sorted set
+    //             const redisNotification = {
+    //             id: dbNotification.notificationId,
+    //             userId: dbNotification.userId,
+    //             title: dbNotification.title,
+    //             content: dbNotification.content,
+    //             remindAt: dbNotification.remindAt.toISOString(),
+    //             type: dbNotification.type,
+    //             scheduledTime: dbNotification.scheduledTime.toISOString(),
+    //             };
 
-                await this.redis.zadd(
-                `notifications:${data.userId}`,
-                remindAtTimestamp,
-                JSON.stringify(redisNotification),
-                );
-            }
-        }
+    //             await this.redis.zadd(
+    //             `notifications:${data.userId}`,
+    //             remindAtTimestamp,
+    //             JSON.stringify(redisNotification),
+    //             );
+    //         }
+    //     }
 
-        return appointment;
+    //     return appointment;
 
-    }
+    // }
 
 
     async findAll() {

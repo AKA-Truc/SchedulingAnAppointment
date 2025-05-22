@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/mongodb"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URL")
+}
+
+model Review {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  comment   String
+  rating    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId     Int
+  doctorId   Int?
+  hospitalId Int?
+  role       RoleEnum
+
+  parentId String?  @db.ObjectId
+  parent   Review?  @relation("ReplyThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies  Review[] @relation("ReplyThread")
+
+  isVisible     Boolean @default(true)
+  isFlagged     Boolean @default(false)
+  flaggedReason String?
+
+  @@index([hospitalId])
+  @@index([doctorId])
+}
+
+enum RoleEnum {
+  USER
+  DOCTOR
+  ADMIN
+}
