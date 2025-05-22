@@ -1,9 +1,7 @@
-// src/patient-profile/dto/CreatePatientProfile.dto.ts
-import { IsInt, IsString, IsOptional, IsDate } from 'class-validator';
+import { IsInt, IsString, IsDateString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 
-export class CreatePatientProfile {
+export class PatientImportRowDto {
   @ApiProperty({ description: 'User ID của bệnh nhân', example: 123 })
   @IsInt()
   userId: number;
@@ -12,10 +10,9 @@ export class CreatePatientProfile {
   @IsString()
   gender: string;
 
-  @ApiProperty({ description: 'Ngày sinh', type: String, example: '1980-01-01' })
-  @Type(() => Date)
-  @IsDate()
-  dateOfBirth: Date;
+  @ApiProperty({ description: 'Ngày sinh (YYYY-MM-DD)', example: '1980-01-01' })
+  @IsDateString()
+  dateOfBirth: string;
 
   @ApiProperty({ description: 'Địa chỉ', example: '123 Đường A, Quận B' })
   @IsString()
