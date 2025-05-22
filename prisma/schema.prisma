@@ -43,7 +43,6 @@ model Doctor {
   Specialty_ID      Int
   Hospital          Hospital         @relation(fields: [Hospital_ID], references: [Hospital_ID])
   Hospital_ID       Int
-  Phone             String
   Rating            Float
   Bio               String
   yearsOfExperience String
@@ -60,7 +59,6 @@ model PatientProfile {
   Profile_ID        Int      @id @default(autoincrement())
   User_ID           Int      @unique
   User              User     @relation(fields: [User_ID], references: [User_ID])
-  Gender            String
   DateOfBirth       DateTime
   Address           String
   Insurance         String
@@ -242,15 +240,6 @@ model Notification {
   createdAt       DateTime            @default(now())
   targetType      NotificationTargetType
   targetId        Int                 // ID liên quan (Appointment_ID, FollowUp_ID, v.v.)
-
-  appointment     Appointment?        @relation(fields: [appointmentId], references: [Appointment_ID])
-  appointmentId   Int?
-
-  followUp        FollowUp?           @relation(fields: [followUpId], references: [followUp_ID])
-  followUpId      Int?
-
-  medicalRecord   MedicalRecord?      @relation(fields: [medicalRecordId], references: [MedicalRecord_ID])
-  medicalRecordId Int?
 }
 
 enum NotificationType {
