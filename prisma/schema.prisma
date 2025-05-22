@@ -45,10 +45,10 @@ model Doctor {
   specialtyId       Int
   hospital          Hospital         @relation(fields: [hospitalId], references: [hospitalId])
   hospitalId        Int
-  rating            Float
-  bio               String
-  yearsOfExperience String
-  education         String
+  rating            Float?
+  bio               String?
+  yearsOfExperience String?
+  education         String?
   certifications    Certification[]
   achievements      Achievement[]
   schedules         DoctorSchedule[]

@@ -1,5 +1,5 @@
 import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsUrl, Min, Max } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateDoctor {
     @ApiProperty({
@@ -25,37 +25,4 @@ export class CreateDoctor {
     @IsInt()
     @IsNotEmpty()
     hospitalId: number;
-
-    @ApiProperty({
-        example: 4.5,
-        description: 'Đánh giá bác sĩ từ 0.0 đến 5.0',
-    })
-    @IsNumber()
-    @Min(0)
-    @Max(5)
-    rating: number;
-
-    @ApiProperty({
-        example: 'Bác sĩ chuyên khoa tim mạch với 10 năm kinh nghiệm.',
-        description: 'Tiểu sử ngắn của bác sĩ',
-    })
-    @IsString()
-    @IsNotEmpty()
-    bio: string;
-
-    @ApiProperty({
-        example: '10 năm',
-        description: 'Số năm kinh nghiệm của bác sĩ',
-    })
-    @IsString()
-    @IsNotEmpty()
-    yearsOfExperience: string;
-
-    @ApiProperty({
-        example: 'Tốt nghiệp Đại học Y Dược TP.HCM, chuyên ngành Nội tổng quát',
-        description: 'Thông tin học vấn của bác sĩ',
-    })
-    @IsString()
-    @IsNotEmpty()
-    education: string;
 }

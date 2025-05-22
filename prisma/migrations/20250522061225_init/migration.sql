@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Doctor" ALTER COLUMN "rating" DROP NOT NULL,
+ALTER COLUMN "bio" DROP NOT NULL,
+ALTER COLUMN "yearsOfExperience" DROP NOT NULL,
+ALTER COLUMN "education" DROP NOT NULL;

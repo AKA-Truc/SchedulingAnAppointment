@@ -9,10 +9,16 @@ import { HospitalModule } from './hospital/hospital.module';
 import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
+import { ConfigModule } from '@nestjs/config';
+import * as path from 'path';
 
 @Module({
   imports: [UserModule, PrismaModule, AuthModule, DoctorModule, HospitalModule, PatientProfileModule,
-    AppointmentModule, PaymentModule],
+    AppointmentModule, PaymentModule,
+    ConfigModule.forRoot({
+      envFilePath: path.resolve(__dirname, '../.env'),
+      isGlobal: true,
+    }),],
   controllers: [AppController],
   providers: [AppService],
 })
