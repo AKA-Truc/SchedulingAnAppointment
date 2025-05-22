@@ -9,11 +9,24 @@ import { HospitalModule } from './hospital/hospital.module';
 import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, DoctorModule, HospitalModule, PatientProfileModule,
-    AppointmentModule, PaymentModule],
+  imports: [
+    RedisModule.forRoot({
+      type: 'single',
+      url: 'redis://localhost:6379',
+    }),
+    UserModule,
+    PrismaModule,
+    AuthModule,
+    DoctorModule,
+    HospitalModule,
+    PatientProfileModule,
+    AppointmentModule,
+    PaymentModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
