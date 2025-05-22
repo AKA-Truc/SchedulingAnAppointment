@@ -9,7 +9,7 @@ export class PatientProfileService {
     // Create
     async create(data: CreatePatientProfile) {
         const existingProfile = await this.prisma.patientProfile.findUnique({
-            where: { User_ID: data.userId },
+            where: { userId: data.userId },
         });
 
         if (existingProfile) {
@@ -18,20 +18,20 @@ export class PatientProfileService {
 
         const profile = await this.prisma.patientProfile.create({
             data: {
-                User_ID: data.userId,
-                Gender: data.gender,
-                DateOfBirth: new Date(data.dateOfBirth),
-                Address: data.address,
-                Insurance: data.insurance,
-                Allergies: data.allergies,
-                ChronicDiseases: data.chronicDiseases,
+                userId: data.userId,
+                gender: data.gender,
+                dateOfBirth: new Date(data.dateOfBirth),
+                address: data.address,
+                insurance: data.insurance,
+                allergies: data.allergies,
+                chronicDiseases: data.chronicDiseases,
                 obstetricHistory: data.obstetricHistory,
                 surgicalHistory: data.surgicalHistory,
                 familyHistory: data.familyHistory,
                 socialHistory: data.socialHistory,
                 medicationHistory: data.medicationHistory,
             },
-            include: { User: true },
+            include: { user: true },
         });
 
         return profile;
@@ -45,7 +45,7 @@ export class PatientProfileService {
             this.prisma.patientProfile.findMany({
                 skip,
                 take: limit,
-                include: { User: true },
+                include: { user: true },
             }),
             this.prisma.patientProfile.count(),
         ]);
@@ -64,8 +64,8 @@ export class PatientProfileService {
     // Get by ID
     async findOne(id: number) {
         const profile = await this.prisma.patientProfile.findUnique({
-            where: { Profile_ID: id },
-            include: { User: true },
+            where: { profileId: id },
+            include: { user: true },
         });
 
         if (!profile) {
@@ -78,7 +78,7 @@ export class PatientProfileService {
     // Update
     async update(id: number, dto: UpdatePatientProfile) {
         const profile = await this.prisma.patientProfile.findUnique({
-            where: { Profile_ID: id },
+            where: { profileId: id },
         });
 
         if (!profile) {
@@ -86,15 +86,15 @@ export class PatientProfileService {
         }
 
         return this.prisma.patientProfile.update({
-            where: { Profile_ID: id },
+            where: { profileId: id },
             data: {
-                User_ID: dto.userId,
-                Gender: dto.gender,
-                DateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
-                Address: dto.address,
-                Insurance: dto.insurance,
-                Allergies: dto.allergies,
-                ChronicDiseases: dto.chronicDiseases,
+                userId: dto.userId,
+                gender: dto.gender,
+                dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+                address: dto.address,
+                insurance: dto.insurance,
+                allergies: dto.allergies,
+                chronicDiseases: dto.chronicDiseases,
                 obstetricHistory: dto.obstetricHistory,
                 surgicalHistory: dto.surgicalHistory,
                 familyHistory: dto.familyHistory,
@@ -107,7 +107,7 @@ export class PatientProfileService {
     // Delete
     async remove(id: number) {
         const profile = await this.prisma.patientProfile.findUnique({
-            where: { Profile_ID: id },
+            where: { profileId: id },
         });
 
         if (!profile) {
@@ -115,7 +115,7 @@ export class PatientProfileService {
         }
 
         return this.prisma.patientProfile.delete({
-            where: { Profile_ID: id },
+            where: { profileId: id },
         });
     }
 }

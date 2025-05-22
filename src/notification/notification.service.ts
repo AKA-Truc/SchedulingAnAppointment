@@ -5,29 +5,22 @@ import { UpdateNotificationDto } from './dto/update-notification.dto';
 
 @Injectable()
 export class NotificationService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly prisma: PrismaService) { }
 
     async create(dto: CreateNotificationDto) {
         const notification = await this.prisma.notification.create({
             data: {
                 type: dto.type,
-                method: dto.method,
                 title: dto.title,
                 content: dto.content,
                 userId: dto.userId,
                 remindAt: dto.remindAt,
                 sent: dto.sent,
-                targetType: dto.targetType,
-                targetId: dto.targetId,
-                appointmentId: dto.appointmentId,
-                followUpId: dto.followUpId,
-                medicalRecordId: dto.medicalRecordId,
+                scheduledTime: dto.scheduledTime,
+
             },
             include: {
                 user: true,
-                appointment: true,
-                followUp: true,
-                medicalRecord: true,
             },
         });
 
@@ -44,10 +37,7 @@ export class NotificationService {
                 skip,
                 take: limit,
                 include: {
-                    user: true,
-                    appointment: true,
-                    followUp: true,
-                    medicalRecord: true,
+                    user: true
                 },
                 orderBy: {
                     createdAt: 'desc',
@@ -69,12 +59,9 @@ export class NotificationService {
 
     async findOne(id: number) {
         const notification = await this.prisma.notification.findUnique({
-            where: { id },
+            where: { notificationId: id },
             include: {
-                user: true,
-                appointment: true,
-                followUp: true,
-                medicalRecord: true,
+                user: true
             },
         });
 
@@ -87,7 +74,7 @@ export class NotificationService {
 
     async update(id: number, dto: UpdateNotificationDto) {
         const notification = await this.prisma.notification.findUnique({
-            where: { id },
+            where: { notificationId: id },
         });
 
         if (!notification) {
@@ -95,20 +82,17 @@ export class NotificationService {
         }
 
         return this.prisma.notification.update({
-            where: { id },
+            where: { notificationId: id },
             data: dto,
             include: {
-                user: true,
-                appointment: true,
-                followUp: true,
-                medicalRecord: true,
+                user: true
             },
         });
     }
 
     async remove(id: number) {
         const notification = await this.prisma.notification.findUnique({
-            where: { id },
+            where: { notificationId: id },
         });
 
         if (!notification) {
@@ -116,19 +100,16 @@ export class NotificationService {
         }
 
         return this.prisma.notification.delete({
-            where: { id },
+            where: { notificationId: id },
             include: {
-                user: true,
-                appointment: true,
-                followUp: true,
-                medicalRecord: true,
+                user: true
             },
         });
     }
 
     async markAsSent(id: number) {
         const notification = await this.prisma.notification.findUnique({
-            where: { id },
+            where: { notificationId: id },
         });
 
         if (!notification) {
@@ -136,7 +117,7 @@ export class NotificationService {
         }
 
         return this.prisma.notification.update({
-            where: { id },
+            where: { notificationId: id },
             data: { sent: true },
         });
     }
@@ -149,10 +130,7 @@ export class NotificationService {
                 skip,
                 take: limit,
                 include: {
-                    user: true,
-                    appointment: true,
-                    followUp: true,
-                    medicalRecord: true,
+                    user: true
                 },
                 orderBy: {
                     createdAt: 'desc',

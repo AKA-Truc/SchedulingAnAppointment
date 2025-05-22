@@ -1,12 +1,9 @@
 import { IsString, IsEnum, IsInt, IsDate, IsBoolean, IsOptional } from 'class-validator';
-import { NotificationType, NotificationMethod, NotificationTargetType } from '@prisma/client';
+import { NotificationType } from '@prisma/client';
 
 export class CreateNotificationDto {
     @IsEnum(NotificationType)
     type: NotificationType;
-
-    @IsEnum(NotificationMethod)
-    method: NotificationMethod;
 
     @IsString()
     title: string;
@@ -24,16 +21,6 @@ export class CreateNotificationDto {
     @IsOptional()
     sent?: boolean;
 
-    @IsEnum(NotificationTargetType)
-    targetType: NotificationTargetType;
-
-    @IsInt()
-    targetId: number;
-
-    @IsInt()
-    @IsOptional()
-    appointmentId?: number;
-
     @IsInt()
     @IsOptional()
     followUpId?: number;
@@ -41,4 +28,7 @@ export class CreateNotificationDto {
     @IsInt()
     @IsOptional()
     medicalRecordId?: number;
+
+    @IsDate()
+    scheduledTime: Date;
 }

@@ -13,7 +13,7 @@ export class CreateUserDto {
 
     @ApiProperty({
         example: 'nguyenvana@example.com',
-        description: 'Email hợp lệ',
+        description: 'email hợp lệ',
     })
     @IsEmail()
     email: string;
@@ -22,9 +22,9 @@ export class CreateUserDto {
         example: '0909123456',
         description: 'Số điện thoại người dùng',
     })
-    @IsInt()
+    @IsString()
     @IsNotEmpty()
-    phone: number;
+    phone: string;
 
     @ApiProperty({
         example: 'StrongPass123',

@@ -10,10 +10,10 @@ export class PaymentService {
     async create(dto: CreatePayment) {
         const payment = await this.prisma.payment.create({
             data: {
-                Appointment_ID: dto.Appointment_ID,
-                Price: dto.Price,
-                Payment_Method: dto.Payment_Method,
-                Payment_Status: dto.Payment_Status,
+                appointmentId: dto.appointmentId,
+                price: dto.price,
+                paymentMethod: dto.paymentMethod,
+                paymentStatus: dto.paymentStatus,
             },
         });
         return {
@@ -28,7 +28,7 @@ export class PaymentService {
             this.prisma.payment.findMany({
                 skip,
                 take: limit,
-                include: { Appointment: true },
+                include: { appointment: true },
             }),
             this.prisma.payment.count(),
         ]);
@@ -46,8 +46,8 @@ export class PaymentService {
 
     async findOne(id: number) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
-            include: { Appointment: true },
+            where: { paymentId: id },
+            include: { appointment: true },
         });
 
         if (!payment) {
@@ -58,7 +58,7 @@ export class PaymentService {
 
     async update(id: number, dto: UpdatePayment) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
 
         if (!payment) {
@@ -66,14 +66,14 @@ export class PaymentService {
         }
 
         return this.prisma.payment.update({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
             data: dto,
         });
     }
 
     async remove(id: number) {
         const payment = await this.prisma.payment.findUnique({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
 
         if (!payment) {
@@ -81,7 +81,7 @@ export class PaymentService {
         }
 
         return this.prisma.payment.delete({
-            where: { Payment_ID: id },
+            where: { paymentId: id },
         });
     }
 
@@ -92,37 +92,36 @@ export class PaymentService {
 
         const payments = await this.prisma.payment.findMany({
             where: {
-                CreatedAt: {
+                createdAt: {
                     gte: startDate,
                     lte: endDate,
                 },
             },
             include: {
-                Appointment: {
+                appointment: {
                     include: {
-                        Doctor: {
+                        doctor: {
                             include: {
-                                User: true,
+                                user: true,
                             },
                         },
-                        Hospital: true,
                     },
                 },
             },
         });
 
-        const totalAmount = payments.reduce((sum, payment) => sum + payment.Price, 0);
+        const totalAmount = payments.reduce((sum, payment) => sum + payment.price, 0);
         const paymentCount = payments.length;
 
         // Thống kê theo phương thức thanh toán
         const paymentMethodStats = payments.reduce((acc, payment) => {
-            acc[payment.Payment_Method] = (acc[payment.Payment_Method] || 0) + 1;
+            acc[payment.paymentMethod] = (acc[payment.paymentMethod] || 0) + 1;
             return acc;
         }, {});
 
         // Thống kê theo trạng thái thanh toán
         const paymentStatusStats = payments.reduce((acc, payment) => {
-            acc[payment.Payment_Status] = (acc[payment.Payment_Status] || 0) + 1;
+            acc[payment.paymentStatus] = (acc[payment.paymentStatus] || 0) + 1;
             return acc;
         }, {});
 
@@ -144,34 +143,33 @@ export class PaymentService {
 
         const payments = await this.prisma.payment.findMany({
             where: {
-                CreatedAt: {
+                createdAt: {
                     gte: startDate,
                     lte: endDate,
                 },
             },
             include: {
-                Appointment: {
+                appointment: {
                     include: {
-                        Doctor: {
+                        doctor: {
                             include: {
-                                User: true,
+                                user: true,
                             },
                         },
-                        Hospital: true,
                     },
                 },
             },
         });
 
-        const totalAmount = payments.reduce((sum, payment) => sum + payment.Price, 0);
+        const totalAmount = payments.reduce((sum, payment) => sum + payment.price, 0);
         const paymentCount = payments.length;
 
         // Thống kê theo tháng trong quý
         const monthlyStats = payments.reduce((acc, payment) => {
-            const month = payment.CreatedAt.getMonth() + 1;
+            const month = payment.createdAt.getMonth() + 1;
             acc[month] = {
                 count: (acc[month]?.count || 0) + 1,
-                amount: (acc[month]?.amount || 0) + payment.Price,
+                amount: (acc[month]?.amount || 0) + payment.price,
             };
             return acc;
         }, {});
@@ -192,45 +190,44 @@ export class PaymentService {
 
         const payments = await this.prisma.payment.findMany({
             where: {
-                CreatedAt: {
+                createdAt: {
                     gte: startDate,
                     lte: endDate,
                 },
             },
             include: {
-                Appointment: {
+                appointment: {
                     include: {
-                        Doctor: {
+                        doctor: {
                             include: {
-                                User: true,
+                                user: true,
                             },
                         },
-                        Hospital: true,
                     },
                 },
             },
         });
 
-        const totalAmount = payments.reduce((sum, payment) => sum + payment.Price, 0);
+        const totalAmount = payments.reduce((sum, payment) => sum + payment.price, 0);
         const paymentCount = payments.length;
 
         // Thống kê theo quý
         const quarterlyStats = payments.reduce((acc, payment) => {
-            const month = payment.CreatedAt.getMonth();
+            const month = payment.createdAt.getMonth();
             const quarter = Math.floor(month / 3) + 1;
             acc[quarter] = {
                 count: (acc[quarter]?.count || 0) + 1,
-                amount: (acc[quarter]?.amount || 0) + payment.Price,
+                amount: (acc[quarter]?.amount || 0) + payment.price,
             };
             return acc;
         }, {});
 
         // Thống kê theo tháng
         const monthlyStats = payments.reduce((acc, payment) => {
-            const month = payment.CreatedAt.getMonth() + 1;
+            const month = payment.createdAt.getMonth() + 1;
             acc[month] = {
                 count: (acc[month]?.count || 0) + 1,
-                amount: (acc[month]?.amount || 0) + payment.Price,
+                amount: (acc[month]?.amount || 0) + payment.price,
             };
             return acc;
         }, {});
@@ -249,37 +246,33 @@ export class PaymentService {
     async getCustomPeriodStatistics(startDate: Date, endDate: Date) {
         const payments = await this.prisma.payment.findMany({
             where: {
-                CreatedAt: {
+                createdAt: {
                     gte: startDate,
                     lte: endDate,
                 },
             },
             include: {
-                Appointment: {
+                appointment: {
                     include: {
-                        Doctor: {
+                        doctor: {
                             include: {
-                                User: true,
+                                user: true,
                             },
                         },
-                        Hospital: true,
                     },
                 },
             },
-            orderBy: {
-                CreatedAt: 'asc',
-            },
         });
 
-        const totalAmount = payments.reduce((sum, payment) => sum + payment.Price, 0);
+        const totalAmount = payments.reduce((sum, payment) => sum + payment.price, 0);
         const paymentCount = payments.length;
 
         // Thống kê theo ngày
         const dailyStats = payments.reduce((acc, payment) => {
-            const date = payment.CreatedAt.toISOString().split('T')[0];
+            const date = payment.createdAt.toISOString().split('T')[0];
             acc[date] = {
                 count: (acc[date]?.count || 0) + 1,
-                amount: (acc[date]?.amount || 0) + payment.Price,
+                amount: (acc[date]?.amount || 0) + payment.price,
             };
             return acc;
         }, {});

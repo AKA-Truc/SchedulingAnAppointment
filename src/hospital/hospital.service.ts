@@ -1,144 +1,115 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateHospital, UpdateHospital } from './DTO';
 
+
 @Injectable()
 export class HospitalService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async createHospital(data: CreateHospital) {
-        const emailExists = await this.prisma.hospital.findFirst({
-            where: { Email: data.Email },
-        });
+  async createHospital(data: CreateHospital) {
+    const emailExists = await this.prisma.hospital.findFirst({
+      where: { email: data.email },
+    });
 
-        if (emailExists) {
-            throw new BadRequestException('Email already exists.');
-        }
-
-        const hospital = await this.prisma.hospital.create({
-            data: {
-                Name: data.Name,
-                Address: data.Address,
-                Phone: data.Phone,
-                Description: data.Description,
-                Email: data.Email,
-                establishYear: data.establishYear,
-                Type: data.Type,
-                website: data.website
-            },
-            include: {
-                achievements: true
-            }
-        });
-
-        return {
-            message: 'Hospital created successfully',
-            hospital,
-        };
+    if (emailExists) {
+      throw new BadRequestException('Email already exists.');
     }
 
-    async getAllHospitals(page = 1, limit = 10) {
-        const skip = (page - 1) * limit;
+    return this.prisma.hospital.create({ data });
+  }
 
-        const [hospitals, total] = await Promise.all([
-            this.prisma.hospital.findMany({
-                skip,
-                take: limit,
-                include: {
-                    doctors: true,
-                    appointments: true,
-                    achievements: true
-                },
-            }),
-            this.prisma.hospital.count(),
-        ]);
+  async getAllHospitals(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
 
-        return {
-            data: hospitals,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+    const [hospitals, total] = await Promise.all([
+      this.prisma.hospital.findMany({
+        skip,
+        take: limit,
+        include: {
+          doctors: true,
+          achievements: true,
+        },
+      }),
+      this.prisma.hospital.count(),
+    ]);
+
+    return {
+      data: hospitals,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getHospitalById(id: number) {
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { hospitalId: id },
+      include: {
+        doctors: true,
+        achievements: true,
+      },
+    });
+
+    if (!hospital) {
+      throw new NotFoundException(`Hospital with ID ${id} not found`);
     }
 
-    async getHospitalById(id: number) {
-        const hospital = await this.prisma.hospital.findUnique({
-            where: { Hospital_ID: id },
-            include: {
-                doctors: true,
-                appointments: true,
-                achievements: true
-            },
-        });
+    return hospital;
+  }
 
-        if (!hospital) {
-            throw new NotFoundException(`Hospital with ID ${id} not found`);
-        }
+  async updateHospital(id: number, dto: UpdateHospital) {
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { hospitalId: id },
+    });
 
-        return hospital;
+    if (!hospital) {
+      throw new NotFoundException(`Hospital with ID ${id} not found`);
     }
 
-    async updateHospital(id: number, dto: UpdateHospital) {
-        const hospital = await this.prisma.hospital.findUnique({
-            where: { Hospital_ID: id },
-        });
-
-        if (!hospital) {
-            throw new NotFoundException(`Hospital with ID ${id} not found`);
-        }
-
-        // Nếu update email, kiểm tra email đã tồn tại chưa
-        if (dto.Email && dto.Email !== hospital.Email) {
-            const emailExists = await this.prisma.hospital.findFirst({
-                where: { Email: dto.Email },
-            });
-            if (emailExists) {
-                throw new BadRequestException('Email already exists.');
-            }
-        }
-
-        return this.prisma.hospital.update({
-            where: { Hospital_ID: id },
-            data: dto,
-            include: {
-                achievements: true
-            }
-        });
+    if (dto.email && dto.email !== hospital.email) {
+      const emailExists = await this.prisma.hospital.findFirst({
+        where: { email: dto.email },
+      });
+      if (emailExists) {
+        throw new BadRequestException('Email already exists.');
+      }
     }
 
-    async deleteHospital(id: number) {
-        const hospital = await this.prisma.hospital.findUnique({
-            where: { Hospital_ID: id },
-        });
+    return this.prisma.hospital.update({
+      where: { hospitalId: id },
+      data: dto,
+    });
+  }
 
-        if (!hospital) {
-            throw new NotFoundException(`Hospital with ID ${id} not found`);
-        }
-         const doctorsCount = await this.prisma.doctor.count({
-            where: { Hospital_ID: id },
-        });
+  async deleteHospital(id: number) {
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { hospitalId: id },
+    });
 
-        if (doctorsCount > 0) {
-            throw new BadRequestException('Cannot delete hospital with existing doctors.');
-        }
-
-        const appointmentsCount = await this.prisma.appointment.count({
-            where: { Hospital_ID: id },
-        });
-
-        if (appointmentsCount > 0) {
-            throw new BadRequestException('Cannot delete hospital with existing appointments.');
-        }
-
-
-        return this.prisma.hospital.delete({
-            where: { Hospital_ID: id },
-            include: {
-                achievements: true
-            }
-        });
+    if (!hospital) {
+      throw new NotFoundException(`Hospital with ID ${id} not found`);
     }
+
+    const doctorsCount = await this.prisma.doctor.count({
+      where: { hospitalId: id },
+    });
+
+    if (doctorsCount > 0) {
+      throw new BadRequestException(
+        'Cannot delete hospital with existing doctors.',
+      );
+    }
+
+    return this.prisma.hospital.delete({
+      where: { hospitalId: id },
+    });
+  }
 }

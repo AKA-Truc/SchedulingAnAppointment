@@ -3,67 +3,68 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // hoặc "mysql" tùy theo hệ quản trị bạn dùng
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  User_ID        Int             @id @default(autoincrement())
-  Full_Name      String
-  Email          String          @unique
-  Phone          String
-  Password       String
-  Role           RoleEnum
-  Gender         GenderEnum
-  Created_at     DateTime        @default(now())
-  Avatar         String?
+  userId         Int             @id @default(autoincrement())
+  fullName       String
+  email          String          @unique
+  phone          String
+  password       String
+  role           RoleEnum
+  gender         GenderEnum
+  createdAt      DateTime        @default(now())
+  avatar         String?
   doctor         Doctor?
+
   patientProfile PatientProfile?
   appointments   Appointment[]
   tokens         Token[]
   notifications  Notification[]
+  medicalRecord  MedicalRecord?
 }
 
 model Token {
-  Token_ID         Int      @id @default(autoincrement())
-  AccessToken      String // hash access token (hoặc có thể không hash)
-  RefreshToken     String // hash refresh token
-  User             User     @relation(fields: [User_ID], references: [User_ID])
-  User_ID          Int
-  CreatedAt        DateTime @default(now())
-  AccessExpiresAt  DateTime
-  RefreshExpiresAt DateTime
+  tokenId          Int      @id @default(autoincrement())
+  accessToken      String
+  refreshToken     String
+  user             User     @relation(fields: [userId], references: [userId])
+  userId           Int
+  createdAt        DateTime @default(now())
+  accessExpiresAt  DateTime
+  refreshExpiresAt DateTime
 }
 
 model Doctor {
-  Doctor_ID         Int              @id @default(autoincrement())
-  User              User             @relation(fields: [User_ID], references: [User_ID])
-  User_ID           Int              @unique
-  Specialty         Specialty        @relation(fields: [Specialty_ID], references: [Specialty_ID])
-  Specialty_ID      Int
-  Hospital          Hospital         @relation(fields: [Hospital_ID], references: [Hospital_ID])
-  Hospital_ID       Int
-  Rating            Float
-  Bio               String
+  doctorId          Int              @id @default(autoincrement())
+  user              User             @relation(fields: [userId], references: [userId])
+  userId            Int              @unique
+  specialty         Specialty        @relation(fields: [specialtyId], references: [specialtyId])
+  specialtyId       Int
+  hospital          Hospital         @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId        Int
+  rating            Float
+  bio               String
   yearsOfExperience String
-  website           String?
   education         String
   certifications    Certification[]
   achievements      Achievement[]
   schedules         DoctorSchedule[]
-  leaves            DoctorLeave[]
   appointments      Appointment[]
 }
 
 model PatientProfile {
-  Profile_ID        Int      @id @default(autoincrement())
-  User_ID           Int      @unique
-  User              User     @relation(fields: [User_ID], references: [User_ID])
-  DateOfBirth       DateTime
-  Address           String
-  Insurance         String
-  Allergies         String
-  ChronicDiseases   String
+  profileId         Int      @id @default(autoincrement())
+  userId            Int      @unique
+  user              User     @relation(fields: [userId], references: [userId])
+  gender            String
+  dateOfBirth       DateTime
+  address           String
+  insurance         String
+  allergies         String
+  chronicDiseases   String
   obstetricHistory  String
   surgicalHistory   String
   familyHistory     String
@@ -72,174 +73,139 @@ model PatientProfile {
 }
 
 model Specialty {
-  Specialty_ID Int    @id @default(autoincrement())
-  Name         String
-  Description  String
-
-  doctors Doctor[]
+  specialtyId Int    @id @default(autoincrement())
+  name        String
+  description String
+  doctors     Doctor[]
 }
 
 model Hospital {
-  Hospital_ID    Int           @id @default(autoincrement())
-  Name           String
-  Address        String
-  Phone          String
-  Description    String
-  Email          String
+  hospitalId     Int           @id @default(autoincrement())
+  name           String
+  address        String
+  phone          String
+  description    String
+  email          String
   establishYear  Int
   logo           String
-  WorkScheduling String
-  Type           String // public/private
-  achievements   Achievement[] // 1 hospital có nhiều achievements
-  doctors        Doctor[]
-  appointments   Appointment[]
+  workScheduling String
+  type           String
   website        String?
+
+  achievements   Achievement[]
+  doctors        Doctor[]
 }
 
 model Appointment {
-  Appointment_ID Int      @id @default(autoincrement())
-  Doctor         Doctor   @relation(fields: [Doctor_ID], references: [Doctor_ID])
-  Doctor_ID      Int
-  User           User     @relation(fields: [User_ID], references: [User_ID])
-  User_ID        Int
-  Hospital       Hospital @relation(fields: [Hospital_ID], references: [Hospital_ID])
-  Hospital_ID    Int
-  Scheduled_time DateTime
-  Note           String?
-  status        AppointmentStatus @default(SCHEDULED)
-  reminder      AppointmentReminder?
-  feedback      Feedback?
-  medicalRecord MedicalRecord?
-  followUps     FollowUp[]
-  payments      Payment[]
-  notifications Notification[]
-}
+  appointmentId  Int      @id @default(autoincrement())
+  doctor         Doctor   @relation(fields: [doctorId], references: [doctorId])
+  doctorId       Int
+  user           User     @relation(fields: [userId], references: [userId])
+  userId         Int
+  scheduledTime  DateTime
+  note           String?
+  status         AppointmentStatus
 
-model AppointmentReminder {
-  reminder_ID    Int         @id @default(autoincrement())
-  appointment    Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
-  appointment_ID Int         @unique
-  startDate      DateTime
-  remindAt       DateTime
-  sent           Boolean
+  feedback       Feedback?
+  followUps      FollowUp[]
+  payments       Payment[]
 }
 
 model Feedback {
-  feedback_ID    Int         @id @default(autoincrement())
-  appointment    Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
-  appointment_ID Int         @unique
+  feedbackId     Int         @id @default(autoincrement())
+  appointment    Appointment @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId  Int         @unique
   rating         Int
   comment        String
   createdAt      DateTime    @default(now())
 }
 
 model MedicalRecord {
-  MedicalRecord_ID      Int         @id @default(autoincrement())
-  appointment           Appointment @relation(fields: [Appointment_ID], references: [Appointment_ID])
-  Appointment_ID        Int         @unique
-  Diagnosis             String
-  Prescription          String
-  Test_Result           String
-  Doctor_notes          String
-  ChiefComplaint        String
-  historyPresentIllness String
-  physicalExam          String
-  treatmentGoals        String
-  assessment            String
-  treatmentPlan         String
-  nonDrugPlan           String
-  education             String
-
+  medicalRecordId        Int         @id @default(autoincrement())
+  user                   User @relation(fields: [userId], references: [userId])
+  userId          Int    @unique
+  historyPresentIllness  String
+  chiefComplaint         String
+  diagnosis              String
+  testResult             String
+  doctorNotes            String
+  treatmentPlan          String
+  treatmentGoals         String
+  
   prescriptions  PrescriptionItem[]
-  notifications  Notification[]
 }
 
 model PrescriptionItem {
-  Item_ID          Int           @id @default(autoincrement())
-  medicalRecord    MedicalRecord @relation(fields: [MedicalRecord_ID], references: [MedicalRecord_ID])
-  MedicalRecord_ID Int
-  medicineName     String
-  dosage           String
-  frequency        String
-  duration         String
-  notes            String
+  itemId          Int           @id @default(autoincrement())
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [medicalRecordId])
+  medicalRecordId Int
+  medicineName    String
+  dosage          String
+  frequency       String
+  duration        String
+  notes           String
 }
 
 model DoctorSchedule {
-  schedule_ID Int    @id @default(autoincrement())
-  doctor      Doctor @relation(fields: [doctor_ID], references: [Doctor_ID])
-  doctor_ID   Int
-  dayOfWeek   Int
-  startTime   String
-  endTime     String
-}
-
-model DoctorLeave {
-  leave_ID  Int      @id @default(autoincrement())
-  doctor    Doctor   @relation(fields: [doctor_ID], references: [Doctor_ID])
-  doctor_ID Int
-  startDate DateTime
-  endDate   DateTime
-  reason    String
+  scheduleId Int    @id @default(autoincrement())
+  doctor     Doctor @relation(fields: [doctorId], references: [doctorId])
+  doctorId   Int
+  dayOfWeek  Int
+  startTime  String
+  endTime    String
 }
 
 model Payment {
-  Payment_ID     Int               @id @default(autoincrement())
-  Appointment    Appointment       @relation(fields: [Appointment_ID], references: [Appointment_ID])
-  Appointment_ID Int
-  Price          Float
-  Payment_Method PaymentMethodEnum
-  Payment_Status PaymentStatusEnum
-  PaymentDate    DateTime          @default(now())
-  CreatedAt      DateTime          @default(now())
-  UpdatedAt      DateTime          @updatedAt
+  paymentId     Int               @id @default(autoincrement())
+  appointment   Appointment       @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId Int
+  price         Float
+  paymentMethod PaymentMethodEnum
+  paymentStatus PaymentStatusEnum
+  createdAt     DateTime          @default(now())
 }
 
-
 model FollowUp {
-  followUp_ID    Int         @id @default(autoincrement())
-  appointment    Appointment @relation(fields: [appointment_ID], references: [Appointment_ID])
-  appointment_ID Int
-  nextDate       DateTime
-  reason         String
-  createdAt      DateTime    @default(now())
-  notifications  Notification[]
+  followUpId    Int         @id @default(autoincrement())
+  appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
+  appointmentId Int
+  nextDate      DateTime
+  reason        String
+  createdAt     DateTime    @default(now())
 }
 
 model Achievement {
-  Achievement_ID Int       @id @default(autoincrement())
-  Title          String
-  Description    String?
-  DateAchieved   DateTime?
+  achievementId Int       @id @default(autoincrement())
+  title         String
+  description   String?
+  dateAchieved  DateTime?
 
-  Doctor    Doctor? @relation(fields: [Doctor_ID], references: [Doctor_ID])
-  Doctor_ID Int?
+  doctor        Doctor?   @relation(fields: [doctorId], references: [doctorId])
+  doctorId      Int?
 
-  Hospital    Hospital? @relation(fields: [Hospital_ID], references: [Hospital_ID])
-  Hospital_ID Int?
+  hospital      Hospital? @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId    Int?
 }
 
 model Certification {
-  Certification_ID Int      @id @default(autoincrement())
-  fileUrl String
+  certificationId Int     @id @default(autoincrement())
+  fileUrl         String
 
-  Doctor   Doctor  @relation(fields: [Doctor_ID], references: [Doctor_ID])
-  Doctor_ID Int
+  doctor          Doctor  @relation(fields: [doctorId], references: [doctorId])
+  doctorId        Int
 }
 
 model Notification {
-  id              Int                 @id @default(autoincrement())
+  notificationId  Int                   @id @default(autoincrement())
+  user            User                 @relation(fields: [userId], references: [userId])
+  userId          Int
   type            NotificationType
-  method          NotificationMethod
   title           String
   content         String
-  user            User                @relation(fields: [userId], references: [User_ID])
-  userId          Int
   remindAt        DateTime
-  sent            Boolean             @default(false)
-  createdAt       DateTime            @default(now())
-  targetType      NotificationTargetType
-  targetId        Int                 // ID liên quan (Appointment_ID, FollowUp_ID, v.v.)
+  sent            Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  scheduledTime   DateTime             
 }
 
 enum NotificationType {
@@ -248,13 +214,6 @@ enum NotificationType {
   VACCINE
   CUSTOM
 }
-
-enum NotificationMethod {
-  EMAIL
-  SMS
-  PUSH
-}
-
 
 enum RoleEnum {
   ADMIN
