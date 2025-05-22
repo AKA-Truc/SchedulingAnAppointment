@@ -1,2 +1,6 @@
 export * from './CreateAppointment.dto';
 export * from './UpdateAppointment.dto';
+export * from './CreateFollowUp.dto';
+export * from './UpdateFollowUp.dto';
+export * from './CreateFeedBack.dto';
+export * from './UpdateFeedBack.dto'

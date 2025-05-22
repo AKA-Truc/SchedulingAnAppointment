@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
 import { ApiQuery } from '@nestjs/swagger';
-import { AppointmentService } from './appointment.service';
+import { AppointmentService } from './service/appointment.service';
 import { CreateAppointment, UpdateAppointment } from './DTO';
 import { AppointmentStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';

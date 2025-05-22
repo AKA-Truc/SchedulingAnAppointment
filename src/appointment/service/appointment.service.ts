@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateAppointment, UpdateAppointment } from './DTO';
+import { CreateAppointment, UpdateAppointment } from '../DTO';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import { AppointmentStatus } from '@prisma/client';
@@ -47,11 +47,26 @@ export class AppointmentService {
 
         const scheduledTime = new Date(data.scheduledTime).getTime();
 
-        for (const offsetMinutes of Object.values(ReminderOffset).keys()) {
+        for (const offsetMinutes of Object.values(ReminderOffset).filter(v => typeof v === 'number') as number[]) {
             const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
 
             if (remindAtTimestamp > Date.now()) {
                 const remindAt = new Date(remindAtTimestamp);
+
+                // Tính thời gian còn lại từ thời điểm nhắc -> đến lịch hẹn
+                const msLeft = scheduledTime - remindAtTimestamp;
+                const minutesLeft = Math.floor(msLeft / (60 * 1000));
+                const hoursLeft = Math.floor(minutesLeft / 60);
+                const daysLeft = Math.floor(hoursLeft / 24);
+
+                let timeLeftText = '';
+                if (daysLeft > 0) {
+                    timeLeftText = `${daysLeft} ngày`;
+                } else if (hoursLeft > 0) {
+                    timeLeftText = `${hoursLeft} giờ`;
+                } else {
+                    timeLeftText = `${minutesLeft} phút`;
+                }
 
                 // Create a notification in the database
                 const dbNotification = await this.prisma.notification.create({
@@ -60,11 +75,11 @@ export class AppointmentService {
                     appointmentId: appointment.appointmentId,
                     type: NotificationType.APPOINTMENT,
                     title: 'Nhắc lịch khám',
-                    content: `Bạn có lịch khám vào lúc ${data.scheduledTime}`,
+                     content: `Bạn có lịch khám vào lúc ${data.scheduledTime} (còn ${timeLeftText} nữa)`,
                     remindAt,
                     scheduledTime: new Date(data.scheduledTime),
-                },
-                });
+            },
+        });
 
                 // Add the notification to Redis sorted set
                 const redisNotification = {
