@@ -99,4 +99,69 @@ export class FollowUpService {
         return followUp;
     }
 
+    async getFollowUpsByAppointmentId(appointmentId: number) {
+        const followUps = await this.prisma.followUp.findMany({
+            where: { appointmentId },
+        });
+
+        if (followUps.length === 0) {
+            throw new NotFoundException('No follow-ups found for this appointment');
+        }
+
+        return followUps;
+    }
+    
+    async getAllFollowUps(page: number, limit: number) {
+        const followUps = await this.prisma.followUp.findMany({
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+
+        const totalFollowUps = await this.prisma.followUp.count();
+
+        return {
+            data: followUps,
+            total: totalFollowUps,
+            page,
+            limit,
+        };
+    }
+
+    async getFollowUpById(id: number) {
+        const followUp = await this.prisma.followUp.findUnique({
+            where: { followUpId: id },
+        });
+
+        if (!followUp) {
+            throw new NotFoundException('Follow-up not found');
+        }
+
+        return followUp;
+    }
+
+    
+
+    async deleteFollowUp(id: number) {
+        const followUp = await this.prisma.followUp.findUnique({
+            where: { followUpId: id },
+        });
+
+        if (!followUp) {
+            throw new NotFoundException('Follow-up not found');
+        }
+
+        await this.prisma.followUp.delete({
+            where: { followUpId: id },
+        });
+
+        // Xóa thông báo liên quan đến follow-up
+        await this.prisma.notification.deleteMany({
+            where: { appointmentId: followUp.appointmentId, type: NotificationType.FOLLOW_UP },
+        });
+
+        // Xóa thông báo khỏi Redis
+        await this.redis.zrem(`notifications:${followUp.appointmentId}`, JSON.stringify(followUp));
+
+        return { message: 'Follow-up deleted successfully' };
+    }
 }
