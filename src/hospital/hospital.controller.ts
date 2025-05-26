@@ -4,67 +4,91 @@ import {
 import { HospitalService } from './hospital.service';
 import { CreateHospital, UpdateHospital } from './DTO';
 import { ApiTags, ApiQuery } from '@nestjs/swagger';
+import { ReviewHospitalService } from './reviewHospital.service';
+import { RoleEnum } from 'prisma/generated/mongodb';
 
 @ApiTags('Hospital')
 @Controller('hospital')
 export class HospitalController {
-  constructor(private readonly hospitalService: HospitalService) {}
+  constructor(
+    private readonly hospitalService: HospitalService,
+    private readonly reviewService: ReviewHospitalService,
+  ) {}
 
-  @Post()
-  async create(@Body() dto: CreateHospital) {
-    const result = await this.hospitalService.createHospital(dto);
-    return {
-      message: 'Hospital created successfully',
-      data: result,
-    };
-  }
+    @Post()
+    async createReview(
+      @Param('hospitalId', ParseIntPipe) hospitalId: number,
+      @Body()
+      body: {
+        comment: string;
+        rating: number;
+        userId: number;
+        role: RoleEnum;
+      },
+    ) {
+      const review = await this.reviewService.createReview({
+        ...body,
+        hospitalId,
+      });
 
-  @Get()
-  @ApiQuery({ name: 'page', required: false })
-  @ApiQuery({ name: 'limit', required: false })
-  async findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-  ) {
-    const parsedPage = Math.max(Number(page) || 1, 1);
-    const parsedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+      return {
+        message: 'Review created successfully',
+        data: review,
+      };
+    }
 
-    const { data, meta } = await this.hospitalService.getAllHospitals(parsedPage, parsedLimit);
+    @Get()
+    async getHospitalReviews(@Param('hospitalId', ParseIntPipe) hospitalId: number) {
+      const reviews = await this.reviewService.getHospitalReviews(hospitalId);
 
-    return {
-      message: 'Hospitals fetched successfully',
-      data,
-      meta,
-    };
-  }
+      return {
+        message: 'Reviews fetched successfully',
+        data: reviews,
+      };
+    }
 
-  @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    const result = await this.hospitalService.getHospitalById(id);
-    return {
-      message: `Hospital with ID ${id} fetched successfully`,
-      data: result,
-    };
-  }
+    @Post(':reviewId/reply')
+    async replyToReview(
+      @Param('hospitalId', ParseIntPipe) hospitalId: number,
+      @Param('reviewId') reviewId: string,
+      @Body()
+      body: {
+        comment: string;
+        rating: number;
+        userId: number;
+        role: RoleEnum;
+      },
+    ) {
+      const reply = await this.reviewService.replyToReview(reviewId, {
+        ...body,
+        hospitalId,
+      });
 
-  @Patch(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateHospital,
-  ) {
-    const updated = await this.hospitalService.updateHospital(id, dto);
-    return {
-      message: `Hospital with ID ${id} updated successfully`,
-      data: updated,
-    };
-  }
+      return {
+        message: 'Reply added successfully',
+        data: reply,
+      };
+    }
 
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    const deleted = await this.hospitalService.deleteHospital(id);
-    return {
-      message: `Hospital with ID ${id} deleted successfully`,
-      data: deleted,
-    };
-  }
+    @Post(':reviewId/flag')
+    async flagReview(
+      @Param('reviewId') reviewId: string,
+      @Body() body: { reason: string },
+    ) {
+      const result = await this.reviewService.flagReview(reviewId, body.reason);
+      return {
+        message: 'Review flagged',
+        data: result,
+      };
+    }
+
+    @Delete(':reviewId')
+    async deleteReview(@Param('reviewId') reviewId: string) {
+      const deleted = await this.reviewService.deleteReview(reviewId);
+      return {
+        message: 'Review deleted',
+        data: deleted,
+      };
+    }
+
 }
