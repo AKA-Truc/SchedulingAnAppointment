@@ -35,6 +35,42 @@ export class DoctorScheduleService {
         };
     }
 
+    async generateDefaultSchedule(doctorId: number) {
+        const doctor = await this.prisma.doctor.findUnique({
+            where: { doctorId },
+        });
+
+        if (!doctor) {
+            throw new BadRequestException(`Bác sĩ với ID ${doctorId} không tồn tại.`);
+        }
+
+        const defaultStartTime = '08:00';
+        const defaultEndTime = '17:00';
+        const workingDays = [1, 2, 3, 4, 5, 6]; // Thứ 2 đến Thứ 7
+
+
+        for (const dayOfWeek of workingDays) {
+            const existing = await this.prisma.doctorSchedule.findFirst({
+                where: { doctorId, dayOfWeek },
+            });
+
+            if (!existing) {
+                const schedule = await this.prisma.doctorSchedule.create({
+                    data: {
+                        doctorId: doctorId,
+                        dayOfWeek: dayOfWeek,
+                        startTime: defaultStartTime,
+                        endTime: defaultEndTime,
+                    },
+                });
+            }
+        }
+
+        return {
+            message: 'Lịch làm việc mặc định từ Thứ 2 đến Thứ 7 đã được tạo.',
+        };
+    }
+
     async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
