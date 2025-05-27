@@ -1,11 +1,13 @@
 import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AppointmentService } from './service/appointment.service';
 import { FeedbackService } from './service/feedBack.service';
 import { CreateAppointment, UpdateAppointment } from './DTO';
 import { CreateFeedback, UpdateFeedback } from './DTO';
 import { CreateFollowUp, UpdateFollowUp } from './DTO';
+import { CreateNotification, UpdateNotification } from './DTO';
 import { FollowUpService } from './service/followUp.service';
+import { NotificationService } from './service/notification.service';
 import { AppointmentStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 
@@ -14,15 +16,18 @@ export class AppointmentController {
     constructor(
         private readonly appointment: AppointmentService,
         private readonly feedback: FeedbackService,
-        private readonly followUpService: FollowUpService,
+        private readonly followUp: FollowUpService,
+        private readonly notification: NotificationService,
     ) { }
 
     //apointment controller
+    @ApiOperation({ summary: 'Create a new appointment' })
     @Post('appointment')
     async createAppointment(@Body() data: CreateAppointment) {
         return this.appointment.create(data);
     }
 
+    @ApiOperation({ summary: 'Get all appointments with pagination' })
     @Get('appointment')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -36,6 +41,7 @@ export class AppointmentController {
         return this.appointment.getAllAppointments(pageNumber, limitNumber);
     }
 
+    @ApiOperation({ summary: 'Get appointment by ID' })
     @Get('appointment/:id')
     async getAppointmentById(
         @Param('id', ParseIntPipe) id: number
@@ -43,6 +49,7 @@ export class AppointmentController {
         return this.appointment.getAppointmentById(id);
     }
 
+    @ApiOperation({ summary: 'Update appointment' })
     @Put('appointment/:id')
     async updateAppointment(
         @Param('id', ParseIntPipe) id: number,
@@ -51,6 +58,7 @@ export class AppointmentController {
         return this.appointment.updateAppointment(id, data);
     }
 
+    @ApiOperation({ summary: 'Update appointment status' })
     @Patch('appointment/:id/status')
     async updateAppointmentStatus(
     @Param('id', ParseIntPipe) id: number,
@@ -67,6 +75,7 @@ export class AppointmentController {
         return this.appointment.updateStatus(id, status as AppointmentStatus);
     }
 
+    @ApiOperation({ summary: 'Cancel appointment' })
     @Delete('appointment/:id')
     async deleteAppointment(
         @Param('id', ParseIntPipe) id: number
@@ -76,11 +85,13 @@ export class AppointmentController {
 
     //Feedback controller
 
+    @ApiOperation({ summary: 'Create feedback for an appointment' })
     @Post('feedback')
     async createFeedback(@Body() data: CreateFeedback) {
         return this.feedback.createFeedBack(data);
     }
 
+    @ApiOperation({ summary: 'Get all feedbacks with pagination' })
     @Get('feedback')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -93,6 +104,7 @@ export class AppointmentController {
         return this.feedback.getAllFeedBack(pageNumber, limitNumber);
     }
 
+    @ApiOperation({ summary: 'Get feedback by ID' })
     @Get('feedback/:id')
     async getFeedbackById(
         @Param('id', ParseIntPipe) id: number
@@ -100,6 +112,7 @@ export class AppointmentController {
         return this.feedback.getFeedBackById(id);
     }
 
+    @ApiOperation({ summary: 'Update feedback by ID' })
     @Put('feedback/:id')
     async updateFeedback(
         @Param('id', ParseIntPipe) id: number,
@@ -108,6 +121,7 @@ export class AppointmentController {
         return this.feedback.updateFeedBack(id, data);
     }
 
+    @ApiOperation({ summary: 'Delete feedback by ID' })
     @Delete('feedback/:id')
     async deleteFeedback(
         @Param('id', ParseIntPipe) id: number
@@ -116,11 +130,13 @@ export class AppointmentController {
     }
 
     // FollowUp controller
+    @ApiOperation({ summary: 'Create a new follow-up' })
     @Post('follow-up')
     async createFollowUp(@Body() data: CreateFollowUp) {
-        return this.followUpService.createFollowUp(data);
+        return this.followUp.createFollowUp(data);
     }
 
+    @ApiOperation({ summary: 'Get all follow-ups with pagination' })
     @Get('follow-up')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -130,22 +146,24 @@ export class AppointmentController {
     ) {
         const pageNumber = page ? parseInt(page) : 1;
         const limitNumber = limit ? parseInt(limit) : 10;
-        return this.followUpService.getAllFollowUps(pageNumber, limitNumber);
+        return this.followUp.getAllFollowUps(pageNumber, limitNumber);
     }
 
+    @ApiOperation({ summary: 'Get follow-up by ID' })
     @Get('follow-up/:id')
     async getFollowUpById(
         @Param('id', ParseIntPipe) id: number
     ) {
-        return this.followUpService.getFollowUpById(id);
+        return this.followUp.getFollowUpById(id);
     }
 
 
+    @ApiOperation({ summary: 'Get follow-ups by appointment ID' })
     @Get('follow-up/appointment/:appointmentId')
     async getFollowUpsByAppointmentId(
         @Param('appointmentId', ParseIntPipe) appointmentId: number
     ) {
-        return this.followUpService.getFollowUpsByAppointmentId(appointmentId);
+        return this.followUp.getFollowUpsByAppointmentId(appointmentId);
     }
 
     // @Put('follow-up/:id')
@@ -156,13 +174,56 @@ export class AppointmentController {
     //     return this.followUpService.updateFollowUp(id, data);
     // }
 
-    
+    @ApiOperation({ summary: 'Delete follow-up by ID' })
     @Delete('follow-up/:id')
     async deleteFollowUp(
         @Param('id', ParseIntPipe) id: number
     ) {
-        return this.followUpService.deleteFollowUp(id);
+        return this.followUp.deleteFollowUp(id);
     }
 
+    // Notification controller
+    @ApiOperation({ summary: 'Create a new notification' })
+    @Post('notification')
+    async createNotification(@Body() data: CreateNotification) {
+        return this.notification.createNotification(data);
+    }
 
+    @ApiOperation({ summary: 'Get all notifications with pagination' })
+    @Get('notification')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    async getAllNotifications(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        const pageNumber = page ? parseInt(page) : 1;
+        const limitNumber = limit ? parseInt(limit) : 10;
+        return this.notification.getAllNotifications(pageNumber, limitNumber);
+    }
+
+    @ApiOperation({ summary: 'Get notification by ID' })
+    @Get('notification/:id')
+    async getNotificationById(
+        @Param('id', ParseIntPipe) id: number
+    ) {
+        return this.notification.getNotification(id);
+    }
+
+    @ApiOperation({ summary: 'Update notification by ID' })
+    @Put('notification/:id')
+    async updateNotification(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() data: UpdateNotification
+    ) {
+        return this.notification.updateNotification(id, data);
+    }
+
+    @ApiOperation({ summary: 'Delete notification by ID' })
+    @Delete('notification/:id')
+    async deleteNotification(
+        @Param('id', ParseIntPipe) id: number
+    ) {
+        return this.notification.deleteNotification(id);
+    }
 }

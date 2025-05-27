@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { CreateNotification } from '../DTO/CreateNotification.dto';
+import { UpdateNotification } from '../DTO/UpdateNotification.dto';
 
 @Injectable()
 export class NotificationService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async create(dto: CreateNotificationDto) {
+    async createNotification(dto: CreateNotification) {
         const notification = await this.prisma.notification.create({
             data: {
                 type: dto.type,
@@ -31,7 +31,7 @@ export class NotificationService {
         };
     }
 
-    async findAll(page = 1, limit = 10) {
+    async getAllNotifications(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
         const [notifications, total] = await Promise.all([
             this.prisma.notification.findMany({
@@ -58,7 +58,7 @@ export class NotificationService {
         };
     }
 
-    async findOne(id: number) {
+    async getNotification(id: number) {
         const notification = await this.prisma.notification.findUnique({
             where: { notificationId: id },
             include: {
@@ -73,7 +73,7 @@ export class NotificationService {
         return notification;
     }
 
-    async update(id: number, dto: UpdateNotificationDto) {
+    async updateNotification(id: number, dto: UpdateNotification) {
         const notification = await this.prisma.notification.findUnique({
             where: { notificationId: id },
         });
@@ -91,7 +91,7 @@ export class NotificationService {
         });
     }
 
-    async remove(id: number) {
+    async deleteNotification(id: number) {
         const notification = await this.prisma.notification.findUnique({
             where: { notificationId: id },
         });

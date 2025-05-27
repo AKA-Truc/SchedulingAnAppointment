@@ -4,3 +4,5 @@ export * from './CreateFollowUp.dto';
 export * from './UpdateFollowUp.dto';
 export * from './CreateFeedBack.dto';
 export * from './UpdateFeedBack.dto'
+export * from './CreateNotification.dto';
+export * from './UpdateNotification.dto';
