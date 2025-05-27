@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RoleEnum } from 'prisma/generated/mongodb';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { MongoPrismaService } from 'src/prisma/mongo-prisma.service';
 @Injectable()
 export class ReviewHospitalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: MongoPrismaService) {}
 
   async createReview(data: {
     comment: string;
