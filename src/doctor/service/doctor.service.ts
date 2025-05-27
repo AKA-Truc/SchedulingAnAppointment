@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDoctor, UpdateDoctor } from '../DTO';
+import { DoctorScheduleService } from './doctorSchedule.service';
 
 @Injectable()
 export class DoctorService {
     constructor(
         private readonly prisma: PrismaService,
+        private readonly doctorScheduleService: DoctorScheduleService
     ) { }
 
     // Create doctor
@@ -46,10 +48,12 @@ export class DoctorService {
             },
         });
 
+        const schedule = await this.doctorScheduleService.generateDefaultSchedule(doctor.doctorId);
 
         return {
             message: 'Doctor created successfully.',
             doctor,
+            schedule,
         };
     }
 
@@ -187,4 +191,108 @@ export class DoctorService {
             }
         });
     }
+
+
+    async getDoctorPerformanceCurrentMonth(id: number) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth(); // 0-based, 0 = Jan
+
+        const startDate = new Date(year, month, 1, 0, 0, 0);
+        const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+        // Lấy tổng số appointment trong tháng hiện tại
+        const appointmentCount = await this.prisma.appointment.count({
+            where: {
+                doctorId: id,
+                scheduledTime: {
+                    // gte: greater than or equal — lớn hơn hoặc bằng
+
+                    // lte: less than or equal — nhỏ hơn hoặc bằng
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+        });
+
+        // Lấy feedback trong tháng hiện tại
+        const feedbacks = await this.prisma.feedback.findMany({
+            where: {
+                appointment: {
+                    doctorId: id,
+                },
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            select: {
+                rating: true,
+            },
+        });
+
+        const countFeedBack = feedbacks.length;
+
+        // Tính rating trung bình
+        let avgRating;
+        let sum = 0;
+        if (feedbacks.length > 0) {
+            for (const fb of feedbacks) {
+                sum += fb.rating;
+            }
+            avgRating = parseFloat((sum / feedbacks.length).toFixed(2));
+        } else {
+            avgRating = null;
+        }
+
+        return {
+            appointmentCount,
+            avgRating,
+            countFeedBack,
+        };
+    }
+
+    //filtering trên list doctors Theo rating, specialty, hospital
+    async filterDoctors(
+        params: {
+            specialtyId?: number;
+            minRating?: number;
+            hospitalId?: number;
+            page?: number;
+            limit?: number;
+        }
+    ) {
+        const { specialtyId, minRating, hospitalId, page = 1, limit = 10 } = params;
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+        if (specialtyId) where.specialtyId = +specialtyId;
+        if (hospitalId) where.hospitalId = +hospitalId;
+        if (minRating) where.rating = { gte: +minRating };
+
+        const [doctors, total] = await Promise.all([
+            this.prisma.doctor.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    user: true,
+                    specialty: true,
+                    hospital: true,
+                    schedules: true,
+                    appointments: true,
+                    achievements: true,
+                },
+            }),
+            this.prisma.doctor.count({ where }),
+        ]);
+
+        return {
+            data: doctors,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
 }

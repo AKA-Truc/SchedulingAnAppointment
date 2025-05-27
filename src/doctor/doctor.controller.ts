@@ -52,6 +52,24 @@ export class DoctorController {
         return this.doctorService.getDoctorById(id);
     }
 
+    @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
+    @Get(':id')
+    getPerfomanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
+        return this.doctorService.getDoctorPerformanceCurrentMonth(id);
+    }
+
+    @ApiOperation({ summary: 'Filter' })
+    @Get('/filter')
+    filterDoctors(
+        @Query('specialty') specialtyId?: number,
+        @Query('minRating') minRating?: number,
+        @Query('hospital') hospitalId?: number,
+    ) {
+        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
+    }
+
+
+
     @ApiOperation({ summary: 'Update a doctor by ID' })
     @Put(':id')
     updateDoctor(
