@@ -4,12 +4,22 @@ import { AppointmentService } from './service/appointment.service';
 import { NotificationService } from './service/notification.service';
 import { FollowUpService } from './service/followUp.service';
 import { FeedbackService } from './service/feedBack.service';
+import { NotificationWorker } from './service/notification.worker';
+import { NotificationGateway } from './service/notification.gateway';
+import { EmailService } from 'src/email/email.service';
+import { MailModule } from 'src/email/email.module';
+import Redis from 'ioredis';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [RedisModule, PrismaModule], 
+  imports: [RedisModule, PrismaModule, MailModule], 
   controllers: [AppointmentController],
-  providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService],
+  providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService, EmailService, NotificationWorker,
+    NotificationGateway,
+    {
+      provide: Redis,
+      useFactory: () => new Redis(process.env.REDIS_URL || 'redis://localhost:6379'),
+    },],
 })
 export class AppointmentModule {}

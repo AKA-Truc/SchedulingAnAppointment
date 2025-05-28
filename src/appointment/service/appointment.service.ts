@@ -4,6 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { EmailService } from 'src/email/email.service';
+import { NotificationGateway } from './notification.gateway';
 import { CreateAppointment, UpdateAppointment } from '../DTO';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
@@ -16,92 +18,110 @@ enum ReminderOffset {
   BEFORE_1_DAY = 1440,
 }
 
+function getTimeLeftText(from: Date, to: Date): string {
+  const msLeft = to.getTime() - from.getTime();
+  const minutesLeft = Math.floor(msLeft / (60 * 1000));
+  const hoursLeft = Math.floor(minutesLeft / 60);
+  const daysLeft = Math.floor(hoursLeft / 24);
+
+  if (daysLeft > 0) return `${daysLeft} ngày`;
+  if (hoursLeft > 0) return `${hoursLeft} giờ`;
+  return `${minutesLeft} phút`;
+}
+
+
 @Injectable()
 export class AppointmentService {
   constructor(
     private prisma: PrismaService,
     @InjectRedis() private readonly redis: Redis,
+    private readonly emailService: EmailService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
+
+  private async scheduleNotificationsForAppointment(data: CreateAppointment, appointmentId: number) {
+    const scheduledTime = new Date(data.scheduledTime).getTime();
+
+    for (const offsetMinutes of Object.values(ReminderOffset).filter(v => typeof v === 'number') as number[]) {
+        const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
+        if (remindAtTimestamp <= Date.now()) continue;
+
+        const remindAt = new Date(remindAtTimestamp);
+        const timeLeftText = getTimeLeftText(remindAt, new Date(scheduledTime));
+
+        const dbNotification = await this.prisma.notification.create({
+        data: {
+            userId: data.userId,
+            appointmentId,
+            type: NotificationType.APPOINTMENT,
+            title: 'Nhắc lịch khám',
+            content: `Bạn có lịch khám vào lúc ${data.scheduledTime} (còn ${timeLeftText} nữa)`,
+            remindAt,
+            scheduledTime: new Date(data.scheduledTime),
+        },
+        });
+
+        const redisNotification = {
+        id: dbNotification.notificationId,
+        userId: dbNotification.userId,
+        title: dbNotification.title,
+        content: dbNotification.content,
+        remindAt: dbNotification.remindAt.toISOString(),
+        type: dbNotification.type,
+        scheduledTime: dbNotification.scheduledTime.toISOString(),
+        };
+
+        await this.redis.zadd(
+        `notifications:${data.userId}`,
+        remindAtTimestamp,
+        JSON.stringify(redisNotification),
+        );
+    }
+    }
+
 
     async create(data: CreateAppointment) {
         const conflict = await this.prisma.appointment.findFirst({
             where: {
-                doctorId: data.doctorId,
-                scheduledTime: data.scheduledTime,
+            doctorId: data.doctorId,
+            scheduledTime: data.scheduledTime,
             },
         });
-            if (conflict) {
+
+        if (conflict) {
             throw new BadRequestException('Doctor already has an appointment at this time');
         }
 
         const appointment = await this.prisma.appointment.create({
             data: {
-                doctorId: data.doctorId,
-                userId: data.userId,
-                serviceId: data.serviceId,
-                scheduledTime: data.scheduledTime,
-                note: data.note,
-                status: 'SCHEDULED',
+            doctorId: data.doctorId,
+            userId: data.userId,
+            serviceId: data.serviceId,
+            scheduledTime: data.scheduledTime,
+            note: data.note,
+            status: 'SCHEDULED',
             },
         });
 
-        const scheduledTime = new Date(data.scheduledTime).getTime();
+        await this.scheduleNotificationsForAppointment(data, appointment.appointmentId);
 
-        for (const offsetMinutes of Object.values(ReminderOffset).filter(v => typeof v === 'number') as number[]) {
-            const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
-
-            if (remindAtTimestamp > Date.now()) {
-                const remindAt = new Date(remindAtTimestamp);
-
-                // Tính thời gian còn lại từ thời điểm nhắc -> đến lịch hẹn
-                const msLeft = scheduledTime - remindAtTimestamp;
-                const minutesLeft = Math.floor(msLeft / (60 * 1000));
-                const hoursLeft = Math.floor(minutesLeft / 60);
-                const daysLeft = Math.floor(hoursLeft / 24);
-
-                let timeLeftText = '';
-                if (daysLeft > 0) {
-                    timeLeftText = `${daysLeft} ngày`;
-                } else if (hoursLeft > 0) {
-                    timeLeftText = `${hoursLeft} giờ`;
-                } else {
-                    timeLeftText = `${minutesLeft} phút`;
-                }
-
-                // Create a notification in the database
-                const dbNotification = await this.prisma.notification.create({
-                data: {
-                    userId: data.userId,
-                    appointmentId: appointment.appointmentId,
-                    type: NotificationType.APPOINTMENT,
-                    title: 'Nhắc lịch khám',
-                     content: `Bạn có lịch khám vào lúc ${data.scheduledTime} (còn ${timeLeftText} nữa)`,
-                    remindAt,
-                    scheduledTime: new Date(data.scheduledTime),
-            },
+        const user = await this.prisma.user.findUnique({
+            where: { userId: data.userId },
+            select: { email: true },
         });
 
-                // Add the notification to Redis sorted set
-                const redisNotification = {
-                    id: dbNotification.notificationId,
-                    userId: dbNotification.userId,
-                    title: dbNotification.title,
-                    content: dbNotification.content,
-                    remindAt: dbNotification.remindAt.toISOString(),
-                    type: dbNotification.type,
-                    scheduledTime: dbNotification.scheduledTime.toISOString(),
-                };
+        this.notificationGateway.sendToUser(data.userId, {
+            type: 'APPOINTMENT_CREATED',
+            appointmentId: appointment.appointmentId,
+            scheduledTime: data.scheduledTime,
+        });
 
-                await this.redis.zadd(
-                    `notifications:${data.userId}`,
-                    remindAtTimestamp,
-                    JSON.stringify(redisNotification),
-                );
-            }
+        if (user?.email) {
+            const timeLeftText = getTimeLeftText(new Date(), new Date(data.scheduledTime));
+            await this.emailService.sendAppointmentReminder(user.email, data.scheduledTime, timeLeftText);
         }
 
         return appointment;
-
     }
 
 
