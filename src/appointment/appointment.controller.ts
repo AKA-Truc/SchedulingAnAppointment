@@ -22,13 +22,13 @@ export class AppointmentController {
 
     //apointment controller
     @ApiOperation({ summary: 'Create a new appointment' })
-    @Post('appointment')
+    @Post()
     async createAppointment(@Body() data: CreateAppointment) {
         return this.appointment.create(data);
     }
 
     @ApiOperation({ summary: 'Get all appointments with pagination' })
-    @Get('appointment')
+    @Get()
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllAppointments(
@@ -42,7 +42,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Get appointment by ID' })
-    @Get('appointment/:id')
+    @Get(':id')
     async getAppointmentById(
         @Param('id', ParseIntPipe) id: number
     ) {
@@ -50,7 +50,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Update appointment' })
-    @Put('appointment/:id')
+    @Put(':id')
     async updateAppointment(
         @Param('id', ParseIntPipe) id: number,
         @Body() data: UpdateAppointment
@@ -59,7 +59,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Update appointment status' })
-    @Patch('appointment/:id/status')
+    @Patch(':id/status')
     async updateAppointmentStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body('status') status: string,
@@ -76,7 +76,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Cancel appointment' })
-    @Delete('appointment/:id')
+    @Delete(':id')
     async deleteAppointment(
         @Param('id', ParseIntPipe) id: number
     ) {
@@ -208,6 +208,14 @@ export class AppointmentController {
         @Param('id', ParseIntPipe) id: number
     ) {
         return this.notification.getNotification(id);
+    }
+
+    @ApiOperation({ summary: 'Get notifications by user ID' })
+    @Get('notification/user/:userId')
+    async getNotificationsByUserId(
+        @Param('userId', ParseIntPipe) userId: number
+    ) {
+        return this.notification.findByUser(userId);
     }
 
     @ApiOperation({ summary: 'Update notification by ID' })
