@@ -62,13 +62,13 @@ export class AppointmentService {
         });
 
         const redisNotification = {
-        id: dbNotification.notificationId,
-        userId: dbNotification.userId,
-        title: dbNotification.title,
-        content: dbNotification.content,
-        remindAt: dbNotification.remindAt.toISOString(),
-        type: dbNotification.type,
-        scheduledTime: dbNotification.scheduledTime.toISOString(),
+            id: dbNotification.notificationId,
+            userId: dbNotification.userId,
+            title: dbNotification.title,
+            content: dbNotification.content,
+            remindAt: dbNotification.remindAt.toISOString(),
+            type: dbNotification.type,
+            scheduledTime: dbNotification.scheduledTime.toISOString(),
         };
 
         await this.redis.zadd(
@@ -92,16 +92,28 @@ export class AppointmentService {
             throw new BadRequestException('Doctor already has an appointment at this time');
         }
 
-        const appointment = await this.prisma.appointment.create({
+       const appointment = await this.prisma.appointment.create({
             data: {
-            doctorId: data.doctorId,
-            userId: data.userId,
-            serviceId: data.serviceId,
-            scheduledTime: data.scheduledTime,
-            note: data.note,
-            status: 'SCHEDULED',
+                doctorId: data.doctorId,
+                userId: data.userId,
+                serviceId: data.serviceId,
+                scheduledTime: data.scheduledTime,
+                note: data.note,
+                status: 'SCHEDULED',
+            },
+            include: {
+                doctor: {
+                include: {
+                    specialty: true, //lấy thông tin chuyên khoa
+                    user: true, //lấy thông tin người dùng của bác sĩ
+                },
+                },
+                user: true,    //người đặt lịch
+                service: true, //lấy thông tin dịch vụ
             },
         });
+
+
 
         await this.scheduleNotificationsForAppointment(data, appointment.appointmentId);
 
@@ -118,7 +130,8 @@ export class AppointmentService {
 
         if (user?.email) {
             const timeLeftText = getTimeLeftText(new Date(), new Date(data.scheduledTime));
-            await this.emailService.sendAppointmentReminder(user.email, data.scheduledTime, timeLeftText);
+            // Gửi email thông báo đặt lịch thành công
+            await this.emailService.sendAppointmentConfirmation(user.email, appointment)
         }
 
         return appointment;
