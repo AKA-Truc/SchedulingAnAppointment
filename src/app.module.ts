@@ -10,6 +10,7 @@ import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { SignalingModule } from './video/signaling.module';
 import { ConfigModule } from '@nestjs/config';
 import * as path from 'path';
 
@@ -28,6 +29,7 @@ import * as path from 'path';
     PatientProfileModule,
     AppointmentModule,
     PaymentModule,
+    SignalingModule,
     ConfigModule.forRoot({
       envFilePath: path.resolve(__dirname, '../.env'),
       isGlobal: true,
