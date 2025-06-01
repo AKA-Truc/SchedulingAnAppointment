@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -12,7 +12,9 @@ import { PaymentModule } from './payment/payment.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { ConfigModule } from '@nestjs/config';
 import * as path from 'path';
-
+import { ApplicationInitService } from './config/application.init.service';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/guard/auth.guard';
 
 @Module({
   imports: [
@@ -34,6 +36,6 @@ import * as path from 'path';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ApplicationInitService, { provide: APP_GUARD, useClass: AuthGuard, }],
 })
 export class AppModule { }
