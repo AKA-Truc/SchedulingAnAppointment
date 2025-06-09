@@ -33,6 +33,17 @@ model Review {
   @@index([doctorId])
 }
 
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser  Int
+  toUser    Int
+  content   String
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+
+  conversationId String
+}
+
 enum RoleEnum {
   USER
   DOCTOR
