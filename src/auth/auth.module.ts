@@ -1,31 +1,23 @@
-import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
-import { PrismaModule } from '../prisma/prisma.module';
-import { UserModule } from '../user/user.module';
-
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './jwt.strategy';
+import { Module } from "@nestjs/common";
+import { UserModule } from "src/user/user.module";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
+import { JwtModule, JwtService } from "@nestjs/jwt";
+import { ThrottlerModule } from "@nestjs/throttler";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 
 @Module({
   imports: [
-    ConfigModule, // để dùng ConfigService lấy biến môi trường
     UserModule,
-    PrismaModule,
-    PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-        signOptions: { expiresIn: '15m' },
-      }),
+    ConfigModule,
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_ACCESS_TOKEN_SECRET,
+      signOptions: { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION },
     }),
   ],
-  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
+  providers: [AuthService,],
+  exports: [AuthService]
 })
 export class AuthModule { }

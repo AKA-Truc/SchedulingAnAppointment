@@ -1,15 +1,16 @@
 import {
-    Injectable,
-    NotFoundException,
-    BadRequestException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateHospital, UpdateHospital } from './DTO';
+import { CreateHospital, UpdateHospital } from '../DTO';
+import { Hospital, Prisma } from '@prisma/client';
 
 
 @Injectable()
 export class HospitalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createHospital(data: CreateHospital) {
     const emailExists = await this.prisma.hospital.findFirst({
@@ -63,6 +64,19 @@ export class HospitalService {
     }
 
     return hospital;
+  }
+
+  async searchHospital(params: {
+    skip?: number;
+    take?: number;
+    where?: Prisma.HospitalWhereInput;
+  }): Promise<Hospital[]> {
+    const { skip, take, where } = params;
+    return this.prisma.hospital.findMany({
+      skip,
+      take,
+      where,
+    });
   }
 
   async updateHospital(id: number, dto: UpdateHospital) {

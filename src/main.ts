@@ -23,10 +23,25 @@ async function bootstrap() {
     .setDescription('Mô tả API')
     .setVersion('1.0')
     .addTag('tag')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'bearer',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  document.security = [{ bearer: [] }];
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Lưu token khi refresh
+    }
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

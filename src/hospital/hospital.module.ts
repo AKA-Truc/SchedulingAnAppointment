@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { HospitalController } from './hospital.controller';
-import { HospitalService } from './hospital.service';
+import { HospitalService } from './services/hospital.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
-import { ReviewHospitalService } from './reviewHospital.service';
+import { ReviewHospitalService } from './services/reviewHospital.service';
+import { DashboardHospitalService } from './services/dashboard.service';
+import { AchievementHospitalService } from './services/achievement.hospital.service';
 
 @Module({
   imports: [PrismaModule],
   controllers: [HospitalController],
-  providers: [HospitalService,ReviewHospitalService]
+  providers: [HospitalService, ReviewHospitalService, DashboardHospitalService, AchievementHospitalService]
 })
-export class HospitalModule {}
+export class HospitalModule { }
