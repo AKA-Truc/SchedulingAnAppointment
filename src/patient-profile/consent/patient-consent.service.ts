@@ -1,10 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ComplianceReportService } from './services/compliance-report.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PatientConsentService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(PatientConsentService.name);
 
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly complianceService: ComplianceReportService,
+    private readonly eventEmitter: EventEmitter2
+  ) {}
   async grantConsent(params: {
     patientId: number;
     grantedToId: number;
@@ -12,7 +19,7 @@ export class PatientConsentService {
     purpose: string;
     validUntil: Date;
   }) {
-    return this.prisma.patientConsent.create({
+    const consent = await this.prisma.patientConsent.create({
       data: {
         patientId: params.patientId,
         grantedToId: params.grantedToId,
@@ -22,16 +29,49 @@ export class PatientConsentService {
         status: 'ACTIVE'
       }
     });
-  }
 
+    // Emit event for compliance monitoring
+    this.eventEmitter.emit('consent.granted', {
+      consentId: consent.id,
+      patientId: params.patientId,
+      grantedToId: params.grantedToId,
+      dataType: params.dataType,
+      timestamp: new Date()
+    });
+
+    // Generate compliance report
+    await this.complianceService.generateComplianceReport(
+      params.patientId,
+      new Date(new Date().setDate(new Date().getDate() - 30)), // Last 30 days
+      new Date()
+    );
+
+    return consent;
+  }
   async revokeConsent(consentId: number) {
-    return this.prisma.patientConsent.update({
+    const consent = await this.prisma.patientConsent.update({
       where: { id: consentId },
       data: { 
         status: 'REVOKED',
         revokedAt: new Date()
       }
     });
+
+    // Emit event for compliance monitoring
+    this.eventEmitter.emit('consent.revoked', {
+      consentId,
+      patientId: consent.patientId,
+      timestamp: new Date()
+    });
+
+    // Generate compliance report
+    await this.complianceService.generateComplianceReport(
+      consent.patientId,
+      new Date(new Date().setDate(new Date().getDate() - 30)),
+      new Date()
+    );
+
+    return consent;
   }
 
   async verifyConsent(params: {
