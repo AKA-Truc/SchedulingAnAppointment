@@ -1,58 +1,72 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service'; // cập nhật path nếu khác
-import * as seal from 'node-seal'; // Homomorphic encryption library
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import SEAL from 'node-seal';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class PatientEncryptionService {
-  private readonly sensitiveFields = [
-    'allergies',
-    'chronicDiseases',
-    'obstetricHistory',
-    'surgicalHistory',
-    'medicationHistory'
-  ];
+export class PatientEncryptionService implements OnModuleInit {
+  private seal: any;
+  private context: any;
+  private encoder: any;
+  private encryptor: any;
+  private decryptor: any;
+  private evaluator: any;
+  private publicKey: any;
+  private secretKey: any;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService
+  ) {}
 
-  async encryptSensitiveData(data: any) {
-    const encryptedData = { ...data };
-    
-    for (const field of this.sensitiveFields) {
-      if (data[field]) {
-        encryptedData[field] = await this.encryptField(data[field]);
-      }
-    }
-    
-    return encryptedData;
+  async onModuleInit() {
+    this.seal = await SEAL();
+
+    const schemeType = this.seal.SchemeType.bfv;
+    const securityLevel = this.seal.SecurityLevel.tc128;
+    const polyModulusDegree = 4096;
+
+    const coeffModulus = this.seal.CoeffModulus.BFVDefault(polyModulusDegree);
+    const plainModulus = this.seal.PlainModulus.Batching(polyModulusDegree, 20);
+
+    const encParams = this.seal.EncryptionParameters(schemeType);
+    encParams.setPolyModulusDegree(polyModulusDegree);
+    encParams.setCoeffModulus(coeffModulus);
+    encParams.setPlainModulus(plainModulus);
+
+    this.context = this.seal.Context(encParams, true, securityLevel);
+
+    const keyGenerator = this.seal.KeyGenerator(this.context);
+    this.publicKey = keyGenerator.createPublicKey();
+    this.secretKey = keyGenerator.secretKey();
+
+    this.encoder = this.seal.BatchEncoder(this.context);
+    this.encryptor = this.seal.Encryptor(this.context, this.publicKey);
+    this.decryptor = this.seal.Decryptor(this.context, this.secretKey);
+    this.evaluator = this.seal.Evaluator(this.context);
   }
 
-  async aggregateEncryptedData(patientIds: number[], field: string) {
-  const patients = await this.prisma.patientProfile.findMany({
-    where: {
-      profileId: { in: patientIds }
-    },
-    select: {
-      [field]: true
-    }
-  });
+  async encryptString(value: string): Promise<string> {
+    const codes = Array.from(value).map(c => c.charCodeAt(0));
+    while (codes.length < this.encoder.slotCount) codes.push(0);
 
-  const values = (patients as Array<Record<string, any>>)
-    .map(p => p[field])
-    .filter((v): v is string => typeof v === 'string');
+    const plain = this.encoder.encode(Int32Array.from(codes));
+    const cipher = this.seal.CipherText();
+    this.encryptor.encrypt(plain, cipher);
 
-  return await this.computeEncryptedAggregation(values);
-}
-
-
-
-  private async encryptField(value: string): Promise<string> {
-    return `encrypted(${value})`; 
+    return cipher.save();
   }
 
-  private async computeEncryptedAggregation(encryptedValues: string[]) {
-    return {
-      total: encryptedValues.length,
-      aggregatedResult: 'encrypted_result'
-    };
+  async decryptString(cipherText: string): Promise<string> {
+    const cipher = this.seal.CipherText();
+    cipher.load(this.context, cipherText);
+
+    const plain = this.decryptor.decrypt(cipher);
+    const decoded = this.encoder.decode(plain) as Int32Array;
+
+    return Array.from(decoded)
+      .filter(code => code !== 0)
+      .map(code => String.fromCharCode(code))
+      .join('');
   }
 }
