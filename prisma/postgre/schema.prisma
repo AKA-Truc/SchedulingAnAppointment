@@ -23,6 +23,10 @@ model User {
   notifications  Notification[]
   patientProfile PatientProfile?
   tokens         Token[]
+
+  // FHIR and Advanced Features Relations
+  grantedConsents PatientConsent[] @relation("grantedTo")
+  accessLogs      AccessLog[]      @relation("accessedBy")
 }
 
 model Token {
@@ -70,6 +74,12 @@ model PatientProfile {
   socialHistory     String
   medicationHistory String
   user              User     @relation(fields: [userId], references: [userId])
+
+  // FHIR and Advanced Features Relations
+  consents     PatientConsent[]
+  accessLogs   AccessLog[]
+  telemetry    PatientTelemetry[]
+  alerts       PatientAlert[]
 }
 
 model Specialty {
@@ -213,6 +223,59 @@ model Notification {
   scheduledTime  DateTime
   appointment    Appointment      @relation(fields: [appointmentId], references: [appointmentId])
   user           User             @relation(fields: [userId], references: [userId])
+}
+
+// Consent Management
+model PatientConsent {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     PatientProfile @relation(fields: [patientId], references: [profileId])
+  grantedToId Int
+  grantedTo   User     @relation("grantedTo", fields: [grantedToId], references: [userId])
+  dataType    String   // e.g., "MEDICAL_HISTORY", "TELEMETRY", "PRESCRIPTIONS"
+  purpose     String
+  validUntil  DateTime
+  status      String   // "ACTIVE", "REVOKED"
+  revokedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Access Logging
+model AccessLog {
+  id           Int      @id @default(autoincrement())
+  patientId    Int
+  patient      PatientProfile @relation(fields: [patientId], references: [profileId])
+  accessedById Int
+  accessedBy   User     @relation("accessedBy", fields: [accessedById], references: [userId])
+  dataType     String
+  purpose      String
+  timestamp    DateTime @default(now())
+}
+
+// Real-time Telemetry
+model PatientTelemetry {
+  id         Int      @id @default(autoincrement())
+  patientId  Int
+  patient    PatientProfile @relation(fields: [patientId], references: [profileId])
+  deviceId   String
+  metricType String   // "HEART_RATE", "BLOOD_PRESSURE", "SPO2", etc.
+  value      String   // JSON string of actual values
+  timestamp  DateTime
+  createdAt  DateTime @default(now())
+}
+
+// Alerts from Telemetry Analysis
+model PatientAlert {
+  id         Int      @id @default(autoincrement())
+  patientId  Int
+  patient    PatientProfile @relation(fields: [patientId], references: [profileId])
+  alertType  String
+  value      String   // JSON string of alert details
+  timestamp  DateTime
+  status     String   // "PENDING", "ACKNOWLEDGED", "RESOLVED"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum NotificationType {
