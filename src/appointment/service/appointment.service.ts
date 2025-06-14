@@ -285,4 +285,141 @@ export class AppointmentService {
             }
         return { message: 'Hủy lịch hẹn và xoá thông báo thành công' };
     }
+
+    //Dashboard thống kê lịch hẹn
+    async getDashboardStats() {
+        const totalAppointments = await this.prisma.appointment.count();
+        const completedAppointments = await this.prisma.appointment.count({
+            where: { status: AppointmentStatus.COMPLETED },
+        });
+        const cancelledAppointments = await this.prisma.appointment.count({
+            where: { status: AppointmentStatus.CANCELLED },
+        });
+        const pendingAppointments = await this.prisma.appointment.count({
+            where: { status: AppointmentStatus.SCHEDULED },
+        });
+        const rescheduleAppointments = await this.prisma.appointment.count({
+            where: { status: AppointmentStatus.RESCHEDULED },
+        });
+        return {
+            totalAppointments,
+            completedAppointments,
+            cancelledAppointments,
+            pendingAppointments,
+            rescheduleAppointments,
+        };
+    }
+
+    //Lịch hẹn của người dùng
+    async getAppointmentsByUserId(userId: number, page: number = 1, limit: number = 10) {
+        const total = await this.prisma.appointment.count({
+            where: { userId },
+        });
+        const skip = (page - 1) * limit;
+
+        const appointments = await this.prisma.appointment.findMany({
+            where: { userId },
+            skip,
+            take: limit,
+            include: {
+                doctor: {
+                    include: {
+                        specialty: true, //lấy thông tin chuyên khoa
+                        user: true, //lấy thông tin người dùng của bác sĩ
+                    },
+                },
+                service: true, //lấy thông tin dịch vụ
+                feedback: true,
+                followUps: true,
+                payments: true,
+            },
+        });
+
+        return {
+            data: appointments,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
+
+    //Lịch hẹn trong ngày của bác sĩ
+    async getTodaysAppointmentsByDoctor(doctorId: number, page: number = 1, limit: number = 10) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Đặt giờ về đầu ngày
+
+        const total = await this.prisma.appointment.count({
+            where: {
+                doctorId,
+                scheduledTime: {
+                    gte: today,
+                },
+            },
+        });
+
+        const skip = (page - 1) * limit;
+
+        const appointments = await this.prisma.appointment.findMany({
+            where: {
+                doctorId,
+                scheduledTime: {
+                    gte: today,
+                },
+            },
+            skip,
+            take: limit,
+            include: {
+                user: true, // Lấy thông tin người dùng của người đặt lịch
+                service: true, // Lấy thông tin dịch vụ
+            },
+        });
+
+        return {
+            data: appointments,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
+
+    //bác sĩ nào có lịch hẹn nhiều nhất
+    async getTopDoctorsByAppointments(limit: number = 5) {
+        const topDoctors = await this.prisma.appointment.groupBy({
+            by: ['doctorId'],
+            _count: {
+                appointmentId: true,
+            },
+            orderBy: {
+                _count: {
+                    appointmentId: 'desc',
+                },
+            },
+            take: limit,
+        });
+
+        // Lấy thông tin chi tiết bác sĩ
+        const doctorIds = topDoctors.map(d => d.doctorId);
+        const doctors = await this.prisma.doctor.findMany({
+            where: { doctorId: { in: doctorIds } },
+            include: {
+                user: true, // Lấy thông tin người dùng của bác sĩ
+                specialty: true, // Lấy thông tin chuyên khoa
+            },
+        });
+
+        if (doctors.length === 0) {
+            throw new NotFoundException('Không tìm thấy bác sĩ nào');
+        }
+
+        return topDoctors.map(top => ({
+            ...top,
+            doctor: doctors.find(doc => doc.doctorId === top.doctorId),
+        }));
+    }
 }

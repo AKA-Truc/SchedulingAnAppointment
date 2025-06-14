@@ -83,6 +83,42 @@ export class AppointmentController {
         return this.appointment.cancelAppointment(id);
     }
 
+    @ApiOperation({ summary: 'Get appointments by doctor ID' })
+    @Get('doctor/:doctorId')
+    async getAppointmentsByDoctorId(
+        @Param('doctorId', ParseIntPipe) doctorId: number,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        const pageNumber = page ? parseInt(page) : 1;
+        const limitNumber = limit ? parseInt(limit) : 10;
+        return this.appointment.getTodaysAppointmentsByDoctor(doctorId, pageNumber, limitNumber);
+    }
+
+    @ApiOperation({ summary: 'Get appointments by patient ID' })
+    @Get('patient/:patientId')
+    async getAppointmentsByPatientId(
+        @Param('patientId', ParseIntPipe) patientId: number,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        const pageNumber = page ? parseInt(page) : 1;
+        const limitNumber = limit ? parseInt(limit) : 10;
+        return this.appointment.getAppointmentsByUserId(patientId, pageNumber, limitNumber);
+    }
+
+    @ApiOperation({ summary: 'Get appointment statistics' })
+    @Get('statistics')
+    async getAppointmentStatistics() {
+        return this.appointment.getDashboardStats();
+    }
+
+    @ApiOperation({ summary: 'Get doctor with most appointments' })
+    @Get('statistics/doctor-most-appointments')
+    async getDoctorWithMostAppointments() {
+        return this.appointment.getTopDoctorsByAppointments();
+    }
+
     //Feedback controller
 
     @ApiOperation({ summary: 'Create feedback for an appointment' })
