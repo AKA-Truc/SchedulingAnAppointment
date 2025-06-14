@@ -1,17 +1,30 @@
 import { Module } from '@nestjs/common';
-import { DoctorController } from './doctor.controller';
-import { DoctorService } from './service/doctor.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+
+import { DoctorController } from './doctor.controller';
+
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
-import { CertificationService } from './service/certification.service';
-import { SpecialtyService } from './service/specialty.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
+
 import { AchievementService } from './service/achievement.service';
+import { CertificationService } from './service/certification.service';
 import { DoctorScheduleService } from './service/doctorSchedule.service';
+import { DoctorService } from './service/doctor.service';
+import { SpecialtyService } from './service/specialty.service';
 
 @Module({
-  imports: [PrismaModule, CloudinaryModule, ConfigModule],
+  imports: [
+    CloudinaryModule,
+    ConfigModule,
+    PrismaModule,
+  ],
   controllers: [DoctorController],
-  providers: [DoctorService, CertificationService, SpecialtyService, AchievementService, DoctorScheduleService]
+  providers: [
+    AchievementService,
+    CertificationService,
+    DoctorScheduleService,
+    DoctorService,
+    SpecialtyService,
+  ],
 })
 export class DoctorModule { }
