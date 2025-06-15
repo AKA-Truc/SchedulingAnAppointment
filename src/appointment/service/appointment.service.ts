@@ -131,7 +131,7 @@ export class AppointmentService {
         if (user?.email) {
             const timeLeftText = getTimeLeftText(new Date(), new Date(data.scheduledTime));
             // Gửi email thông báo đặt lịch thành công
-            await this.emailService.sendAppointmentConfirmation(user.email, appointment)
+            await this.emailService.sendAppointmentConfirmationWithHandlebars(user.email, appointment)
         }
 
         return appointment;

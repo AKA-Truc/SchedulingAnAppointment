@@ -2,14 +2,12 @@ import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, ParseInt
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AppointmentService } from './service/appointment.service';
 import { FeedbackService } from './service/feedBack.service';
-import { CreateAppointment, UpdateAppointment } from './DTO';
+import { CreateAppointment, UpdateAppointment, UpdateAppointmentStatusDto } from './DTO';
 import { CreateFeedback, UpdateFeedback } from './DTO';
 import { CreateFollowUp, UpdateFollowUp } from './DTO';
 import { CreateNotification, UpdateNotification } from './DTO';
 import { FollowUpService } from './service/followUp.service';
 import { NotificationService } from './service/notification.service';
-import { AppointmentStatus } from '@prisma/client';
-import { BadRequestException } from '@nestjs/common';
 
 @Controller('appointment')
 export class AppointmentController {
@@ -41,6 +39,12 @@ export class AppointmentController {
         return this.appointment.getAllAppointments(pageNumber, limitNumber);
     }
 
+    @ApiOperation({ summary: 'Get appointment statistics' })
+    @Get('statistics')
+    async getAppointmentStatistics() {
+        return this.appointment.getDashboardStats();
+    }
+
     @ApiOperation({ summary: 'Get appointment by ID' })
     @Get(':id')
     async getAppointmentById(
@@ -62,17 +66,11 @@ export class AppointmentController {
     @Patch(':id/status')
     async updateAppointmentStatus(
     @Param('id', ParseIntPipe) id: number,
-    @Body('status') status: string,
+    @Body() body: UpdateAppointmentStatusDto
     ) {
-        const validStatuses = Object.values(AppointmentStatus);
+    const { status } = body;
 
-        if (!validStatuses.includes(status as AppointmentStatus)) {
-            throw new BadRequestException(
-            `Trạng thái '${status}' không hợp lệ. Hợp lệ: ${validStatuses.join(', ')}`
-            );
-        }
-
-        return this.appointment.updateStatus(id, status as AppointmentStatus);
+    return this.appointment.updateStatus(id, status);
     }
 
     @ApiOperation({ summary: 'Cancel appointment' })
@@ -83,7 +81,9 @@ export class AppointmentController {
         return this.appointment.cancelAppointment(id);
     }
 
-    @ApiOperation({ summary: 'Get appointments by doctor ID' })
+    @ApiOperation({ summary: 'Get appointments today by doctor ID' })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
     @Get('doctor/:doctorId')
     async getAppointmentsByDoctorId(
         @Param('doctorId', ParseIntPipe) doctorId: number,
@@ -107,12 +107,6 @@ export class AppointmentController {
         return this.appointment.getAppointmentsByUserId(patientId, pageNumber, limitNumber);
     }
 
-    @ApiOperation({ summary: 'Get appointment statistics' })
-    @Get('statistics')
-    async getAppointmentStatistics() {
-        return this.appointment.getDashboardStats();
-    }
-
     @ApiOperation({ summary: 'Get doctor with most appointments' })
     @Get('statistics/doctor-most-appointments')
     async getDoctorWithMostAppointments() {
@@ -128,7 +122,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Get all feedbacks with pagination' })
-    @Get('feedback')
+    @Get('feedback/get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllFeedbacks(
