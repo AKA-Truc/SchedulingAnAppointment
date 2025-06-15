@@ -1,17 +1,24 @@
-import { BadRequestException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
 import { LoginUserDto } from "./DTO/LoginUser.dto";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
-import { Token, User } from "@prisma/client";
+import { GenderEnum, Token, User } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
+import { RegisterDTO } from "./DTO/Register.dto";
+import { UserService } from "src/user/user.service";
+import { EmailService } from "src/email/email.service";
+import { CreateUserDto } from "src/user/DTO";
+import { use } from "passport";
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly prismaService: PrismaService,
+        private readonly userService: UserService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly emailService: EmailService
     ) { }
 
     async login(data: LoginUserDto): Promise<any> {
@@ -25,6 +32,42 @@ export class AuthService {
 
         return { accessToken, refreshToken };
     }
+
+    async register(data: CreateUserDto) {
+        const user = await this.userService.createUser(data);
+        const { accessToken, refreshToken } = await this.generateToken(user);
+        await this.saveToken(user.userId, accessToken, refreshToken);
+        await this.emailService.sendVerificationEmail(user.email, user.fullName, accessToken);
+        return {
+            message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
+        };
+    }
+
+    async verifyEmail(token: string) {
+        const tokenRecord = await this.prismaService.token.findFirst({
+            where: {
+                accessToken: token,
+                // accessExpiresAt: { gt: new Date() },
+            },
+            include: { user: true },
+        });
+
+        if (!tokenRecord) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        await this.prismaService.user.update({
+            where: { userId: tokenRecord.userId },
+            data: { isActive: true },
+        });
+
+        await this.prismaService.token.delete({
+            where: { tokenId: tokenRecord.tokenId },
+        });
+
+        return { message: 'Tài khoản đã được xác thực thành công.' };
+    }
+
 
     async logout(userReq: any, refreshToken: string) {
         const user = await this.getMyProfile(userReq);
@@ -77,22 +120,28 @@ export class AuthService {
         return user;
     }
 
-    async saveToken(userId: number, accessToken: string, refreshToken: string): Promise<Token> {
-        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-
+    async saveToken(userId: number, accessToken: string, refreshToken?: string): Promise<Token> {
         const decodedAccess = this.jwtService.decode(accessToken) as any;
-        const decodedRefresh = this.jwtService.decode(refreshToken) as any;
+
+        const tokenData: any = {
+            userId,
+            accessToken,
+            accessExpiresAt: new Date(decodedAccess.exp * 1000),
+        };
+
+        if (refreshToken) {
+            const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+            const decodedRefresh = this.jwtService.decode(refreshToken) as any;
+
+            tokenData.refreshToken = hashedRefreshToken;
+            tokenData.refreshExpiresAt = new Date(decodedRefresh.exp * 1000);
+        }
 
         return this.prismaService.token.create({
-            data: {
-                userId: userId,
-                accessToken,
-                refreshToken: hashedRefreshToken,
-                accessExpiresAt: new Date(decodedAccess.exp * 1000),
-                refreshExpiresAt: new Date(decodedRefresh.exp * 1000),
-            },
+            data: tokenData,
         });
     }
+
 
     async generateToken(user: User): Promise<any> {
         const payload = { sub: user.userId, email: user.email, role: user.role }
@@ -103,4 +152,59 @@ export class AuthService {
 
         return { accessToken, refreshToken };
     }
+
+    async findAllTokens(): Promise<Token[]> {
+        return this.prismaService.token.findMany({
+            include: { user: true },
+        });
+    }
+
+    async deleteTokenById(id: number): Promise<{ message: string }> {
+        const token = await this.prismaService.token.findUnique({
+            where: { tokenId: id },
+        });
+        if (!token) throw new NotFoundException('Token not found');
+        await this.prismaService.token.delete({ where: { tokenId: id } });
+        return { message: 'Token deleted successfully' };
+    }
+
+    // async socialLogin(user: any) {
+    //     const existingUser = await this.prismaService.user.findUnique({
+    //         where: { email: user.email },
+    //     });
+
+    //     if (existingUser) {
+    //         const tokens = await this.generateToken(existingUser);
+    //         await this.saveToken(existingUser.userId, tokens.accessToken, tokens.refreshToken);
+    //         return {
+    //             message: 'Login successful',
+    //             user: existingUser,
+    //             ...tokens,
+    //         };
+    //     }
+
+    //     // Tạo mới user nếu chưa tồn tại
+    //     const newUser = await this.prismaService.user.create({
+    //         data: {
+    //             fullName: user.fullName,
+    //             email: user.email,
+    //             // picture: user.picture,
+    //             // provider: 'google',
+    //             password: '',
+    //             role: 'USER',
+    //             gender: GenderEnum.Female,
+    //             phone: '',
+    //             isActive: true
+    //         },
+    //     });
+
+    //     const tokens = await this.generateToken(newUser);
+    //     await this.saveToken(newUser.userId, tokens.accessToken, tokens.refreshToken);
+
+    //     return {
+    //         message: 'User registered and logged in with Google',
+    //         user: newUser,
+    //         ...tokens,
+    //     };
+    // }
 }

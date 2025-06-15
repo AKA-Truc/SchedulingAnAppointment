@@ -20,6 +20,7 @@ export class ApplicationInitService implements OnModuleInit {
                     role: 'ADMIN',
                     gender: 'Female',
                     phone: '0912345678',
+                    isActive: true,
                 },
             });
             console.log('Admin account created. Default password is : adminadmin. Please change it soon!');

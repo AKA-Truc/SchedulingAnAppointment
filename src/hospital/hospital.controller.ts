@@ -14,6 +14,7 @@ import { Public } from 'src/auth/guard/auth.guard';
 import { AchievementHospitalService } from './services/achievement.hospital.service';
 import { UpdateAchievement } from 'src/doctor/DTO';
 import { DashboardHospitalService } from './services/dashboard.service';
+import { HospitalFilterDto } from './DTO/HospitalFilter.dto';
 
 @ApiTags('Hospital')
 @Controller('hospital')
@@ -56,6 +57,19 @@ export class HospitalController {
 
     return results;
   }
+
+  @Public()
+  @Get('filter')
+  async getFilteredHospitals(
+    @Query() filterDto: HospitalFilterDto,
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+  ): Promise<Hospital[]> {
+    const numericSkip = skip ? parseInt(skip, 10) : 0;
+    const numericTake = take ? parseInt(take, 10) : 10;
+    return this.hospitalService.filterHospital(filterDto, numericSkip, numericTake);
+  }
+
 
   @Post()
   async createHospital(@Body() data: CreateHospital) {
