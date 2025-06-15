@@ -7,12 +7,12 @@ import { DoctorScheduleService } from './doctorSchedule.service';
 export class DoctorService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly doctorScheduleService: DoctorScheduleService
+        private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    // Create doctor
+    // 🟢 Tạo bác sĩ mới
     async createDoctor(data: CreateDoctor) {
-        // Kiểm tra userId đã có bác sĩ chưa (do userId là unique)
+        // Kiểm tra userId đã có bác sĩ chưa
         const existingDoctor = await this.prisma.doctor.findUnique({
             where: { userId: data.userId },
         });
@@ -20,7 +20,7 @@ export class DoctorService {
             throw new BadRequestException(`Doctor with userId ${data.userId} already exists.`);
         }
 
-        //Kiểm tra Specialty_ID tồn tại
+        // Kiểm tra specialtyId
         const specialty = await this.prisma.specialty.findUnique({
             where: { specialtyId: data.specialtyId },
         });
@@ -28,7 +28,7 @@ export class DoctorService {
             throw new BadRequestException(`Specialty with ID ${data.specialtyId} does not exist.`);
         }
 
-        //Kiểm tra hospitalId tồn tại
+        // Kiểm tra hospitalId
         const hospital = await this.prisma.hospital.findUnique({
             where: { hospitalId: data.hospitalId },
         });
@@ -57,7 +57,7 @@ export class DoctorService {
         };
     }
 
-    // Get all doctors, có phân trang
+    // 📄 Lấy danh sách bác sĩ (có phân trang)
     async getAllDoctors(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
@@ -71,7 +71,7 @@ export class DoctorService {
                     hospital: true,
                     schedules: true,
                     appointments: true,
-                    achievements: true
+                    achievements: true,
                 },
             }),
             this.prisma.doctor.count(),
@@ -88,7 +88,7 @@ export class DoctorService {
         };
     }
 
-    // Get doctor by id
+    // 🔍 Lấy thông tin bác sĩ theo ID
     async getDoctorById(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { doctorId: id },
@@ -98,7 +98,7 @@ export class DoctorService {
                 hospital: true,
                 schedules: true,
                 appointments: true,
-                achievements: true
+                achievements: true,
             },
         });
 
@@ -109,7 +109,7 @@ export class DoctorService {
         return doctor;
     }
 
-    // Update doctor
+    // ✏️ Cập nhật bác sĩ
     async updateDoctor(id: number, dto: UpdateDoctor) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { doctorId: id },
@@ -119,7 +119,6 @@ export class DoctorService {
             throw new NotFoundException(`Doctor with ID ${id} not found`);
         }
 
-        // Nếu update userId, kiểm tra đã tồn tại chưa
         if (dto.userId && dto.userId !== doctor.userId) {
             const userIdTaken = await this.prisma.doctor.findUnique({
                 where: { userId: dto.userId },
@@ -129,7 +128,6 @@ export class DoctorService {
             }
         }
 
-        // Nếu update Specialty_ID, kiểm tra có tồn tại không
         if (dto.specialtyId) {
             const specialty = await this.prisma.specialty.findUnique({
                 where: { specialtyId: dto.specialtyId },
@@ -139,7 +137,6 @@ export class DoctorService {
             }
         }
 
-        // Nếu update hospitalId, kiểm tra có tồn tại không
         if (dto.hospitalId) {
             const hospital = await this.prisma.hospital.findUnique({
                 where: { hospitalId: dto.hospitalId },
@@ -149,32 +146,30 @@ export class DoctorService {
             }
         }
 
-        // Chuẩn bị object data để cập nhật
         const updateData: any = {};
 
         if (dto.userId) updateData.userId = dto.userId;
-        if (dto.specialtyId) updateData.Specialty_ID = dto.specialtyId;
+        if (dto.specialtyId) updateData.specialtyId = dto.specialtyId;
         if (dto.hospitalId) updateData.hospitalId = dto.hospitalId;
-        if (dto.rating !== undefined) updateData.Rating = dto.rating;
-        if (dto.bio !== undefined) updateData.Bio = dto.bio;
+        if (dto.rating !== undefined) updateData.rating = dto.rating;
+        if (dto.bio !== undefined) updateData.bio = dto.bio;
         if (dto.yearsOfExperience !== undefined) updateData.yearsOfExperience = dto.yearsOfExperience;
 
         const updatedDoctor = await this.prisma.doctor.update({
             where: { doctorId: id },
             data: updateData,
             include: {
-                achievements: true
-            }
+                achievements: true,
+            },
         });
 
         return {
             message: 'Doctor updated successfully.',
-            doctor: updatedDoctor
+            doctor: updatedDoctor,
         };
     }
 
-
-    // Delete doctor
+    // ❌ Xoá bác sĩ
     async deleteDoctor(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { doctorId: id },
@@ -187,63 +182,45 @@ export class DoctorService {
         return this.prisma.doctor.delete({
             where: { doctorId: id },
             include: {
-                achievements: true
-            }
+                achievements: true,
+            },
         });
     }
 
-
+    // 📊 Lấy performance bác sĩ trong tháng hiện tại
     async getDoctorPerformanceCurrentMonth(id: number) {
         const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth(); // 0-based, 0 = Jan
-
-        const startDate = new Date(year, month, 1, 0, 0, 0);
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         const endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-        // Lấy tổng số appointment trong tháng hiện tại
         const appointmentCount = await this.prisma.appointment.count({
             where: {
                 doctorId: id,
                 scheduledTime: {
-                    // gte: greater than or equal — lớn hơn hoặc bằng
-
-                    // lte: less than or equal — nhỏ hơn hoặc bằng
                     gte: startDate,
                     lte: endDate,
                 },
             },
         });
 
-        // Lấy feedback trong tháng hiện tại
         const feedbacks = await this.prisma.feedback.findMany({
             where: {
-                appointment: {
-                    doctorId: id,
-                },
+                appointment: { doctorId: id },
                 createdAt: {
                     gte: startDate,
                     lte: endDate,
                 },
             },
-            select: {
-                rating: true,
-            },
+            select: { rating: true },
         });
 
         const countFeedBack = feedbacks.length;
-
-        // Tính rating trung bình
-        let avgRating;
-        let sum = 0;
-        if (feedbacks.length > 0) {
-            for (const fb of feedbacks) {
-                sum += fb.rating;
-            }
-            avgRating = parseFloat((sum / feedbacks.length).toFixed(2));
-        } else {
-            avgRating = null;
-        }
+        const avgRating =
+            feedbacks.length > 0
+                ? parseFloat(
+                    (feedbacks.reduce((sum, fb) => sum + fb.rating, 0) / feedbacks.length).toFixed(2),
+                )
+                : null;
 
         return {
             appointmentCount,
@@ -252,16 +229,14 @@ export class DoctorService {
         };
     }
 
-    //filtering trên list doctors Theo rating, specialty, hospital
-    async filterDoctors(
-        params: {
-            specialtyId?: number;
-            minRating?: number;
-            hospitalId?: number;
-            page?: number;
-            limit?: number;
-        }
-    ) {
+    // 🔍 Lọc bác sĩ theo specialty, rating, hospital
+    async filterDoctors(params: {
+        specialtyId?: number;
+        minRating?: number;
+        hospitalId?: number;
+        page?: number;
+        limit?: number;
+    }) {
         const { specialtyId, minRating, hospitalId, page = 1, limit = 10 } = params;
         const skip = (page - 1) * limit;
 
@@ -294,5 +269,4 @@ export class DoctorService {
             totalPages: Math.ceil(total / limit),
         };
     }
-
 }

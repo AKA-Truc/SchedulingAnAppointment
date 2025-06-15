@@ -6,7 +6,7 @@ import { CreateAchievement, UpdateAchievement } from '../DTO';
 export class AchievementService {
     constructor(private prisma: PrismaService) { }
 
-    // Tạo thành tích, kiểm tra doctorId & hospitalId trước khi connect
+    // 🟢 Tạo thành tích - kiểm tra doctor & hospital tồn tại trước khi kết nối
     async create(dto: CreateAchievement) {
         if (dto.doctorId) {
             const doctorExists = await this.prisma.doctor.findUnique({
@@ -37,7 +37,7 @@ export class AchievementService {
         });
     }
 
-    // Lấy tất cả thành tích (có phân trang)
+    // 📄 Lấy tất cả thành tích (có phân trang)
     async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
@@ -64,7 +64,7 @@ export class AchievementService {
         };
     }
 
-    // Lấy 1 thành tích
+    // 🔍 Lấy một thành tích theo ID
     async findOne(id: number) {
         const achievement = await this.prisma.achievement.findUnique({
             where: { achievementId: id },
@@ -81,7 +81,7 @@ export class AchievementService {
         return achievement;
     }
 
-    // Cập nhật thành tích
+    // ✏️ Cập nhật thành tích
     async update(id: number, dto: UpdateAchievement) {
         const achievement = await this.prisma.achievement.findUnique({
             where: { achievementId: id },
@@ -101,11 +101,9 @@ export class AchievementService {
             const doctorExists = await this.prisma.doctor.findUnique({
                 where: { doctorId: dto.doctorId },
             });
-
             if (!doctorExists) {
                 throw new NotFoundException(`Doctor with ID ${dto.doctorId} does not exist`);
             }
-
             updateData.doctor = { connect: { doctorId: dto.doctorId } };
         }
 
@@ -113,11 +111,9 @@ export class AchievementService {
             const hospitalExists = await this.prisma.hospital.findUnique({
                 where: { hospitalId: dto.hospitalId },
             });
-
             if (!hospitalExists) {
                 throw new NotFoundException(`Hospital with ID ${dto.hospitalId} does not exist`);
             }
-
             updateData.hospital = { connect: { hospitalId: dto.hospitalId } };
         }
 
@@ -131,7 +127,7 @@ export class AchievementService {
         });
     }
 
-    // Xoá thành tích
+    // ❌ Xoá thành tích
     async remove(id: number) {
         const achievement = await this.prisma.achievement.findUnique({
             where: { achievementId: id },

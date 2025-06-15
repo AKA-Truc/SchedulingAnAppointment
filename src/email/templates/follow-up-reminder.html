@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nhắc lịch tái khám</title>
+  <style>
+    body {
+      background-color: #f4f8fb;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .header h2 {
+      color: #1565c0;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #42a5f5;
+      font-size: 15px;
+    }
+
+    .content {
+      padding: 32px 24px;
+    }
+
+    .detail-section {
+      background-color: #f0f7ff;
+      border-left: 4px solid #42a5f5;
+      padding: 24px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .row {
+      margin-bottom: 16px;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #1565c0;
+    }
+
+    .value {
+      color: #000;
+      margin-left: 4px;
+    }
+
+    .cta {
+      text-align: center;
+      margin-top: 24px;
+    }
+
+    .cta a {
+      display: inline-block;
+      background: linear-gradient(135deg, #42a5f5, #1976d2);
+      color: white;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
+      transition: background 0.3s ease;
+    }
+
+    .cta a:hover {
+      background: #1565c0;
+    }
+
+    .footer {
+      background-color: #f5f5f5;
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>🔔 Nhắc lịch tái khám</h2>
+      <p>Bạn có lịch tái khám sắp tới với bác sĩ</p>
+    </div>
+    <div class="content">
+      <div class="detail-section">
+        <div class="row">
+          <span class="label">👤 Bệnh nhân:</span>
+          <span class="value">{{patientName}}</span>
+        </div>
+        <div class="row">
+          <span class="label">👨‍⚕️ Bác sĩ:</span>
+          <span class="value">{{doctorName}}</span>
+        </div>
+        <div class="row">
+          <span class="label">🗓️ Ngày giờ tái khám:</span>
+          <span class="value">{{followUpTime}}</span>
+        </div>
+        <div class="row">
+          <span class="label">📄 Lý do:</span>
+          <span class="value">{{reason}}</span>
+        </div>
+      </div>
+
+      <div class="cta">
+        <a href="http://localhost:3000/appointments/{{appointmentId}}">
+          👉 Xem chi tiết lịch khám
+        </a>
+      </div>
+    </div>
+    <div class="footer">
+      Trung tâm Y tế | Hotline: (028) 1234-5678 | Email: support@healthcare.vn
+    </div>
+  </div>
+</body>
+</html>

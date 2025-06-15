@@ -4,13 +4,10 @@ import { CreateCertification, UpdateCertification } from '../DTO';
 
 @Injectable()
 export class CertificationService {
-    constructor(
-        private prisma: PrismaService
-    ) { }
+    constructor(private prisma: PrismaService) { }
 
-    //tạo chứng chỉ (bên trong đã có kiểm tra tồn tại của doctor trước khi connect với doctor)
+    // 🟢 Tạo chứng chỉ - kiểm tra doctor trước khi kết nối
     async create(dto: CreateCertification) {
-        // Kiểm tra doctorId có tồn tại không
         const doctorExists = await this.prisma.doctor.findUnique({
             where: { doctorId: dto.doctorId },
         });
@@ -29,8 +26,8 @@ export class CertificationService {
         });
     }
 
-    //Tìm tất cả chứng chỉ (đã phân trang)
-    async findAll(page: number = 1, limit: number = 10) {
+    // 📄 Lấy tất cả chứng chỉ (có phân trang)
+    async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
         const [data, total] = await this.prisma.$transaction([
@@ -38,7 +35,7 @@ export class CertificationService {
                 skip,
                 take: limit,
                 include: { doctor: true },
-                orderBy: { certificationId: 'asc' }, // Có thể sửa thành trường khác nếu muốn
+                orderBy: { certificationId: 'asc' },
             }),
             this.prisma.certification.count(),
         ]);
@@ -53,23 +50,33 @@ export class CertificationService {
         };
     }
 
-    //Tìm 1 chứng chỉ
+    // 🔍 Lấy một chứng chỉ theo ID
     async findOne(id: number) {
         const cert = await this.prisma.certification.findUnique({
             where: { certificationId: id },
             include: { doctor: true },
         });
 
-        if (!cert) throw new NotFoundException('Certification not found');
+        if (!cert) {
+            throw new NotFoundException('Certification not found');
+        }
+
         return cert;
     }
 
-
-    //Cập nhật chứng chỉ (đã có kiểm tra tồn tại của đầu vào và kiểm tra Doctor tồn tại trong db trước khi cập nhật)
+    // ✏️ Cập nhật chứng chỉ
     async update(id: number, dto: UpdateCertification) {
-        const updateData: any = {};
+        const cert = await this.prisma.certification.findUnique({
+            where: { certificationId: id },
+        });
 
-        updateData.fileUrl = dto.fileUrl;
+        if (!cert) {
+            throw new NotFoundException(`Certification with ID ${id} not found`);
+        }
+
+        const updateData: any = {
+            fileUrl: dto.fileUrl,
+        };
 
         if (dto.doctorId) {
             const doctorExists = await this.prisma.doctor.findUnique({
@@ -80,21 +87,28 @@ export class CertificationService {
                 throw new NotFoundException(`Doctor with ID ${dto.doctorId} does not exist`);
             }
 
-            if (dto.doctorId) {
-                updateData.Doctor = {
-                    connect: { doctorId: dto.doctorId },
-                };
-            }
+            updateData.doctor = {
+                connect: { doctorId: dto.doctorId },
+            };
         }
 
         return this.prisma.certification.update({
             where: { certificationId: id },
             data: updateData,
+            include: { doctor: true },
         });
     }
 
-    //Xóa bỏ 1 chứng chỉ
+    // ❌ Xoá chứng chỉ
     async remove(id: number) {
+        const cert = await this.prisma.certification.findUnique({
+            where: { certificationId: id },
+        });
+
+        if (!cert) {
+            throw new NotFoundException(`Certification with ID ${id} not found`);
+        }
+
         return this.prisma.certification.delete({
             where: { certificationId: id },
         });

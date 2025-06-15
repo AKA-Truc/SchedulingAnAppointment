@@ -1,21 +1,25 @@
 import {
-    BadRequestException, ParseIntPipe, Body, Controller, Delete,
-    Get, Param, Post, Put, Query, UploadedFile, UseInterceptors
+    BadRequestException, Body, Controller, Delete, Get,
+    Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiQuery, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CertificationService } from './service/certification.service';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+
 import {
     CreateCertification, UpdateCertification, CreateDoctor, UpdateDoctor,
     CreateAchievement, UpdateAchievement, CreateSpecialty, UpdateSpecialty,
-    CreateDoctorSchedule, UpdateDoctorSchedule
+    CreateDoctorSchedule, UpdateDoctorSchedule,
 } from './DTO';
+
 import { DoctorService } from './service/doctor.service';
-import { ConfigService } from '@nestjs/config';
 import { AchievementService } from './service/achievement.service';
 import { SpecialtyService } from './service/specialty.service';
 import { DoctorScheduleService } from './service/doctorSchedule.service';
+import { CertificationService } from './service/certification.service';
+
+
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Doctor')
 @Controller('doctor')
@@ -27,14 +31,14 @@ export class DoctorController {
         private readonly configService: ConfigService,
         private readonly achievementService: AchievementService,
         private readonly specialtyService: SpecialtyService,
-        private readonly doctorScheduleService: DoctorScheduleService
+        private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    // ---------------- Doctor CRUD ----------------
+    // ──────── Doctor CRUD ────────
     @ApiOperation({ summary: 'Create a new doctor' })
     @Post()
-    createDoctor(@Body() createDoctorDto: CreateDoctor) {
-        return this.doctorService.createDoctor(createDoctorDto);
+    createDoctor(@Body() dto: CreateDoctor) {
+        return this.doctorService.createDoctor(dto);
     }
 
     @ApiOperation({ summary: 'Get all doctors with pagination' })
@@ -54,7 +58,7 @@ export class DoctorController {
 
     @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
     @Get(':id')
-    getPerfomanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
+    getPerformanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
 
@@ -68,18 +72,16 @@ export class DoctorController {
         return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
     }
 
-
-
     @ApiOperation({ summary: 'Update a doctor by ID' })
     @Put(':id')
     updateDoctor(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateDoctorDto: UpdateDoctor,
+        @Body() dto: UpdateDoctor,
     ) {
-        return this.doctorService.updateDoctor(id, updateDoctorDto);
+        return this.doctorService.updateDoctor(id, dto);
     }
 
-    // ------------- Certification CRUD ------------
+    // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })
     @Post('/certification')
     @UseInterceptors(FileInterceptor('file'))
@@ -99,8 +101,9 @@ export class DoctorController {
         @Body('doctorId', ParseIntPipe) doctorId: number,
     ) {
         const MAX_SIZE_MB = parseInt(this.configService.get<string>('MAX_FILE_SIZE') || '10');
-        const fileSizeInMB = file.size / (1024 * 1024);
-        if (fileSizeInMB > MAX_SIZE_MB) {
+        const sizeInMB = file.size / (1024 * 1024);
+
+        if (sizeInMB > MAX_SIZE_MB) {
             throw new BadRequestException(`File size must not exceed ${MAX_SIZE_MB}MB`);
         }
 
@@ -109,14 +112,14 @@ export class DoctorController {
             throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
         }
 
-        const uploadResult = await this.cloudinaryService.uploadFile(file, {
+        const result = await this.cloudinaryService.uploadFile(file, {
             context: `doctorId=${doctorId}`,
             public_id: `${Date.now()}_${file.originalname.split('.')[0]}`,
         });
 
         return this.certificationService.create({
             doctorId,
-            fileUrl: uploadResult.secure_url,
+            fileUrl: result.secure_url,
         });
     }
 
@@ -124,24 +127,25 @@ export class DoctorController {
     @Get('/certification')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
-    async findAllCertifications(
+    findAllCertifications(
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
-        const pageNumber = page ? parseInt(page) : 1;
-        const limitNumber = limit ? parseInt(limit) : 10;
-        return this.certificationService.findAll(pageNumber, limitNumber);
+        return this.certificationService.findAll(
+            page ? parseInt(page) : 1,
+            limit ? parseInt(limit) : 10,
+        );
     }
 
     @ApiOperation({ summary: 'Get certification by ID' })
     @Get('/certification/:id')
-    async findCertification(@Param('id', ParseIntPipe) id: number) {
+    findCertification(@Param('id', ParseIntPipe) id: number) {
         return this.certificationService.findOne(id);
     }
 
     @ApiOperation({ summary: 'Update a certification by ID' })
     @Put('/certification/:id')
-    async updateCertification(
+    updateCertification(
         @Param('id', ParseIntPipe) id: number,
         @Body() dto: UpdateCertification,
     ) {
@@ -150,11 +154,11 @@ export class DoctorController {
 
     @ApiOperation({ summary: 'Delete a certification by ID' })
     @Delete('/certification/:id')
-    async removeCertification(@Param('id', ParseIntPipe) id: number) {
+    removeCertification(@Param('id', ParseIntPipe) id: number) {
         return this.certificationService.remove(id);
     }
 
-    // -------------- Achievement CRUD -------------
+    // ──────── Achievement CRUD ────────
     @ApiOperation({ summary: 'Create a new doctor achievement' })
     @Post('/achievement')
     createAchievement(@Body() dto: CreateAchievement) {
@@ -191,11 +195,11 @@ export class DoctorController {
         return this.achievementService.remove(id);
     }
 
-    // --------------- Specialty CRUD --------------
+    // ──────── Specialty CRUD ────────
     @ApiOperation({ summary: 'Create a new specialty' })
     @Post('/specialty')
-    createSpecialty(@Body() createSpecialtyDto: CreateSpecialty) {
-        return this.specialtyService.create(createSpecialtyDto);
+    createSpecialty(@Body() dto: CreateSpecialty) {
+        return this.specialtyService.create(dto);
     }
 
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
@@ -217,9 +221,9 @@ export class DoctorController {
     @Put('/specialty/:id')
     updateSpecialty(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateSpecialtyDto: UpdateSpecialty,
+        @Body() dto: UpdateSpecialty,
     ) {
-        return this.specialtyService.update(id, updateSpecialtyDto);
+        return this.specialtyService.update(id, dto);
     }
 
     @ApiOperation({ summary: 'Delete a specialty by ID' })
@@ -228,11 +232,11 @@ export class DoctorController {
         return this.specialtyService.remove(id);
     }
 
-    // ----------- Doctor Schedule CRUD ------------
+    // ──────── Doctor Schedule CRUD ────────
     @ApiOperation({ summary: 'Create a new doctor schedule' })
     @Post('/doctorSchedule')
-    createDoctorSchedule(@Body() createDoctorScheduleDto: CreateDoctorSchedule) {
-        return this.doctorScheduleService.create(createDoctorScheduleDto);
+    createDoctorSchedule(@Body() dto: CreateDoctorSchedule) {
+        return this.doctorScheduleService.create(dto);
     }
 
     @ApiOperation({ summary: 'Get all doctor schedules (paginated)' })
@@ -254,9 +258,9 @@ export class DoctorController {
     @Put('/doctorSchedule/:id')
     updateDoctorSchedule(
         @Param('id', ParseIntPipe) id: number,
-        @Body() updateDoctorScheduleDto: UpdateDoctorSchedule,
+        @Body() dto: UpdateDoctorSchedule,
     ) {
-        return this.doctorScheduleService.update(id, updateDoctorScheduleDto);
+        return this.doctorScheduleService.update(id, dto);
     }
 
     @ApiOperation({ summary: 'Delete a doctor schedule by ID' })

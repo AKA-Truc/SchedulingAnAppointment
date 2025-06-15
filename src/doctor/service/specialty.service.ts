@@ -6,14 +6,33 @@ import { CreateSpecialty, UpdateSpecialty } from '../DTO';
 export class SpecialtyService {
     constructor(private readonly prisma: PrismaService) { }
 
-    // Create specialty
-    async create(dto: CreateSpecialty) {
-        const exists = await this.prisma.specialty.findFirst({
-            where: { name: dto.name },
+    // Kiểm tra Specialty có tồn tại theo ID, nếu không thì ném lỗi.
+    private async ensureSpecialtyExists(id: number) {
+        const specialty = await this.prisma.specialty.findUnique({
+            where: { specialtyId: id },
         });
-        if (exists) {
-            throw new BadRequestException(`Specialty with name "${dto.name}" already exists.`);
+
+        if (!specialty) {
+            throw new NotFoundException(`Specialty with ID ${id} not found.`);
         }
+
+        return specialty;
+    }
+
+    // Kiểm tra tên chuyên khoa đã tồn tại chưa, nếu có thì ném lỗi.
+    private async ensureNameUnique(name: string) {
+        const exists = await this.prisma.specialty.findFirst({
+            where: { name },
+        });
+
+        if (exists) {
+            throw new BadRequestException(`Specialty with name "${name}" already exists.`);
+        }
+    }
+
+    // Tạo mới một chuyên khoa.
+    async create(dto: CreateSpecialty) {
+        await this.ensureNameUnique(dto.name);
 
         const specialty = await this.prisma.specialty.create({
             data: {
@@ -28,7 +47,7 @@ export class SpecialtyService {
         };
     }
 
-    // Get all specialties (with pagination)
+    // Lấy danh sách tất cả chuyên khoa, có phân trang.
     async findAll(page = 1, limit = 10) {
         const skip = (page - 1) * limit;
 
@@ -36,9 +55,7 @@ export class SpecialtyService {
             this.prisma.specialty.findMany({
                 skip,
                 take: limit,
-                include: {
-                    doctors: true,
-                },
+                include: { doctors: true }, // Kèm theo danh sách bác sĩ thuộc chuyên khoa này
             }),
             this.prisma.specialty.count(),
         ]);
@@ -54,70 +71,63 @@ export class SpecialtyService {
         };
     }
 
-    // Get specialty by ID
+    //  Lấy thông tin chi tiết của một chuyên khoa theo ID.
     async findOne(id: number) {
         const specialty = await this.prisma.specialty.findUnique({
             where: { specialtyId: id },
-            include: {
-                doctors: true,
-            },
+            include: { doctors: true },
         });
 
         if (!specialty) {
-            throw new NotFoundException(`Specialty with ID ${id} not found`);
+            throw new NotFoundException(`Specialty with ID ${id} not found.`);
         }
 
         return specialty;
     }
 
-    // Update specialty
+    // Cập nhật thông tin chuyên khoa.
     async update(id: number, dto: UpdateSpecialty) {
-        const specialty = await this.prisma.specialty.findUnique({
-            where: { specialtyId: id },
-        });
+        const specialty = await this.ensureSpecialtyExists(id);
 
-        if (!specialty) {
-            throw new NotFoundException(`Specialty with ID ${id} not found`);
-        }
-
+        // Nếu tên mới khác tên cũ, kiểm tra xem tên mới có bị trùng không
         if (dto.name && dto.name !== specialty.name) {
-            const nameTaken = await this.prisma.specialty.findFirst({
-                where: { name: dto.name },
-            });
-            if (nameTaken) {
-                throw new BadRequestException(`Specialty with name "${dto.name}" already exists.`);
-            }
+            await this.ensureNameUnique(dto.name);
         }
 
-        return this.prisma.specialty.update({
+        const updated = await this.prisma.specialty.update({
             where: { specialtyId: id },
             data: {
                 name: dto.name,
                 description: dto.description,
             },
         });
+
+        return {
+            message: 'Specialty updated successfully.',
+            specialty: updated,
+        };
     }
 
-    // Delete specialty
+    // Xóa một chuyên khoa. Không cho phép xóa nếu có bác sĩ liên kết.
     async remove(id: number) {
-        const specialty = await this.prisma.specialty.findUnique({
+        await this.ensureSpecialtyExists(id);
+
+        const hasDoctors = await this.prisma.doctor.count({
             where: { specialtyId: id },
         });
 
-        if (!specialty) {
-            throw new NotFoundException(`Specialty with ID ${id} not found`);
+        if (hasDoctors > 0) {
+            throw new BadRequestException(
+                'Cannot delete specialty because it has associated doctors.',
+            );
         }
 
-        const doctorsCount = await this.prisma.doctor.count({
+        await this.prisma.specialty.delete({
             where: { specialtyId: id },
         });
 
-        if (doctorsCount > 0) {
-            throw new BadRequestException('Cannot delete specialty because there are doctors associated.');
-        }
-
-        return this.prisma.specialty.delete({
-            where: { specialtyId: id },
-        });
+        return {
+            message: 'Specialty deleted successfully.',
+        };
     }
 }

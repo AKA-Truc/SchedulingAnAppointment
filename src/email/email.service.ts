@@ -1,52 +1,118 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import * as Handlebars from 'handlebars';
 import { AppointmentWithDetails } from 'src/type/appointment-with-details.interface';
+import * as path from 'path';
+import * as fs from 'fs';
 
 
 @Injectable()
 export class EmailService {
-  constructor(private readonly mailerService: MailerService) { }
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly prisma: PrismaService,
+  ) { }
 
   async sendAppointmentReminder(email: string, scheduledTime: string, timeLeftText: string) {
+    const scheduledDate = new Date(scheduledTime).toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'appointment-reminder.html');
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    const template = Handlebars.compile(templateSource);
+
+    const templateData = {
+      scheduledDate: scheduledDate,
+      timeLeftText: timeLeftText,
+    };
+
     await this.mailerService.sendMail({
       to: email,
       subject: 'Nhắc lịch khám',
-      html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-          <h2 style="color: #2a9d8f;">Nhắc lịch khám</h2>
-          <p>Bạn có lịch khám vào lúc <strong>${scheduledTime}</strong></p>
-          <p>Còn <strong style="color: #e76f51;">${timeLeftText}</strong> nữa.</p>
-          <hr />
-          <p style="font-size: 0.9em; color: #777;">
-          Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
-          </p>
-      </div>
-      `,
+      html: template(templateData),
     });
   }
 
-  async sendAppointmentConfirmation(email: string, appointment: AppointmentWithDetails) {
+  async sendAppointmentConfirmationWithHandlebars(email: string, appointment: AppointmentWithDetails) {
     const scheduledTime = new Date(appointment.scheduledTime).toLocaleString('vi-VN');
+
+    const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'appointment-confirmation.template.html');
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+
+    const template = Handlebars.compile(templateSource);
+
+    const templateData = {
+      patientName: appointment.user.fullName,
+      scheduledTime: scheduledTime,
+      doctorName: appointment.doctor.user.fullName,
+      specialty: appointment.doctor.specialty?.name || 'Chưa cập nhật',
+      clinic: appointment.doctor.clinic || 'Chưa cập nhật',
+      serviceName: appointment.service.name,
+      hasNote: !!appointment.note,
+      note: appointment.note
+    };
+
+    const htmlContent = template(templateData);
 
     await this.mailerService.sendMail({
       to: email,
       subject: 'Xác nhận đặt lịch khám bệnh',
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #2a9d8f;">Xác nhận đặt lịch khám thành công</h2>
+      html: htmlContent,
+    });
+  }
 
-          <p><strong>👤 Bệnh nhân:</strong> ${appointment.user.fullName}</p>
-          <p><strong>📅 Thời gian khám:</strong> ${scheduledTime}</p>
-          <p><strong>🩺 Bác sĩ:</strong> ${appointment.doctor.user.fullName}</p>
-          <p><strong>🏥 Phòng khám:</strong> ${appointment.doctor.clinic || 'Chưa cập nhật'}</p>
-          <p><strong>🧠 Chuyên khoa:</strong> ${appointment.doctor.specialty?.name || 'Chưa cập nhật'}</p>
-          <p><strong>💼 Dịch vụ:</strong> ${appointment.service.name}</p>
-          <p><strong>📝 Ghi chú:</strong> ${appointment.note || 'Không có ghi chú'}</p>
+  async sendFollowUpNoti(to: string, followUp: { appointmentId: number; nextDate: Date; reason: string }) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { appointmentId: followUp.appointmentId },
+      include: {
+        user: true,
+        doctor: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
-          <hr style="margin: 20px 0;" />
-          <p style="font-size: 0.9em; color: #777;">Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
-        </div>
-      `,
+    if (!appointment) {
+      throw new Error('Appointment not found for follow-up email');
+    }
+
+    const formattedDate = new Date(followUp.nextDate).toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'follow-up-reminder.html');
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+
+    const template = Handlebars.compile(templateSource);
+
+    const templateData = {
+      patientName: appointment.user.fullName,
+      doctorName: appointment.doctor.user.fullName,
+      followUpTime: formattedDate,
+      reason: followUp.reason,
+    };
+
+    const htmlContent = template(templateData);
+
+    await this.mailerService.sendMail({
+      to: to,
+      subject: 'Nhắc lịch tái khám',
+      html: htmlContent,
     });
   }
 
