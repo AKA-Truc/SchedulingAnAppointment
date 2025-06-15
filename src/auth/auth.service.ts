@@ -168,43 +168,43 @@ export class AuthService {
         return { message: 'Token deleted successfully' };
     }
 
-    // async socialLogin(user: any) {
-    //     const existingUser = await this.prismaService.user.findUnique({
-    //         where: { email: user.email },
-    //     });
+    async googleLogin(user: any) {
+        const existingUser = await this.prismaService.user.findUnique({
+            where: { email: user.email },
+        });
 
-    //     if (existingUser) {
-    //         const tokens = await this.generateToken(existingUser);
-    //         await this.saveToken(existingUser.userId, tokens.accessToken, tokens.refreshToken);
-    //         return {
-    //             message: 'Login successful',
-    //             user: existingUser,
-    //             ...tokens,
-    //         };
-    //     }
+        if (existingUser) {
+            const tokens = await this.generateToken(existingUser);
+            await this.saveToken(existingUser.userId, tokens.accessToken, tokens.refreshToken);
+            return {
+                message: 'Login successful',
+                user: existingUser,
+                ...tokens,
+            };
+        }
 
-    //     // Tạo mới user nếu chưa tồn tại
-    //     const newUser = await this.prismaService.user.create({
-    //         data: {
-    //             fullName: user.fullName,
-    //             email: user.email,
-    //             // picture: user.picture,
-    //             // provider: 'google',
-    //             password: '',
-    //             role: 'USER',
-    //             gender: GenderEnum.Female,
-    //             phone: '',
-    //             isActive: true
-    //         },
-    //     });
+        // Tạo mới user nếu chưa tồn tại
+        const newUser = await this.prismaService.user.create({
+            data: {
+                fullName: user.fullName,
+                email: user.email,
+                // picture: user.picture,
+                // provider: 'google',
+                password: '',
+                role: 'USER',
+                gender: GenderEnum.Female,
+                phone: '',
+                isActive: true
+            },
+        });
 
-    //     const tokens = await this.generateToken(newUser);
-    //     await this.saveToken(newUser.userId, tokens.accessToken, tokens.refreshToken);
+        const tokens = await this.generateToken(newUser);
+        await this.saveToken(newUser.userId, tokens.accessToken, tokens.refreshToken);
 
-    //     return {
-    //         message: 'User registered and logged in with Google',
-    //         user: newUser,
-    //         ...tokens,
-    //     };
-    // }
+        return {
+            message: 'User registered and logged in with Google',
+            user: newUser,
+            ...tokens,
+        };
+    }
 }

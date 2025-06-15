@@ -1,14 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { LoginUserDto } from "./DTO/LoginUser.dto";
 import { AuthGuard as JwtAuthGuard, Public } from './guard/auth.guard';
-import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+// import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+
 
 import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
 import { console } from "inspector";
 import { LogoutDto } from "./DTO/Logout.dto";
 import { RefreshTokenDto } from "src/user/DTO/RefreshToken.dto";
 import { RegisterDTO } from "./DTO/Register.dto";
+import { GoogleAuthGuard } from "./guard/google-auth.guard";
 
 
 @Controller('auth')
@@ -58,15 +60,33 @@ export class AuthController {
         return this.authService.deleteTokenById(tokenId);
     }
 
-    @Get('google')
-    @UseGuards(PassportAuthGuard('google'))
-    async googleAuth(@Req() req) {
-        // redirect to Google OAuth
+    // @Get('google/login')
+    // // @UseGuards(PassportAuthGuard('google'))
+    // @UseGuards(GoogleAuthGuard)
+    // async googleAuth(@Req() req) {
+    //     // redirect to Google OAuth
+    // }
+
+    @Public()
+    @Get('google/login')
+    @UseGuards(GoogleAuthGuard)
+    googleLogin() {
+
+    }
+
+    @Public()
+    @UseGuards(GoogleAuthGuard)
+    @Get('google/redirect')
+    async googleAuthRedirect(@Req() req, @Res() res) {
+        // const response = await this.authService.login(req.user.id);
+        // res.redirect(`http://localhost:3000?token=${response.accessToken}`);
+        const response = await this.authService.googleLogin(req.user);
+        res.redirect('http://localhost:3000/api')
     }
 
     // @Get('google/redirect')
-    // @UseGuards(PassportAuthGuard('google'))
+    // // @UseGuards(PassportAuthGuard('google'))
     // async googleAuthRedirect(@Req() req) {
-    //     return this.authService.socialLogin(req.user);
+    //     return this.authService.googleLogin(req.user);
     // }
 }
