@@ -88,6 +88,42 @@ export class DoctorService {
         };
     }
 
+    //Get all dotors by specialtyId
+    async getDoctors({specialtyId, page,limit,}: 
+        {
+            specialtyId?: number;
+            page: number;
+            limit: number;
+        }) {
+        const skip = (page - 1) * limit;
+
+        const where = specialtyId ? { specialtyId } : {};
+
+        const [doctors, total] = await this.prisma.$transaction([
+            this.prisma.doctor.findMany({
+            where,
+            skip,
+            take: limit,
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                schedules: true
+            },
+            }),
+            this.prisma.doctor.count({ where }),
+        ]);
+
+        return {
+            data: doctors,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
+
     // 🔍 Lấy thông tin bác sĩ theo ID
     async getDoctorById(id: number) {
         const doctor = await this.prisma.doctor.findUnique({

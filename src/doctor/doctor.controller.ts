@@ -43,12 +43,27 @@ export class DoctorController {
 
     @ApiOperation({ summary: 'Get all doctors with pagination' })
     @Get()
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
     getAllDoctors(
         @Query('page', ParseIntPipe) page = 1,
         @Query('limit', ParseIntPipe) limit = 10,
     ) {
         return this.doctorService.getAllDoctors(page, limit);
     }
+
+    @Get('/by-specialty/:specialtyId')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    getAllDoctorsbySpecialty(
+        @Param('specialtyId', ParseIntPipe) specialtyId: number,
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 10,
+    ) {
+        return this.doctorService.getDoctors({ specialtyId, page, limit });
+    }
+
+
 
     @ApiOperation({ summary: 'Get a doctor by ID' })
     @Get(':id')
