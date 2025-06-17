@@ -7,8 +7,10 @@ import {
   UseInterceptors,
   Res,
   BadRequestException,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as xlsx from 'xlsx';
@@ -23,9 +25,11 @@ export class PatientProfileController {
   constructor(
     private readonly patientProfileService: PatientProfileService,
   ) {}
-
   @Post('import')
-  @ApiOperation({ summary: 'Bulk import patient profiles from Excel/CSV' })
+  @ApiOperation({
+    summary: 'Bulk import patient profiles from Excel/CSV',
+    description: 'Import multiple patient profiles at once using an Excel or CSV file.'
+  })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -35,11 +39,37 @@ export class PatientProfileController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'An Excel (.xlsx/.xls) or CSV file',
+          description: 'An Excel (.xlsx/.xls) or CSV file containing patient profile data',
         },
       },
+      required: ['file']
     },
   })
+  @ApiResponse({
+    status: 201,
+    description: 'Patient profiles successfully imported',
+    schema: {
+      type: 'object',
+      properties: {
+        total: { type: 'number', description: 'Total number of rows processed' },
+        imported: { type: 'number', description: 'Number of profiles successfully imported' },
+        failed: { type: 'number', description: 'Number of profiles that failed to import' },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              userId: { type: 'number', nullable: true },
+              error: { type: 'string', nullable: true }
+            }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file format or data' })
+  
   async importPatientProfiles(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<{
@@ -119,9 +149,24 @@ export class PatientProfileController {
       results,
     };
   }
-
   @Get('export')
-  @ApiOperation({ summary: 'Export patient profiles to Excel' })
+  @ApiOperation({
+    summary: 'Export patient profiles to Excel',
+    description: 'Exports all patient profiles to an Excel file with detailed information'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Excel file containing patient profiles',
+    content: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 500, description: 'Internal server error during file generation' })
   async exportPatientProfiles(@Res() res: Response): Promise<void> {
     // Fetch up to 1000 profiles
     const { data: profiles } = await this.patientProfileService.findAll(1, 1000);
@@ -160,5 +205,217 @@ export class PatientProfileController {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
     res.send(buffer);
+  }
+
+  @Get(':id/health-analytics')
+  @ApiOperation({
+    summary: 'Get patient health analytics',
+    description: 'Retrieves comprehensive health analytics including visits, costs, and medical history for a patient'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The health analytics data has been successfully retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        visitStats: {
+          type: 'object',
+          properties: {
+            totalVisits: { type: 'number' },
+            visitsByMonth: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  month: { type: 'string' },
+                  count: { type: 'number' }
+                }
+              }
+            },
+            averageVisitsPerMonth: { type: 'number' },
+            lastVisitDate: { type: 'string', format: 'date-time' }
+          }
+        },
+        costAnalysis: {
+          type: 'object',
+          properties: {
+            totalCost: { type: 'number' },
+            costByMonth: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  month: { type: 'string' },
+                  amount: { type: 'number' }
+                }
+              }
+            },
+            averageCostPerVisit: { type: 'number' },
+            costByPaymentMethod: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  method: { type: 'string' },
+                  amount: { type: 'number' }
+                }
+              }
+            }
+          }
+        },
+        medicalHistory: {
+          type: 'object',
+          properties: {
+            appointments: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  date: { type: 'string', format: 'date-time' },
+                  doctorName: { type: 'string' },
+                  hospitalName: { type: 'string' },
+                  diagnosis: { type: 'string' },
+                  prescriptions: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        medicineName: { type: 'string' },
+                        dosage: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  @ApiParam({ name: 'id', description: 'Patient profile ID', type: 'number' })
+  async getHealthAnalytics(@Param('id', ParseIntPipe) id: number) {
+    return this.patientProfileService.getHealthAnalytics(id);
+  }
+
+  @Get(':id/visit-stats')
+  @ApiOperation({
+    summary: 'Get patient visit statistics',
+    description: 'Retrieves statistics about patient visits including total visits, monthly distribution, and trends'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Visit statistics successfully retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        totalVisits: { type: 'number' },
+        visitsByMonth: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              month: { type: 'string' },
+              count: { type: 'number' }
+            }
+          }
+        },
+        averageVisitsPerMonth: { type: 'number' },
+        lastVisitDate: { type: 'string', format: 'date-time' }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  @ApiParam({ name: 'id', description: 'Patient profile ID', type: 'number' })
+  async getVisitStats(@Param('id', ParseIntPipe) id: number) {
+    const analytics = await this.patientProfileService.getHealthAnalytics(id);
+    return analytics.visitStats;
+  }
+
+  @Get(':id/cost-analysis')
+  @ApiOperation({
+    summary: 'Get patient cost analysis',
+    description: 'Analyzes patient healthcare costs including total costs, monthly spending, and payment methods'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Cost analysis successfully retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCost: { type: 'number' },
+        costByMonth: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              month: { type: 'string' },
+              amount: { type: 'number' }
+            }
+          }
+        },
+        averageCostPerVisit: { type: 'number' },
+        costByPaymentMethod: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              method: { type: 'string' },
+              amount: { type: 'number' }
+            }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  @ApiParam({ name: 'id', description: 'Patient profile ID', type: 'number' })
+  async getCostAnalysis(@Param('id', ParseIntPipe) id: number) {
+    const analytics = await this.patientProfileService.getHealthAnalytics(id);
+    return analytics.costAnalysis;
+  }
+
+  @Get(':id/medical-history')
+  @ApiOperation({
+    summary: 'Get patient medical history timeline',
+    description: 'Retrieves chronological medical history including appointments, diagnoses, and prescriptions'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Medical history successfully retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        appointments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: 'string', format: 'date-time' },
+              doctorName: { type: 'string' },
+              hospitalName: { type: 'string' },
+              diagnosis: { type: 'string' },
+              prescriptions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    medicineName: { type: 'string' },
+                    dosage: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  @ApiParam({ name: 'id', description: 'Patient profile ID', type: 'number' })
+  async getMedicalHistory(@Param('id', ParseIntPipe) id: number) {
+    const analytics = await this.patientProfileService.getHealthAnalytics(id);
+    return analytics.medicalHistory;
   }
 }
