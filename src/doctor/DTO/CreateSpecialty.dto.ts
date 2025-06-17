@@ -3,16 +3,16 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSpecialty {
     @ApiProperty({
-        example: 'Cardiology',
-        description: 'Tên chuyên khoa',
+        example: 'Tim mạch',
+        description: 'Tên chuyên khoa, ví dụ: Tim mạch, Da liễu, Nhi khoa...',
     })
     @IsString()
     @IsNotEmpty()
     name: string;
 
     @ApiProperty({
-        example: 'Chuyên khoa tim mạch',
-        description: 'Mô tả chuyên khoa',
+        example: 'Chẩn đoán và điều trị các bệnh lý liên quan đến tim và mạch máu.',
+        description: 'Mô tả ngắn gọn về chuyên khoa',
     })
     @IsString()
     @IsNotEmpty()

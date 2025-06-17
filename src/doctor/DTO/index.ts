@@ -4,6 +4,7 @@ export * from './UpdateCertification.dto';
 export * from './CreateCertification.dto';
 export * from './CreateSpecialty.dto';
 export * from './UpdateSpecialty.dto';
+export * from './SpecialtyResponse.dto';
 export * from './CreateAchievement.dto';
 export * from './UpdateAchievement.dto';
 export * from './CreateDoctorSchedule.dto';

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as Handlebars from 'handlebars';
-import { AppointmentWithDetails } from 'src/type/appointment-with-details.interface';
+import { AppointmentWithDetails } from 'src/appointment/type/appointment-with-details.interface';
 import * as path from 'path';
 import * as fs from 'fs';
 

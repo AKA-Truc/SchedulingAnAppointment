@@ -1,5 +1,5 @@
 import {
-    BadRequestException, Body, Controller, Delete, Get,
+    BadRequestException, Body, Controller, DefaultValuePipe, Delete, Get,
     Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -57,7 +57,7 @@ export class DoctorController {
     }
 
     @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
-    @Get(':id')
+    @Get('perfomance/:id')
     getPerformanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
@@ -203,13 +203,16 @@ export class DoctorController {
     }
 
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
-    @Get('/specialty')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 6 })
+    @Get('/specialty/get-all')
     findAllSpecialties(
         @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 10,
+        @Query('limit', ParseIntPipe) limit = 6,
     ) {
         return this.specialtyService.findAll(page, limit);
     }
+
 
     @ApiOperation({ summary: 'Get specialty by ID' })
     @Get('/specialty/:id')

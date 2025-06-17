@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSpecialty, UpdateSpecialty } from '../DTO';
+import { CreateSpecialty, UpdateSpecialty, SpecialtyResponseDto } from '../DTO';
+import { getIconClassBySpecialty} from '../specialty-icon.util';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SpecialtyService {
@@ -47,29 +49,48 @@ export class SpecialtyService {
         };
     }
 
-    // Lấy danh sách tất cả chuyên khoa, có phân trang.
-    async findAll(page = 1, limit = 10) {
+    async findAll(page = 1, limit = 6): Promise<{
+        data: SpecialtyResponseDto[];
+        totalCount: number;
+        page: number;
+        limit: number;
+        }> {
         const skip = (page - 1) * limit;
 
-        const [specialties, total] = await Promise.all([
+        const [specialties, totalCount] = await this.prisma.$transaction([
             this.prisma.specialty.findMany({
-                skip,
-                take: limit,
-                include: { doctors: true }, // Kèm theo danh sách bác sĩ thuộc chuyên khoa này
+            skip,
+            take: limit,
+            orderBy: { name: 'asc' },
             }),
             this.prisma.specialty.count(),
         ]);
 
+        const data: SpecialtyResponseDto[] = await Promise.all(
+            specialties.map(async (specialty) => {
+            const doctorCount = await this.prisma.doctor.count({
+                where: { specialtyId: specialty.specialtyId },
+            });
+
+            return {
+                id: specialty.specialtyId.toString(),
+                name: specialty.name,
+                description: specialty.description,
+                icon: getIconClassBySpecialty(specialty.name),
+                doctorCount,
+            };
+            }),
+        );
+
         return {
-            data: specialties,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            data,
+            totalCount,
+            page,
+            limit,
         };
     }
+
+
 
     //  Lấy thông tin chi tiết của một chuyên khoa theo ID.
     async findOne(id: number) {
