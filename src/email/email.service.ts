@@ -12,7 +12,7 @@ export class EmailService {
   constructor(
     private readonly mailerService: MailerService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   async sendAppointmentReminder(email: string, scheduledTime: string, timeLeftText: string) {
     const scheduledDate = new Date(scheduledTime).toLocaleString('vi-VN', {
@@ -25,13 +25,13 @@ export class EmailService {
       minute: '2-digit',
     });
     const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'appointment-reminder.html');
-    const templateSource = fs.readFileSync(templatePath, 'utf8'); 
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateSource);
 
     const templateData = {
       scheduledDate: scheduledDate,
       timeLeftText: timeLeftText,
-    };  
+    };
 
     await this.mailerService.sendMail({
       to: email,
@@ -42,12 +42,12 @@ export class EmailService {
 
   async sendAppointmentConfirmationWithHandlebars(email: string, appointment: AppointmentWithDetails) {
     const scheduledTime = new Date(appointment.scheduledTime).toLocaleString('vi-VN');
-    
+
     const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'appointment-confirmation.template.html');
     const templateSource = fs.readFileSync(templatePath, 'utf8');
-  
+
     const template = Handlebars.compile(templateSource);
-    
+
     const templateData = {
       patientName: appointment.user.fullName,
       scheduledTime: scheduledTime,
@@ -58,7 +58,7 @@ export class EmailService {
       hasNote: !!appointment.note,
       note: appointment.note
     };
-    
+
     const htmlContent = template(templateData);
 
     await this.mailerService.sendMail({
@@ -97,7 +97,7 @@ export class EmailService {
 
     const templatePath = path.join(process.cwd(), 'src', 'email', 'templates', 'follow-up-reminder.html');
     const templateSource = fs.readFileSync(templatePath, 'utf8');
-  
+
     const template = Handlebars.compile(templateSource);
 
     const templateData = {
@@ -113,6 +113,24 @@ export class EmailService {
       to: to,
       subject: 'Nhắc lịch tái khám',
       html: htmlContent,
+    });
+  }
+
+  async sendVerificationEmail(email: string, fullName: string, token: string) {
+    const verifyUrl = `https://f0fb-42-113-218-160.ngrok-free.app/auth/verify-email?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Xác thực tài khoản',
+      html: `
+      <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Xác thực địa chỉ email</h2>
+        <p>Xin chào <strong>${fullName}</strong>,</p>
+        <p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng xác thực địa chỉ email của bạn bằng cách nhấp vào liên kết bên dưới:</p>
+        <a href="${verifyUrl}" style="display: inline-block; padding: 10px 20px; background-color: #2a9d8f; color: white; text-decoration: none;">Xác thực ngay</a>
+        <p>Liên kết sẽ hết hạn sau 15 phút.</p>
+      </div>
+    `,
     });
   }
 }

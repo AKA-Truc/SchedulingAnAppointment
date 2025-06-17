@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateHospital, UpdateHospital } from '../DTO';
 import { Hospital, Prisma } from '@prisma/client';
+import { HospitalFilterDto } from '../DTO/HospitalFilter.dto';
 
 
 @Injectable()
@@ -65,6 +66,25 @@ export class HospitalService {
 
     return hospital;
   }
+
+  async filterHospital(
+    filter: HospitalFilterDto,
+    skip: number = 0,
+    take: number = 10
+  ): Promise<Hospital[]> {
+    return this.prisma.hospital.findMany({
+      where: {
+        ...(filter.type && { type: filter.type }),
+        ...(filter.name && { name: { contains: filter.name, mode: 'insensitive' } }),
+      },
+      skip,
+      take,
+      orderBy: {
+        name: 'asc', // Sắp xếp theo tên bệnh viện cho dễ đọc (có thể thay đổi)
+      },
+    });
+  }
+
 
   async searchHospital(params: {
     skip?: number;

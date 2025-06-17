@@ -5,10 +5,14 @@ import { AuthService } from "./auth.service";
 import { JwtModule, JwtService } from "@nestjs/jwt";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { GoogleStrategy } from "./strategy/google.strategy";
+import { MailModule } from "src/email/email.module";
+import { EmailService } from "src/email/email.service";
 
 @Module({
   imports: [
     UserModule,
+    MailModule,
     ConfigModule,
     JwtModule.register({
       global: true,
@@ -17,7 +21,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService,],
+  providers: [AuthService, GoogleStrategy, EmailService],
   exports: [AuthService]
 })
 export class AuthModule { }

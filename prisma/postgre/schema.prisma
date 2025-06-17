@@ -17,6 +17,7 @@ model User {
   gender         GenderEnum
   createdAt      DateTime        @default(now())
   avatar         String?
+  isActive       Boolean
   appointments   Appointment[]
   doctor         Doctor?
   medicalRecord  MedicalRecord?
@@ -244,6 +245,7 @@ enum PaymentStatusEnum {
 enum GenderEnum {
   Male
   Female
+  Other
 }
 
 enum AppointmentStatus {
