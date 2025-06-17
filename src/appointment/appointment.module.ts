@@ -13,7 +13,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-  imports: [RedisModule, PrismaModule, MailModule], 
+  imports: [RedisModule, PrismaModule, MailModule],
   controllers: [AppointmentController],
   providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService, EmailService, NotificationWorker,
     NotificationGateway,
@@ -22,4 +22,4 @@ import { PrismaModule } from 'src/prisma/prisma.module';
       useFactory: () => new Redis(process.env.REDIS_URL || 'redis://localhost:6379'),
     },],
 })
-export class AppointmentModule {}
+export class AppointmentModule { }

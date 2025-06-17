@@ -34,14 +34,18 @@ model Review {
 }
 
 model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  fromUser  Int
-  toUser    Int
-  content   String
-  timestamp DateTime @default(now())
-  read      Boolean  @default(false)
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser       Int
+  toUser         Int
+  content        String
+  timestamp      DateTime @default(now())
+  read           Boolean  @default(false)
+  readAt         DateTime?     // Thời điểm người nhận đọc tin nhắn
 
-  conversationId String
+  conversationId String        // Chuỗi định danh duy nhất cho 2 người dùng (gợi ý bên dưới)
+
+  @@index([conversationId])
+  @@index([toUser, read])      // Tối ưu truy vấn tin nhắn chưa đọc
 }
 
 enum RoleEnum {
