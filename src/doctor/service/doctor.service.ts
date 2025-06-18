@@ -89,7 +89,7 @@ export class DoctorService {
     }
 
     //Get all dotors by specialtyId
-    async getDoctors({specialtyId, page,limit,}: 
+    async getDoctors({ specialtyId, page, limit, }:
         {
             specialtyId?: number;
             page: number;
@@ -101,15 +101,15 @@ export class DoctorService {
 
         const [doctors, total] = await this.prisma.$transaction([
             this.prisma.doctor.findMany({
-            where,
-            skip,
-            take: limit,
-            include: {
-                user: true,
-                specialty: true,
-                hospital: true,
-                schedules: true
-            },
+                where,
+                skip,
+                take: limit,
+                include: {
+                    user: true,
+                    specialty: true,
+                    hospital: true,
+                    schedules: true
+                },
             }),
             this.prisma.doctor.count({ where }),
         ]);
@@ -133,8 +133,9 @@ export class DoctorService {
                 specialty: true,
                 hospital: true,
                 schedules: true,
-                appointments: true,
+                appointments: false,
                 achievements: true,
+                certifications: true
             },
         });
 
