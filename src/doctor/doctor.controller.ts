@@ -34,13 +34,6 @@ export class DoctorController {
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    // ──────── Doctor CRUD ────────
-    @ApiOperation({ summary: 'Create a new doctor' })
-    @Post()
-    createDoctor(@Body() dto: CreateDoctor) {
-        return this.doctorService.createDoctor(dto);
-    }
-
     @ApiOperation({ summary: 'Get all doctors with pagination' })
     @Get()
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -63,7 +56,59 @@ export class DoctorController {
         return this.doctorService.getDoctors({ specialtyId, page, limit });
     }
 
+    @ApiOperation({ summary: 'Get all certifications (paginated)' })
+    @Get('/certification')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    findAllCertifications(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        return this.certificationService.findAll(
+            page ? parseInt(page) : 1,
+            limit ? parseInt(limit) : 10,
+        );
+    }
 
+    @ApiOperation({ summary: 'Get all doctor schedules (paginated)' })
+    @Get('/doctorSchedule')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    findAllDoctorSchedules(
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 10,
+    ) {
+        return this.doctorScheduleService.findAll(page, limit);
+    }
+
+    @ApiOperation({ summary: 'Get all specialties (paginated)' })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 6 })
+    @Get('/specialty/get-all')
+    findAllSpecialties(
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 6,
+    ) {
+        return this.specialtyService.findAll(page, limit);
+    }
+
+    @ApiOperation({ summary: 'Get all achievements (paginated)' })
+    @Get('/achievement')
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    findAllAchievements(
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 10,
+    ) {
+        return this.achievementService.findAll(page, limit);
+    }
+
+    // ──────── Doctor CRUD ────────
+    @ApiOperation({ summary: 'Create a new doctor' })
+    @Post()
+    createDoctor(@Body() dto: CreateDoctor) {
+        return this.doctorService.createDoctor(dto);
+    }
 
     @ApiOperation({ summary: 'Get a doctor by ID' })
     @Get(':id')
@@ -138,20 +183,6 @@ export class DoctorController {
         });
     }
 
-    @ApiOperation({ summary: 'Get all certifications (paginated)' })
-    @Get('/certification')
-    @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 10 })
-    findAllCertifications(
-        @Query('page') page?: string,
-        @Query('limit') limit?: string,
-    ) {
-        return this.certificationService.findAll(
-            page ? parseInt(page) : 1,
-            limit ? parseInt(limit) : 10,
-        );
-    }
-
     @ApiOperation({ summary: 'Get certification by ID' })
     @Get('/certification/:id')
     findCertification(@Param('id', ParseIntPipe) id: number) {
@@ -178,15 +209,6 @@ export class DoctorController {
     @Post('/achievement')
     createAchievement(@Body() dto: CreateAchievement) {
         return this.achievementService.create(dto);
-    }
-
-    @ApiOperation({ summary: 'Get all achievements (paginated)' })
-    @Get('/achievement')
-    findAllAchievements(
-        @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 10,
-    ) {
-        return this.achievementService.findAll(page, limit);
     }
 
     @ApiOperation({ summary: 'Get achievement by ID' })
@@ -217,18 +239,6 @@ export class DoctorController {
         return this.specialtyService.create(dto);
     }
 
-    @ApiOperation({ summary: 'Get all specialties (paginated)' })
-    @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 6 })
-    @Get('/specialty/get-all')
-    findAllSpecialties(
-        @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 6,
-    ) {
-        return this.specialtyService.findAll(page, limit);
-    }
-
-
     @ApiOperation({ summary: 'Get specialty by ID' })
     @Get('/specialty/:id')
     findSpecialty(@Param('id', ParseIntPipe) id: number) {
@@ -255,15 +265,6 @@ export class DoctorController {
     @Post('/doctorSchedule')
     createDoctorSchedule(@Body() dto: CreateDoctorSchedule) {
         return this.doctorScheduleService.create(dto);
-    }
-
-    @ApiOperation({ summary: 'Get all doctor schedules (paginated)' })
-    @Get('/doctorSchedule')
-    findAllDoctorSchedules(
-        @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 10,
-    ) {
-        return this.doctorScheduleService.findAll(page, limit);
     }
 
     @ApiOperation({ summary: 'Get doctor schedule by ID' })

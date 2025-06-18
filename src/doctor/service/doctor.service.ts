@@ -167,8 +167,9 @@ export class DoctorService {
                 specialty: true,
                 hospital: true,
                 schedules: true,
-                appointments: true,
+                appointments: false,
                 achievements: true,
+                certifications: true
             },
         });
 
