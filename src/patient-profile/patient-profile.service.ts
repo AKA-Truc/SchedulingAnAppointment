@@ -1,6 +1,6 @@
 // src/patient-profile/patient-profile.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreatePatientProfile, UpdatePatientProfile } from './DTO';
 import { HealthAnalytics, VisitStats, CostAnalysis, MedicalHistoryTimeline } from './interfaces/health-analytics.interface';
 

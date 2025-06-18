@@ -9,8 +9,13 @@ import {
   BadRequestException,
   Param,
   ParseIntPipe,
+  Body,
+  Delete,
+  Query,
+  Put,
+  DefaultValuePipe,
 } from '@nestjs/common';
-import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import * as xlsx from 'xlsx';
@@ -18,6 +23,8 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PatientProfileService } from './patient-profile.service';
 import { PatientImportRowDto } from './DTO/PatientImportRow.dto';
+import { CreatePatientProfile } from './DTO/CreatePatientProfile.dto';
+import { UpdatePatientProfile } from './DTO/UpdatePatientProfile.dto';
 
 @ApiTags('Patient Profile')
 @Controller('patient-profile')
@@ -289,8 +296,7 @@ export class PatientProfileController {
               }
             }
           }
-        }
-      }
+        }      }
     }
   })
   @ApiResponse({ status: 404, description: 'Patient profile not found' })
@@ -322,8 +328,7 @@ export class PatientProfileController {
           }
         },
         averageVisitsPerMonth: { type: 'number' },
-        lastVisitDate: { type: 'string', format: 'date-time' }
-      }
+        lastVisitDate: { type: 'string', format: 'date-time' }      }
     }
   })
   @ApiResponse({ status: 404, description: 'Patient profile not found' })
@@ -365,8 +370,7 @@ export class PatientProfileController {
               amount: { type: 'number' }
             }
           }
-        }
-      }
+        }      }
     }
   })
   @ApiResponse({ status: 404, description: 'Patient profile not found' })
@@ -408,8 +412,7 @@ export class PatientProfileController {
               }
             }
           }
-        }
-      }
+        }      }
     }
   })
   @ApiResponse({ status: 404, description: 'Patient profile not found' })
@@ -417,5 +420,81 @@ export class PatientProfileController {
   async getMedicalHistory(@Param('id', ParseIntPipe) id: number) {
     const analytics = await this.patientProfileService.getHealthAnalytics(id);
     return analytics.medicalHistory;
+  }
+  @Post()
+  @ApiOperation({
+    summary: 'Create a new patient profile',
+    description: 'Creates a new patient profile with the provided data',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Patient profile successfully created',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input data or profile already exists' })
+  async create(@Body() createDto: CreatePatientProfile) {
+    return this.patientProfileService.create(createDto);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all patient profiles',
+    description: 'Retrieves a paginated list of all patient profiles'
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'List of patient profiles'
+  })
+  async findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.patientProfileService.findAll(page, limit);
+  }
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get a patient profile by ID',
+    description: 'Retrieves a patient profile by their unique identifier',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Patient profile found',
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.patientProfileService.findOne(id);
+  }
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Update a patient profile',
+    description: 'Updates an existing patient profile with the provided data',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Patient profile successfully updated',
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdatePatientProfile,
+  ) {
+    return this.patientProfileService.update(id, updateDto);
+  }
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete a patient profile',
+    description: 'Deletes an existing patient profile',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Patient profile successfully deleted',
+  })
+  @ApiResponse({ status: 404, description: 'Patient profile not found' })
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.patientProfileService.remove(id);
   }
 }

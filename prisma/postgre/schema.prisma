@@ -7,64 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums
-enum NotificationType {
-  APPOINTMENT
-  FOLLOW_UP
-  VACCINE
-  CUSTOM
-}
-
-enum RoleEnum {
-  ADMIN
-  DOCTOR
-  USER
-}
-
-enum PaymentMethodEnum {
-  CASH
-  CARD
-  BANK_TRANSFER
-  MOMO
-}
-
-enum PaymentStatusEnum {
-  PAID
-  UNPAID
-  PENDING
-}
-
-enum GenderEnum {
-  Male
-  Female
-}
-
-enum AppointmentStatus {
-  SCHEDULED
-  CANCELLED
-  COMPLETED
-  RESCHEDULED
-}
-
-// Models
 model User {
-  userId          Int              @id @default(autoincrement())
-  fullName        String
-  email           String           @unique
-  phone           String
-  password        String
-  role            RoleEnum
-  gender          GenderEnum
-  createdAt       DateTime         @default(now())
-  avatar          String?
-  appointments    Appointment[]
-  doctor          Doctor?
-  medicalRecord   MedicalRecord?
-  notifications   Notification[]
-  patientProfile  PatientProfile?
-  tokens          Token[]
-  grantedConsents PatientConsent[] @relation("grantedTo")
-  accessLogs      AccessLog[]      @relation("accessedBy")
+  userId         Int             @id @default(autoincrement())
+  fullName       String
+  email          String          @unique
+  phone          String
+  password       String
+  role           RoleEnum
+  gender         GenderEnum
+  createdAt      DateTime        @default(now())
+  avatar         String?
+  isActive       Boolean
+  appointments   Appointment[]
+  doctor         Doctor?
+  medicalRecord  MedicalRecord?
+  notifications  Notification[]
+  patientProfile PatientProfile?
+  tokens         Token[]
 }
 
 model Token {
@@ -76,13 +35,6 @@ model Token {
   accessExpiresAt  DateTime
   refreshExpiresAt DateTime
   user             User     @relation(fields: [userId], references: [userId])
-}
-
-model Specialty {
-  specialtyId Int    @id @default(autoincrement())
-  name        String
-
-  doctors Doctor[] // Quan hệ ngược lại với Doctor
 }
 
 model Doctor {
@@ -105,26 +57,43 @@ model Doctor {
 }
 
 model PatientProfile {
-  profileId            Int                    @id @default(autoincrement())
-  userId               Int                    @unique
-  gender               String
-  dateOfBirth          DateTime
-  address              String
-  insurance            String
-  allergies            String
-  chronicDiseases      String
-  obstetricHistory     String
-  surgicalHistory      String
-  familyHistory        String
-  socialHistory        String
-  medicationHistory    String
-  user                 User                   @relation(fields: [userId], references: [userId])
-  consents             PatientConsent[]
-  accessLogs           AccessLog[]
-  telemetry            PatientTelemetry[]
-  alerts               PatientAlert[]
-  encryptedMedicalData EncryptedMedicalData[]
-  complianceReports    ComplianceReport[]
+  profileId         Int      @id @default(autoincrement())
+  userId            Int      @unique
+  gender            String
+  dateOfBirth       DateTime
+  address           String
+  insurance         String
+  allergies         String
+  chronicDiseases   String
+  obstetricHistory  String
+  surgicalHistory   String
+  familyHistory     String
+  socialHistory     String
+  medicationHistory String
+  user              User     @relation(fields: [userId], references: [userId])
+}
+
+model Specialty {
+  specialtyId Int      @id @default(autoincrement())
+  name        String
+  description String
+  doctors     Doctor[]
+}
+
+model Hospital {
+  hospitalId     Int           @id @default(autoincrement())
+  name           String
+  address        String
+  phone          String
+  description    String
+  email          String
+  establishYear  Int
+  logo           String
+  workScheduling String
+  type           String
+  website        String?
+  achievements   Achievement[]
+  doctors        Doctor[]
 }
 
 model Appointment {
@@ -144,6 +113,14 @@ model Appointment {
   payments      Payment[]
 }
 
+model Service {
+  serviceId   Int           @id @default(autoincrement())
+  name        String
+  price       Int
+  calender    String
+  appointment Appointment[]
+}
+
 model Feedback {
   feedbackId    Int         @id @default(autoincrement())
   appointmentId Int         @unique
@@ -151,14 +128,6 @@ model Feedback {
   comment       String
   createdAt     DateTime    @default(now())
   appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
-}
-
-model Service {
-  serviceId   Int           @id @default(autoincrement())
-  name        String
-  price       Int
-  calender    String
-  appointment Appointment[]
 }
 
 model MedicalRecord {
@@ -232,22 +201,6 @@ model Certification {
   doctor          Doctor @relation(fields: [doctorId], references: [doctorId])
 }
 
-model Hospital {
-  hospitalId     Int           @id @default(autoincrement())
-  name           String
-  address        String
-  phone          String
-  description    String
-  email          String
-  establishYear  Int
-  logo           String
-  workScheduling String
-  type           String
-  website        String?
-  achievements   Achievement[]
-  doctors        Doctor[]
-}
-
 model Notification {
   notificationId Int              @id @default(autoincrement())
   userId         Int
@@ -263,136 +216,41 @@ model Notification {
   user           User             @relation(fields: [userId], references: [userId])
 }
 
-model PatientConsent {
-  id          Int            @id @default(autoincrement())
-  patientId   Int
-  patient     PatientProfile @relation(fields: [patientId], references: [profileId])
-  grantedToId Int
-  grantedTo   User           @relation("grantedTo", fields: [grantedToId], references: [userId])
-  dataType    String
-  purpose     String
-  validUntil  DateTime
-  status      String
-  revokedAt   DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  accessLogs  AccessLog[]
+enum NotificationType {
+  APPOINTMENT
+  FOLLOW_UP
+  VACCINE
+  CUSTOM
 }
 
-model AccessLog {
-  id           Int             @id @default(autoincrement())
-  patientId    Int
-  patient      PatientProfile  @relation(fields: [patientId], references: [profileId])
-  accessedById Int
-  accessedBy   User            @relation("accessedBy", fields: [accessedById], references: [userId])
-  dataType     String
-  purpose      String
-  timestamp    DateTime        @default(now())
-  consentId    Int?
-  consent      PatientConsent? @relation(fields: [consentId], references: [id])
+enum RoleEnum {
+  ADMIN
+  DOCTOR
+  USER
 }
 
-model PatientTelemetry {
-  id         Int            @id @default(autoincrement())
-  patientId  Int
-  patient    PatientProfile @relation(fields: [patientId], references: [profileId])
-  deviceId   String
-  metricType String
-  value      String
-  timestamp  DateTime
-  createdAt  DateTime       @default(now())
+enum PaymentMethodEnum {
+  CASH
+  CARD
+  BANK_TRANSFER
+  MOMO
 }
 
-model PatientAlert {
-  id        Int            @id @default(autoincrement())
-  patientId Int
-  patient   PatientProfile @relation(fields: [patientId], references: [profileId])
-  alertType String
-  value     String
-  timestamp DateTime
-  status    String
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+enum PaymentStatusEnum {
+  PAID
+  UNPAID
+  PENDING
 }
 
-model EncryptedMedicalData {
-  id            Int            @id @default(autoincrement())
-  patientId     Int
-  patient       PatientProfile @relation(fields: [patientId], references: [profileId])
-  dataType      String
-  encryptedData String
-  publicKey     String
-  cipherContext String
-  metadata      Json?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  @@index([patientId, dataType])
+enum GenderEnum {
+  Male
+  Female
+  Other
 }
 
-model ComplianceReport {
-  id             Int            @id @default(autoincrement())
-  patientId      Int
-  patient        PatientProfile @relation(fields: [patientId], references: [profileId])
-  reportDate     DateTime
-  reportData     Json
-  gdprCompliant  Boolean
-  hipaaCompliant Boolean
-  issues         Int
-  createdAt      DateTime       @default(now())
-
-  @@index([patientId, reportDate])
-}
-
-model BusinessAssociateAgreement {
-  id         Int       @id @default(autoincrement())
-  entityId   Int
-  entityType String
-  entityName String
-  status     String
-  startDate  DateTime
-  endDate    DateTime?
-  documents  Json[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  @@index([entityType, status])
-}
-
-model DataProcessingRecord {
-  id               Int      @id @default(autoincrement())
-  processCategory  String
-  dataCategories   String[]
-  recipients       String[]
-  retention        String
-  securityMeasures Json
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([processCategory])
-}
-
-model MPCComputationSession {
-  id           Int       @id @default(autoincrement())
-  sessionType  String
-  status       String
-  participants Int[]
-  threshold    Int
-  result       String?
-  startedAt    DateTime  @default(now())
-  completedAt  DateTime?
-  metadata     Json?
-
-  @@index([status])
-}
-
-model MPCPartialResult {
-  id          Int      @id @default(autoincrement())
-  sessionId   Int
-  partyId     Int
-  partialData String
-  submittedAt DateTime @default(now())
-  verified    Boolean  @default(false)
-
-  @@unique([sessionId, partyId])
+enum AppointmentStatus {
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
 }
