@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSpecialty, UpdateSpecialty, SpecialtyResponseDto } from '../DTO';
-import { getIconClassBySpecialty} from '../specialty-icon.util';
-import { Prisma } from '@prisma/client';
+import { CreateSpecialty, UpdateSpecialty } from '../DTO';
 
 @Injectable()
 export class SpecialtyService {
@@ -50,41 +48,40 @@ export class SpecialtyService {
     }
 
     async findAll(page = 1, limit = 6): Promise<{
-        data: SpecialtyResponseDto[];
+        specialties: CreateSpecialty[];
         totalCount: number;
+        totalPages: number;
         page: number;
         limit: number;
-        }> {
+    }> {
         const skip = (page - 1) * limit;
-
-        const [specialties, totalCount] = await this.prisma.$transaction([
+        const [specialtiesWithCount, totalCount] = await this.prisma.$transaction([
             this.prisma.specialty.findMany({
-            skip,
-            take: limit,
-            orderBy: { name: 'asc' },
+                skip,
+                take: limit,
+                orderBy: { name: 'asc' },
+                include: {
+                    _count: {
+                        select: { doctors: true },
+                    },
+                },
             }),
             this.prisma.specialty.count(),
         ]);
 
-        const data: SpecialtyResponseDto[] = await Promise.all(
-            specialties.map(async (specialty) => {
-            const doctorCount = await this.prisma.doctor.count({
-                where: { specialtyId: specialty.specialtyId },
-            });
+        const totalPages = Math.ceil(totalCount / limit);
 
-            return {
-                id: specialty.specialtyId.toString(),
-                name: specialty.name,
-                description: specialty.description,
-                icon: getIconClassBySpecialty(specialty.name),
-                doctorCount,
-            };
-            }),
-        );
+        const specialties = specialtiesWithCount.map(specialty => ({
+            id: specialty.specialtyId.toString(),
+            name: specialty.name,
+            description: specialty.description,
+            doctorCount: specialty._count.doctors,
+        }));
 
         return {
-            data,
+            specialties,
             totalCount,
+            totalPages,
             page,
             limit,
         };
