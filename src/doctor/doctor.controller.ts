@@ -34,18 +34,6 @@ export class DoctorController {
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    @ApiOperation({ summary: 'Filter' })
-    @Get('/filter')
-    filterDoctors(
-        @Req() req: Request, // ✅ Đưa lên trước
-        @Query('specialty') specialtyId?: number,
-        @Query('minRating') minRating?: number,
-        @Query('hospital') hospitalId?: number,
-    ) {
-        console.log(specialtyId);
-        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
-    }
-
     @ApiOperation({ summary: 'Get top 3 rated doctors' })
     @Get('/top-rated')
     getTopRatedDoctors() {
