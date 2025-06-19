@@ -47,7 +47,7 @@ export class SpecialtyService {
         };
     }
 
-    async findAll(page = 1, limit = 6): Promise<{
+    async findAll(page = 1, limit = 30): Promise<{
         specialties: CreateSpecialty[];
         totalCount: number;
         totalPages: number;
