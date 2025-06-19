@@ -7,6 +7,12 @@ export class UpdateDoctorSchedule {
     @IsOptional()
     doctorId?: number;
 
+    @ApiProperty({ example: 1, description: 'ID Lịch làm', required: false })
+    @IsInt()
+    @IsOptional()
+    scheduleId?: number;
+
+
     @ApiProperty({ example: 2, description: 'Ngày trong tuần (0=Chủ nhật, 1=Thứ 2, ... 6=Thứ 7)', required: false })
     @IsInt()
     @Min(0)

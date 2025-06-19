@@ -7,6 +7,11 @@ export class UpdateDoctor {
     @IsInt()
     userId?: number;
 
+    @ApiPropertyOptional({ example: 1, description: 'ID bác sĩ' })
+    @IsOptional()
+    @IsInt()
+    doctorId?: number;
+
     @ApiPropertyOptional({ example: 2, description: 'ID chuyên khoa của bác sĩ' })
     @IsOptional()
     @IsInt()
@@ -24,7 +29,7 @@ export class UpdateDoctor {
     @Max(5)
     rating?: number;
 
-    @ApiPropertyOptional({ example: 'Tiểu sử bác sĩ...', description: 'Tiểu sử ngắn của bác sĩ' })
+    @ApiPropertyOptional({ example: 'Bác sĩ chuyên khoa tim mạch với hơn 10 năm kinh nghiệm', description: 'Tiểu sử ngắn của bác sĩ' })
     @IsOptional()
     @IsString()
     bio?: string;
@@ -33,4 +38,14 @@ export class UpdateDoctor {
     @IsOptional()
     @IsString()
     yearsOfExperience?: string;
+
+    @ApiPropertyOptional({ example: 'Đại học Y Dược TP.HCM', description: 'Trình độ học vấn của bác sĩ' })
+    @IsOptional()
+    @IsString()
+    education?: string;
+
+    @ApiPropertyOptional({ example: 'Phòng khám Đa khoa ABC', description: 'Tên phòng khám nơi bác sĩ làm việc' })
+    @IsOptional()
+    @IsString()
+    clinic?: string;
 }
