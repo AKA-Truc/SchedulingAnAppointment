@@ -143,19 +143,19 @@ export class DoctorService {
             this.prisma.doctor.count({ where }),
         ]);
 
-    const totalPages = Math.ceil(totalCount / limit);
-    return {
-        message: "Request successfully handled",
-        code: 200,
-        data: doctors,
-        meta: {
-            total: totalCount,
-            page,
-            limit,
-            totalPages,
-        },
-    };
-}
+        const totalPages = Math.ceil(totalCount / limit);
+        return {
+            message: "Request successfully handled",
+            code: 200,
+            data: doctors,
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages,
+            },
+        };
+    }
 
 
     // 🔍 Lấy thông tin bác sĩ theo ID
@@ -225,6 +225,8 @@ export class DoctorService {
         if (dto.rating !== undefined) updateData.rating = dto.rating;
         if (dto.bio !== undefined) updateData.bio = dto.bio;
         if (dto.yearsOfExperience !== undefined) updateData.yearsOfExperience = dto.yearsOfExperience;
+        if (dto.education !== undefined) updateData.education = dto.education;
+        if (dto.clinic !== undefined) updateData.clinic = dto.clinic;
 
         const updatedDoctor = await this.prisma.doctor.update({
             where: { doctorId: id },
