@@ -92,6 +92,15 @@ model Hospital {
   workScheduling String
   type           String
   website        String?
+  latitude       Float?        // Latitude for map integration
+  longitude      Float?        // Longitude for map integration
+  gallery        String?       // JSON array of gallery image URLs
+  certificates   String?       // JSON array of certificate data
+  rating         Float?        // Hospital rating
+  reviews        Int?          // Number of reviews
+  verified       Boolean?      @default(true) // Hospital verification status
+  totalBeds      Int?          // Total number of beds
+  totalNurses    Int?          // Total number of nurses
   achievements   Achievement[]
   doctors        Doctor[]
 }
@@ -114,12 +123,16 @@ model Appointment {
 }
 
 model Service {
-  serviceId   Int           @id @default(autoincrement())
-  name        String
-  price       Int
-  calender    String
-  appointment Appointment[]
+  serviceId    Int      @id @default(autoincrement())
+  name         String
+  price        Int
+  duration     String?
+  highlighted  Boolean?  @default(false)
+  description  String[]
+  calender     String
+  appointment  Appointment[]
 }
+
 
 model Feedback {
   feedbackId    Int         @id @default(autoincrement())

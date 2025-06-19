@@ -110,6 +110,18 @@ export class DoctorController {
         return this.specialtyService.findAll(page, limit);
     }
 
+    @ApiOperation({ summary: 'Get all specialties (paginated)' })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 6 })
+    @Get('/specialty/:hospitalId')
+    findAllSpecialtiesByHospitalId(
+        @Param('hospitalId', ParseIntPipe) hospitalId: number,
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 6,
+    ) {
+        return this.specialtyService.getSpecialtiesByHospitalId(hospitalId, page, limit);
+    }
+
     @ApiOperation({ summary: 'Get all achievements (paginated)' })
     @Get('/achievement')
     @ApiQuery({ name: 'page', required: false, example: 1 })
