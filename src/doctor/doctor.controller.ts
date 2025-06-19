@@ -135,13 +135,20 @@ export class DoctorController {
     }
 
     @ApiOperation({ summary: 'Filter' })
-    @Get('/filter')
+    @Get('/filter/doctor')
+    @ApiQuery({ name: 'specialty', required: false })
+    @ApiQuery({ name: 'minRating', required: false })
+    @ApiQuery({ name: 'hospital', required: false })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
     filterDoctors(
-        @Query('specialty') specialtyId?: number,
-        @Query('minRating') minRating?: number,
-        @Query('hospital') hospitalId?: number,
+    @Query('specialty') specialtyId?: number,
+    @Query('minRating') minRating?: number,
+    @Query('hospital') hospitalId?: number,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
     ) {
-        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
+    return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId, page, limit });
     }
 
     @ApiOperation({ summary: 'Update a doctor by ID' })

@@ -138,6 +138,7 @@ export class DoctorService {
                         },
                     },
                     schedules: true,
+                    appointments: true,
                 },
             }),
             this.prisma.doctor.count({ where }),
@@ -318,7 +319,7 @@ export class DoctorService {
         if (hospitalId) where.hospitalId = +hospitalId;
         if (minRating) where.rating = { gte: +minRating };
 
-        const [doctors, total] = await Promise.all([
+        const [doctors, totalCount] = await Promise.all([
             this.prisma.doctor.findMany({
                 where,
                 skip,
@@ -335,11 +336,17 @@ export class DoctorService {
             this.prisma.doctor.count({ where }),
         ]);
 
+        const totalPages = Math.ceil(totalCount / limit);
         return {
+            message: "Request successfully handled",
+            code: 200,
             data: doctors,
-            total,
-            page,
-            totalPages: Math.ceil(total / limit),
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages,
+            },
         };
     }
 }

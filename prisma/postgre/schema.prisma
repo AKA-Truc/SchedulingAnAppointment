@@ -264,6 +264,7 @@ enum GenderEnum {
 enum AppointmentStatus {
   SCHEDULED
   CANCELLED
+  PENDING
   COMPLETED
   RESCHEDULED
 }
