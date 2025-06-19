@@ -26,6 +26,15 @@ export class HospitalController {
     private readonly dashboardService: DashboardHospitalService
   ) { }
 
+  @Get('/hospitals')
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
+  async getAllHospitals(
+    @Query('page', ParseIntPipe) page = 1,
+    @Query('limit', ParseIntPipe) limit = 10,) {
+    return this.hospitalService.getAllHospitals()
+  }
+
   //HOSPITAL=================================================================
   @Public()
   @Get('search/:searchString')
@@ -74,13 +83,6 @@ export class HospitalController {
   @Post()
   async createHospital(@Body() data: CreateHospital) {
     return this.hospitalService.createHospital(data)
-  }
-
-  @Get('/hospitals')
-  async getAllHospitals(
-    @Query('page', ParseIntPipe) page = 1,
-    @Query('limit', ParseIntPipe) limit = 10,) {
-    return this.hospitalService.getAllHospitals()
   }
 
   @Get(':id')

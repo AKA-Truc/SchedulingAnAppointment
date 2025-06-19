@@ -316,7 +316,12 @@ export class DoctorService {
         const where: any = {};
         if (specialtyId) where.specialtyId = +specialtyId;
         if (hospitalId) where.hospitalId = +hospitalId;
-        if (minRating) where.rating = { gte: +minRating };
+        if (typeof minRating !== 'undefined') {
+            where.rating = {
+                not: null,
+                gte: Number(minRating),
+            };
+        }
 
         const [doctors, total] = await Promise.all([
             this.prisma.doctor.findMany({
@@ -341,5 +346,28 @@ export class DoctorService {
             page,
             totalPages: Math.ceil(total / limit),
         };
+    }
+
+
+    async getTopRatedDoctors() {
+        return this.prisma.doctor.findMany({
+            where: {
+                rating: {
+                    not: null,
+                },
+            },
+            orderBy: {
+                rating: 'desc',
+            },
+            take: 3,
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                schedules: true,
+                appointments: true,
+                achievements: true,
+            },
+        });
     }
 }

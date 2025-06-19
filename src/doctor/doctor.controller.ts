@@ -1,6 +1,6 @@
 import {
     BadRequestException, Body, Controller, DefaultValuePipe, Delete, Get,
-    Param, ParseIntPipe, Post, Put, Query, UploadedFile, UseInterceptors,
+    Param, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiQuery, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -33,6 +33,24 @@ export class DoctorController {
         private readonly specialtyService: SpecialtyService,
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
+
+    @ApiOperation({ summary: 'Filter' })
+    @Get('/filter')
+    filterDoctors(
+        @Req() req: Request, // ✅ Đưa lên trước
+        @Query('specialty') specialtyId?: number,
+        @Query('minRating') minRating?: number,
+        @Query('hospital') hospitalId?: number,
+    ) {
+        console.log(specialtyId);
+        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
+    }
+
+    @ApiOperation({ summary: 'Get top 3 rated doctors' })
+    @Get('/top-rated')
+    getTopRatedDoctors() {
+        return this.doctorService.getTopRatedDoctors();
+    }
 
     @ApiOperation({ summary: 'Get all doctors with pagination' })
     @Get()
@@ -73,21 +91,21 @@ export class DoctorController {
     @ApiOperation({ summary: 'Get all doctor schedules (paginated)' })
     @Get('/doctorSchedule')
     @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    @ApiQuery({ name: 'limit', required: false, example: 2 })
     findAllDoctorSchedules(
         @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 10,
+        @Query('limit', ParseIntPipe) limit = 2,
     ) {
         return this.doctorScheduleService.findAll(page, limit);
     }
 
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
     @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 6 })
+    @ApiQuery({ name: 'limit', required: false, example: 30 })
     @Get('/specialty/get-all')
     findAllSpecialties(
         @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 6,
+        @Query('limit', ParseIntPipe) limit = 30,
     ) {
         return this.specialtyService.findAll(page, limit);
     }
@@ -122,15 +140,6 @@ export class DoctorController {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
 
-    @ApiOperation({ summary: 'Filter' })
-    @Get('/filter')
-    filterDoctors(
-        @Query('specialty') specialtyId?: number,
-        @Query('minRating') minRating?: number,
-        @Query('hospital') hospitalId?: number,
-    ) {
-        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
-    }
 
     @ApiOperation({ summary: 'Update a doctor by ID' })
     @Put(':id')
