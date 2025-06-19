@@ -88,6 +88,76 @@ export class DoctorService {
         };
     }
 
+    //Get all dotors by specialtyId
+    async getDoctors({
+        specialtyId,
+        page,
+        limit,
+    }: {
+        specialtyId?: number;
+        page: number;
+        limit: number;
+    }) {
+        const skip = (page - 1) * limit;
+
+        const where = specialtyId ? { specialtyId } : {};
+
+        const [doctors, totalCount] = await this.prisma.$transaction([
+            this.prisma.doctor.findMany({
+                where,
+                skip,
+                take: limit,
+                select: {
+                    doctorId: true,
+                    rating: true,
+                    bio: true,
+                    yearsOfExperience: true,
+                    education: true,
+                    clinic: true,
+                    user: {
+                        select: {
+                            userId: true,
+                            fullName: true,
+                            email: true,
+                            phone: true,
+                            gender: true,
+                            avatar: true,
+                        },
+                    },
+                    specialty: {
+                        select: {
+                            specialtyId: true,
+                            name: true,
+                        },
+                    },
+                    hospital: {
+                        select: {
+                            hospitalId: true,
+                            name: true,
+                            address: true,
+                        },
+                    },
+                    schedules: true,
+                },
+            }),
+            this.prisma.doctor.count({ where }),
+        ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+    return {
+        message: "Request successfully handled",
+        code: 200,
+        data: doctors,
+        meta: {
+            total: totalCount,
+            page,
+            limit,
+            totalPages,
+        },
+    };
+}
+
+
     // 🔍 Lấy thông tin bác sĩ theo ID
     async getDoctorById(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
@@ -97,8 +167,9 @@ export class DoctorService {
                 specialty: true,
                 hospital: true,
                 schedules: true,
-                appointments: true,
+                appointments: false,
                 achievements: true,
+                certifications: true
             },
         });
 

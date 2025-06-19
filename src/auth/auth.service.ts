@@ -207,4 +207,59 @@ export class AuthService {
             ...tokens,
         };
     }
+
+    async refreshToken(refreshToken: string): Promise<any> {
+        if (!refreshToken) {
+            throw new BadRequestException('Refresh token is required');
+        }
+
+        // Tìm token record trong database
+        const tokenRecords = await this.prismaService.token.findMany({
+            where: {
+                refreshExpiresAt: { gt: new Date() }, // Token chưa hết hạn
+            },
+            include: { user: true },
+        });
+
+        // Tìm token record phù hợp
+        let validTokenRecord: (typeof tokenRecords)[0] | null = null;
+        for (const tokenRecord of tokenRecords) {
+            const isMatch = await bcrypt.compare(refreshToken, tokenRecord.refreshToken);
+            if (isMatch) {
+                validTokenRecord = tokenRecord;
+                break;
+            }
+        }
+
+        if (!validTokenRecord) {
+            throw new UnauthorizedException('Invalid or expired refresh token');
+        }
+
+        // Kiểm tra user còn active không (bỏ qua check này tạm thời)
+        // if (!validTokenRecord.user.isActive) {
+        //     throw new UnauthorizedException('User account is inactive');
+        // }
+
+        // Tạo token mới
+        const newTokens = await this.generateToken(validTokenRecord.user);
+        
+        // Xóa token cũ
+        await this.prismaService.token.delete({
+            where: { tokenId: validTokenRecord.tokenId },
+        });
+
+        // Lưu token mới
+        await this.saveToken(validTokenRecord.userId, newTokens.accessToken, newTokens.refreshToken);
+
+        return {
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            user: {
+                id: validTokenRecord.user.userId,
+                email: validTokenRecord.user.email,
+                name: validTokenRecord.user.fullName,
+                role: validTokenRecord.user.role,
+            }
+        };
+    }
 }

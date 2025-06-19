@@ -44,6 +44,11 @@ export class AuthController {
         return this.authService.logout(req.user, refreshToken);
     }
 
+    @Public()
+    @Post('refresh-token')
+    async refreshToken(@Body() body: RefreshTokenDto) {
+        return this.authService.refreshToken(body.refreshToken);
+    }
 
     @Get('profile')
     getProfile(@Req() req) {

@@ -47,29 +47,47 @@ export class SpecialtyService {
         };
     }
 
-    // Lấy danh sách tất cả chuyên khoa, có phân trang.
-    async findAll(page = 1, limit = 10) {
+    async findAll(page = 1, limit = 6): Promise<{
+        specialties: CreateSpecialty[];
+        totalCount: number;
+        totalPages: number;
+        page: number;
+        limit: number;
+    }> {
         const skip = (page - 1) * limit;
-
-        const [specialties, total] = await Promise.all([
+        const [specialtiesWithCount, totalCount] = await this.prisma.$transaction([
             this.prisma.specialty.findMany({
                 skip,
                 take: limit,
-                include: { doctors: true }, // Kèm theo danh sách bác sĩ thuộc chuyên khoa này
+                orderBy: { name: 'asc' },
+                include: {
+                    _count: {
+                        select: { doctors: true },
+                    },
+                },
             }),
             this.prisma.specialty.count(),
         ]);
 
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const specialties = specialtiesWithCount.map(specialty => ({
+            id: specialty.specialtyId.toString(),
+            name: specialty.name,
+            description: specialty.description,
+            doctorCount: specialty._count.doctors,
+        }));
+
         return {
-            data: specialties,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
+            specialties,
+            totalCount,
+            totalPages,
+            page,
+            limit,
         };
     }
+
+
 
     //  Lấy thông tin chi tiết của một chuyên khoa theo ID.
     async findOne(id: number) {
