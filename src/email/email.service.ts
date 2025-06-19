@@ -117,7 +117,7 @@ export class EmailService {
   }
 
   async sendVerificationEmail(email: string, fullName: string, token: string) {
-    const verifyUrl = `https://f0fb-42-113-218-160.ngrok-free.app/auth/verify-email?token=${token}`;
+    const verifyUrl = `https://4da6-42-114-202-149.ngrok-free.app/auth/verify-email?token=${token}`;
 
     await this.mailerService.sendMail({
       to: email,

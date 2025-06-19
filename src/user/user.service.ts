@@ -3,6 +3,7 @@ import { PrismaClient, User } from '@prisma/client';
 import { CreateUserDto, UpdateUserDto } from './DTO';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt'
+import { use } from 'passport';
 
 @Injectable()
 export class UserService {
@@ -63,6 +64,13 @@ export class UserService {
         //         createdAt: user.createdAt,
         //     },
         // };
+    }
+
+    async uploadAvatar(userId: number, fileUrl: string) {
+        return this.prisma.user.update({
+            where: { userId: userId },
+            data: { avatar: fileUrl }
+        })
     }
 
     //GetAll

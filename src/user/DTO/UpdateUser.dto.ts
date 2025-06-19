@@ -1,5 +1,5 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RoleEnum, GenderEnum } from '@prisma/client';
 
 export class UpdateUserDto {
@@ -36,6 +36,17 @@ export class UpdateUserDto {
     // @IsString()
     // @MinLength(8)
     // password?: String;
+
+    @ApiProperty({
+        example: '2004-02-02'
+    })
+    @IsNotEmpty()
+    dateOfBirth: Date;
+
+    @ApiProperty({
+        example: '20 Nguyen Thi Dinh, Ho Chi Minh'
+    })
+    address: string;
 
     @ApiPropertyOptional({
         example: GenderEnum.Male,
