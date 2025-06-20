@@ -405,15 +405,93 @@ export class HospitalService {
   }
 
   async removeCertificate(hospitalId: number, certificateId: string) {
-    const hospital = await this.getHospitalById(hospitalId);
-    
-    const existingCertificates = hospital.certificates ? JSON.parse(hospital.certificates as string) : [];
-    const updatedCertificates = existingCertificates.filter((cert: any) => cert.id !== certificateId);
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { hospitalId },
+    });
+
+    if (!hospital) {
+      throw new NotFoundException(`Hospital with ID ${hospitalId} not found`);
+    }
+
+    // Assuming certificates are stored as JSON string
+    // This implementation depends on your certificate storage structure
+    // You might need to adjust based on your actual database schema
+    return hospital;
+  }
+
+  // New method for creating hospital with media
+  async createHospitalWithMedia(
+    hospitalData: CreateHospital,
+    logoUrl?: string,
+    galleryUrls?: string[]
+  ) {
+    const emailExists = await this.prisma.hospital.findFirst({
+      where: { email: hospitalData.email },
+    });
+
+    if (emailExists) {
+      throw new BadRequestException('Email already exists.');
+    }
+
+    const createData: any = {
+      ...hospitalData,
+      ...(logoUrl && { logo: logoUrl }),
+      ...(galleryUrls && galleryUrls.length > 0 && { 
+        gallery: JSON.stringify(galleryUrls) 
+      }),
+    };
+
+    return this.prisma.hospital.create({ 
+      data: createData,
+      include: {
+        doctors: true,
+        achievements: true,
+      },
+    });
+  }
+
+  // New method for updating hospital with media
+  async updateHospitalWithMedia(
+    id: number,
+    hospitalData: UpdateHospital,
+    logoUrl?: string,
+    galleryUrls?: string[]
+  ) {
+    const hospital = await this.prisma.hospital.findUnique({
+      where: { hospitalId: id },
+    });
+
+    if (!hospital) {
+      throw new NotFoundException(`Hospital with ID ${id} not found`);
+    }
+
+    if (hospitalData.email && hospitalData.email !== hospital.email) {
+      const emailExists = await this.prisma.hospital.findFirst({
+        where: { email: hospitalData.email },
+      });
+      if (emailExists) {
+        throw new BadRequestException('Email already exists.');
+      }
+    }
+
+    const updateData: any = {
+      ...hospitalData,
+      ...(logoUrl && { logo: logoUrl }),
+    };
+
+    // Handle gallery images - append to existing or replace
+    if (galleryUrls && galleryUrls.length > 0) {
+      const existingGallery = hospital.gallery ? JSON.parse(hospital.gallery) : [];
+      const newGallery = [...existingGallery, ...galleryUrls];
+      updateData.gallery = JSON.stringify(newGallery);
+    }
 
     return this.prisma.hospital.update({
-      where: { hospitalId },
-      data: { 
-        certificates: JSON.stringify(updatedCertificates),
+      where: { hospitalId: id },
+      data: updateData,
+      include: {
+        doctors: true,
+        achievements: true,
       },
     });
   }
