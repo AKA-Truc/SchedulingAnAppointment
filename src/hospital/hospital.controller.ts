@@ -128,7 +128,7 @@ export class HospitalController {
     };
 
     const result = await this.hospitalService.getAllHospitals(page, limit, filters);
-    
+
     return {
       message: 'Hospitals retrieved successfully',
       code: 200,
@@ -141,7 +141,7 @@ export class HospitalController {
   @Get(':id')
   async getHospital(@Param('id', ParseIntPipe) id: number) {
     const hospital = await this.hospitalService.getHospitalById(id);
-    
+
     return {
       message: 'Hospital retrieved successfully',
       code: 200,
@@ -157,7 +157,7 @@ export class HospitalController {
   @Delete(':id')
   async deleteHospital(@Param('id', ParseIntPipe) id: number) {
     await this.hospitalService.deleteHospital(id);
-    
+
     return {
       message: 'Hospital deleted successfully',
       code: 200,
@@ -178,7 +178,7 @@ export class HospitalController {
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
     const hospitals = await this.hospitalService.searchByLocation(latitude, longitude, radius, limit);
-    
+
     return {
       message: 'Hospitals found by location',
       code: 200,
@@ -194,7 +194,7 @@ export class HospitalController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
     const result = await this.hospitalService.getHospitalsBySpecialty(specialtyId, page, limit);
-    
+
     return {
       message: 'Hospitals by specialty retrieved successfully',
       code: 200,
@@ -214,7 +214,7 @@ export class HospitalController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {
     const hospitals = await this.hospitalService.getNearbyHospitals(latitude, longitude, limit);
-    
+
     return {
       message: 'Nearby hospitals retrieved successfully',
       code: 200,
@@ -228,7 +228,7 @@ export class HospitalController {
     @Query('limit', new DefaultValuePipe(6), ParseIntPipe) limit: number,
   ) {
     const hospitals = await this.hospitalService.getFeaturedHospitals(limit);
-    
+
     return {
       message: 'Featured hospitals retrieved successfully',
       code: 200,
@@ -240,7 +240,7 @@ export class HospitalController {
   @Get('statistics')
   async getHospitalStats() {
     const stats = await this.hospitalService.getHospitalStatistics();
-    
+
     return {
       message: 'Hospital statistics retrieved successfully',
       code: 200,
@@ -254,7 +254,7 @@ export class HospitalController {
     @Body() body: { latitude: number; longitude: number },
   ) {
     const hospital = await this.hospitalService.updateCoordinates(id, body.latitude, body.longitude);
-    
+
     return {
       message: 'Hospital coordinates updated successfully',
       code: 200,
@@ -288,7 +288,7 @@ export class HospitalController {
     }
 
     const uploadResult = await this.cloudinaryService.uploadHospitalLogo(file, hospitalId);
-    
+
     // Update hospital logo URL in database
     const hospital = await this.hospitalService.updateHospital(hospitalId, {
       logo: uploadResult.secure_url,
@@ -338,12 +338,12 @@ export class HospitalController {
       throw new NotFoundException('No files uploaded');
     }
 
-    const uploadPromises = files.map(file => 
+    const uploadPromises = files.map(file =>
       this.cloudinaryService.uploadHospitalGallery(file, hospitalId, imageType)
     );
 
     const uploadResults = await Promise.all(uploadPromises);
-    
+
     // Update hospital gallery URLs in database (you might want to create a separate gallery table)
     const galleryUrls = uploadResults.map(result => result.secure_url);
     await this.hospitalService.addGalleryImages(hospitalId, galleryUrls);
@@ -395,7 +395,7 @@ export class HospitalController {
     }
 
     const uploadResult = await this.cloudinaryService.uploadHospitalCertificate(file, hospitalId);
-    
+
     // Create certificate record in database
     const certificate = await this.hospitalService.addCertificate(hospitalId, {
       title,
@@ -415,7 +415,7 @@ export class HospitalController {
   @Get(':id/images')
   async getHospitalImages(@Param('id', ParseIntPipe) hospitalId: number) {
     const images = await this.cloudinaryService.getHospitalImages(hospitalId);
-    
+
     return {
       message: 'Hospital images retrieved successfully',
       code: 200,
@@ -429,7 +429,7 @@ export class HospitalController {
     @Param('publicId') publicId: string,
   ) {
     await this.cloudinaryService.deleteImage(publicId);
-    
+
     return {
       message: 'Hospital image deleted successfully',
       code: 200,

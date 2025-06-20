@@ -123,12 +123,16 @@ model Appointment {
 }
 
 model Service {
-  serviceId   Int           @id @default(autoincrement())
-  name        String
-  price       Int
-  calender    String
-  appointment Appointment[]
+  serviceId    Int      @id @default(autoincrement())
+  name         String
+  price        Int
+  duration     String?
+  highlighted  Boolean?  @default(false)
+  description  String[]
+  calender     String
+  appointment  Appointment[]
 }
+
 
 model Feedback {
   feedbackId    Int         @id @default(autoincrement())
@@ -260,6 +264,7 @@ enum GenderEnum {
 enum AppointmentStatus {
   SCHEDULED
   CANCELLED
+  PENDING
   COMPLETED
   RESCHEDULED
 }
