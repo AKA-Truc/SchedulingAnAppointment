@@ -127,11 +127,7 @@ export class AppointmentService {
             appointmentId: appointment.appointmentId,
             scheduledTime: data.scheduledTime,
         });
-
-        if (user?.email) {
-            await this.emailService.sendAppointmentConfirmationWithHandlebars(user.email, appointment)
-        }
-
+        
         return appointment;
     }
 
