@@ -17,6 +17,7 @@ import { ApplicationInitService } from './config/application.init.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { ServicesModule } from './service/service.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ServicesModule } from './service/service.module';
       type: 'single',
       url: 'redis://localhost:6379',
     }),
+    ChatModule,
     UserModule,
     PrismaModule,
     AuthModule,

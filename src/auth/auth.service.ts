@@ -242,7 +242,7 @@ export class AuthService {
 
         // Tạo token mới
         const newTokens = await this.generateToken(validTokenRecord.user);
-        
+
         // Xóa token cũ
         await this.prismaService.token.delete({
             where: { tokenId: validTokenRecord.tokenId },

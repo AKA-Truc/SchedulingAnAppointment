@@ -16,7 +16,7 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId     Int
+  userId     Int  
   doctorId   Int?
   hospitalId Int?
   role       RoleEnum
@@ -33,15 +33,28 @@ model Review {
   @@index([doctorId])
 }
 
+model Conversation {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1     Int
+  user2     Int
+  messages  Message[] // 👉 Quan hệ 1-n
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([user1, user2])
+}
+
 model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  fromUser  Int
-  toUser    Int
-  content   String
-  timestamp DateTime @default(now())
-  read      Boolean  @default(false)
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser       Int
+  toUser         Int
+  content        String
+  timestamp      DateTime     @default(now())
+  read           Boolean      @default(false)
 
   conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
 
 enum RoleEnum {

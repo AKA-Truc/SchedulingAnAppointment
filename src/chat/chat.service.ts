@@ -1,80 +1,158 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SendMessageDto } from './DTO/SendMessage.dto';
 import { MongoPrismaService } from 'src/prisma/mongo-prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class ChatService {
-    constructor(private prisma: MongoPrismaService) { }
+    constructor(private mongo: MongoPrismaService,
+        private prisma: PrismaService,
+        private jwtService: JwtService,
+    ) { }
 
-    /**
-     * Lưu một tin nhắn mới vào cơ sở dữ liệu.
-     * - Tạo conversationId dựa trên từ 2 userId (gửi và nhận).
-     * - Ghi thông tin tin nhắn, bao gồm người gửi, người nhận, nội dung,
-     *   conversationId, trạng thái đọc (mặc định chưa đọc), và thời gian gửi.
-     * @param dto Dữ liệu tin nhắn (fromUserId, toUserId, content)
-     * @returns Promise trả về object tin nhắn vừa lưu trong DB
-     */
+    async getOrCreateConversation(userA: number, userB: number) {
+        const [user1, user2] = [userA, userB].sort((a, b) => a - b);
+
+        let conversation = await this.mongo.conversation.findFirst({
+            where: { user1, user2 },
+        });
+
+        if (!conversation) {
+            conversation = await this.mongo.conversation.create({
+                data: { user1, user2 },
+            });
+            console.log(`🆕 Tạo cuộc trò chuyện mới giữa ${user1} và ${user2}: ${conversation.id}`);
+        } else {
+            console.log(`✅ Đã tìm thấy cuộc trò chuyện: ${conversation.id}`);
+        }
+
+        return conversation;
+    }
+
     async saveMessage(dto: SendMessageDto) {
-        const conversationId = this.getConversationId(dto.fromUserId, dto.toUserId);
-        return this.prisma.message.create({
+        const conversation = await this.getOrCreateConversation(dto.fromUserId, dto.toUserId);
+
+        const savedMessage = await this.mongo.message.create({
             data: {
                 fromUser: dto.fromUserId,
                 toUser: dto.toUserId,
                 content: dto.content,
-                conversationId,
                 read: false,
                 timestamp: new Date(),
+                conversation: {
+                    connect: { id: conversation.id },
+                },
             },
         });
+
+        console.log(`💾 Đã lưu tin nhắn từ ${dto.fromUserId} đến ${dto.toUserId}:`, savedMessage);
+        return savedMessage;
     }
 
-    /**
-     * Tạo một ID cuộc trò chuyện duy nhất dựa trên 2 userId.
-     * Hàm sắp xếp 2 userId theo thứ tự tăng dần và nối lại bằng dấu gạch dưới,
-     * đảm bảo conversationId luôn giống nhau dù thứ tự userA và userB thay đổi.
-     * @param userA userId thứ nhất
-     * @param userB userId thứ hai
-     * @returns conversationId dạng "smallerUserId_largerUserId"
-     */
-    getConversationId(userA: number, userB: number): string {
-        return [userA, userB].sort((a, b) => a - b).join('_');
+    async getConversationMessages(userA: number, userB: number, page = 1, limit = 20) {
+        const [user1, user2] = [userA, userB].sort((a, b) => a - b);
+
+        const conversation = await this.mongo.conversation.findFirst({
+            where: { user1, user2 },
+        });
+
+        if (!conversation) {
+            return {
+                messages: [],
+                page,
+                limit,
+                totalMessages: 0,
+                totalPages: 0,
+            };
+        }
+
+        return this.getConversationMessagesById(conversation.id, page, limit);
     }
 
-    /**
-     * Lấy danh sách tất cả tin nhắn trong một cuộc trò chuyện giữa 2 user.
-     * - Tạo conversationId tương ứng dựa trên 2 userId.
-     * - Truy vấn tin nhắn theo conversationId và sắp xếp theo thời gian gửi tăng dần.
-     * @param userA userId thứ nhất
-     * @param userB userId thứ hai
-     * @returns Promise trả về mảng tin nhắn (message[]) của cuộc trò chuyện
-     */
-    async getConversationMessages(
-        userA: number,
-        userB: number,
-        page = 1,
-        limit = 20,
-    ) {
-        const conversationId = this.getConversationId(userA, userB);
+    async getConversationMessagesById(conversationId: string, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
 
-        const messages = await this.prisma.message.findMany({
-            where: { conversationId },
-            orderBy: { timestamp: 'asc' },
-            skip,
-            take: limit,
-        });
-
-        const totalMessages = await this.prisma.message.count({
-            where: { conversationId },
-        });
+        const [messages, totalMessages] = await Promise.all([
+            this.mongo.message.findMany({
+                where: { conversationId },
+                orderBy: { timestamp: 'asc' },
+                skip,
+                take: limit,
+            }),
+            this.mongo.message.count({ where: { conversationId } }),
+        ]);
 
         return {
+            messages,
             page,
             limit,
             totalMessages,
             totalPages: Math.ceil(totalMessages / limit),
-            messages,
         };
+    }
+
+    async getUserConversations(token: string) {
+        let userId: number;
+
+        // 1. Giải mã token để lấy userId
+        try {
+            const payload = this.jwtService.verify(token)
+            userId = payload.sub;
+            if (!userId) throw new Error();
+        } catch (err) {
+            throw new BadRequestException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        // 2. Kiểm tra user có tồn tại không
+        const user = await this.prisma.user.findUnique({
+            where: { userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException("Không tìm thấy người dùng");
+        }
+
+        // 3. Lấy các cuộc trò chuyện từ MongoDB
+        const conversations = await this.mongo.conversation.findMany({
+            where: {
+                OR: [{ user1: userId }, { user2: userId }],
+            },
+            orderBy: { updatedAt: "desc" },
+            include: {
+                messages: {
+                    orderBy: { timestamp: "desc" },
+                    take: 1,
+                },
+            },
+        });
+
+        if (!conversations.length) return [];
+
+        // 4. Lấy userId của đối phương
+        const otherUserIds = Array.from(
+            new Set(conversations.map((c) => (c.user1 === userId ? c.user2 : c.user1)))
+        );
+
+        // 5. Lấy thông tin người dùng đối phương
+        const users = await this.prisma.user.findMany({
+            where: { userId: { in: otherUserIds } },
+        });
+
+        const userMap = new Map(users.map((u) => [u.userId, u]));
+
+        // 6. Kết hợp dữ liệu và trả về
+        return conversations.map((c) => {
+            const otherUserId = c.user1 === userId ? c.user2 : c.user1;
+            const otherUser = userMap.get(otherUserId);
+
+            return {
+                id: c.id,
+                lastMessage: c.messages[0]?.content ?? "",
+                lastTime: c.messages[0]?.timestamp ?? c.updatedAt,
+                otherUser,
+            };
+        });
     }
 
 }
