@@ -2,22 +2,27 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDoctor, UpdateDoctor } from '../DTO';
 import { DoctorScheduleService } from './doctorSchedule.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class DoctorService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly doctorScheduleService: DoctorScheduleService,
+        private readonly userService: UserService,
     ) { }
 
     // 🟢 Tạo bác sĩ mới
     async createDoctor(data: CreateDoctor) {
+
+        const newUser = await this.userService.createUser(data.user)
+
         // Kiểm tra userId đã có bác sĩ chưa
         const existingDoctor = await this.prisma.doctor.findUnique({
-            where: { userId: data.userId },
+            where: { userId: newUser.userId },
         });
         if (existingDoctor) {
-            throw new BadRequestException(`Doctor with userId ${data.userId} already exists.`);
+            throw new BadRequestException(`Doctor with userId ${newUser.userId} already exists.`);
         }
 
         // Kiểm tra specialtyId
@@ -38,7 +43,7 @@ export class DoctorService {
 
         const doctor = await this.prisma.doctor.create({
             data: {
-                userId: data.userId,
+                userId: newUser.userId,
                 specialtyId: data.specialtyId,
                 hospitalId: data.hospitalId,
                 rating: null,
