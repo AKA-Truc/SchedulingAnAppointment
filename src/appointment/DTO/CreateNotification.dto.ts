@@ -24,6 +24,10 @@ export class CreateNotification {
     @IsOptional()
     sent?: boolean;
 
+    @IsBoolean()
+    @IsOptional()
+    isRead?: boolean;
+
     @IsInt()
     @IsOptional()
     followUpId?: number;

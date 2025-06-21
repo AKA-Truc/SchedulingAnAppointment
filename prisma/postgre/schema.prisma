@@ -92,15 +92,15 @@ model Hospital {
   workScheduling String
   type           String
   website        String?
-  latitude       Float?        // Latitude for map integration
-  longitude      Float?        // Longitude for map integration
-  gallery        String?       // JSON array of gallery image URLs
-  certificates   String?       // JSON array of certificate data
-  rating         Float?        // Hospital rating
-  reviews        Int?          // Number of reviews
-  verified       Boolean?      @default(true) // Hospital verification status
-  totalBeds      Int?          // Total number of beds
-  totalNurses    Int?          // Total number of nurses
+  certificates   String?
+  gallery        String?
+  latitude       Float?
+  longitude      Float?
+  rating         Float?
+  reviews        Int?
+  totalBeds      Int?
+  totalNurses    Int?
+  verified       Boolean?      @default(true)
   achievements   Achievement[]
   doctors        Doctor[]
 }
@@ -123,16 +123,15 @@ model Appointment {
 }
 
 model Service {
-  serviceId    Int      @id @default(autoincrement())
-  name         String
-  price        Int
-  duration     String?
-  highlighted  Boolean?  @default(false)
-  description  String[]
-  calender     String
-  appointment  Appointment[]
+  serviceId   Int           @id @default(autoincrement())
+  name        String
+  price       Int
+  duration    String?
+  highlighted Boolean?      @default(false)
+  description String[]
+  calender    String
+  appointment Appointment[]
 }
-
 
 model Feedback {
   feedbackId    Int         @id @default(autoincrement())
@@ -223,6 +222,7 @@ model Notification {
   content        String
   remindAt       DateTime
   sent           Boolean          @default(false)
+  isRead         Boolean          @default(false)
   createdAt      DateTime         @default(now())
   scheduledTime  DateTime
   appointment    Appointment      @relation(fields: [appointmentId], references: [appointmentId])
@@ -264,7 +264,7 @@ enum GenderEnum {
 enum AppointmentStatus {
   SCHEDULED
   CANCELLED
-  PENDING
   COMPLETED
   RESCHEDULED
+  PENDING
 }
