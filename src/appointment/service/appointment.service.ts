@@ -99,7 +99,7 @@ export class AppointmentService {
                 serviceId: data.serviceId,
                 scheduledTime: data.scheduledTime,
                 note: data.note,
-                status: 'SCHEDULED',
+                status: AppointmentStatus.PENDING,
             },
             include: {
                 doctor: {
@@ -115,7 +115,7 @@ export class AppointmentService {
 
 
 
-        await this.scheduleNotificationsForAppointment(data, appointment.appointmentId);
+    await this.scheduleNotificationsForAppointment(data, appointment.appointmentId);
 
         const user = await this.prisma.user.findUnique({
             where: { userId: data.userId },
@@ -127,13 +127,7 @@ export class AppointmentService {
             appointmentId: appointment.appointmentId,
             scheduledTime: data.scheduledTime,
         });
-
-        if (user?.email) {
-            const timeLeftText = getTimeLeftText(new Date(), new Date(data.scheduledTime));
-            // Gửi email thông báo đặt lịch thành công
-            await this.emailService.sendAppointmentConfirmation(user.email, appointment)
-        }
-
+        
         return appointment;
     }
 
@@ -191,16 +185,50 @@ export class AppointmentService {
     async updateStatus(id: number, status: AppointmentStatus) {
         const appointment = await this.prisma.appointment.findUnique({
             where: { appointmentId: id },
+            include: {
+                user: true, 
+                doctor: {
+                    include: {
+                        specialty: true,
+                        user: true
+                    }
+                }
+            },
         });
 
         if (!appointment) {
             throw new NotFoundException(`Appointment ID ${id} không tồn tại`);
         }
-
-        return this.prisma.appointment.update({
+        
+        const updatedAppointment = await this.prisma.appointment.update({
             where: { appointmentId: id },
             data: { status },
+            include: {
+                user: true,
+                doctor: {
+                    include: {
+                        specialty: true,
+                        user: true
+                    }
+                },
+                service: true
+            }
         });
+
+        if (updatedAppointment.user?.email && updatedAppointment.status=='COMPLETED') {
+            try {
+                await this.emailService.sendAppointmentConfirmationWithHandlebars(
+                    updatedAppointment.user.email,
+                    updatedAppointment
+                );
+            } catch (emailError) {
+                console.error(
+                    `[Email Service] Failed to send status update email for appointment ${id}:`, 
+                    emailError
+                );
+            }
+        }
+        return updatedAppointment;
     }
 
 

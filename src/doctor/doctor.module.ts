@@ -11,12 +11,14 @@ import { CertificationService } from './service/certification.service';
 import { DoctorScheduleService } from './service/doctorSchedule.service';
 import { DoctorService } from './service/doctor.service';
 import { SpecialtyService } from './service/specialty.service';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
     CloudinaryModule,
     ConfigModule,
     PrismaModule,
+    UserModule,
   ],
   controllers: [DoctorController],
   providers: [

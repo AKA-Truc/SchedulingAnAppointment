@@ -109,8 +109,10 @@ export class CertificationService {
             throw new NotFoundException(`Certification with ID ${id} not found`);
         }
 
-        return this.prisma.certification.delete({
+        await this.prisma.certification.delete({
             where: { certificationId: id },
         });
+
+        return { message: `Certification with ID ${id} has been deleted successfully.` };
     }
 }

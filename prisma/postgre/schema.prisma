@@ -92,6 +92,15 @@ model Hospital {
   workScheduling String
   type           String
   website        String?
+  certificates   String?
+  gallery        String?
+  latitude       Float?
+  longitude      Float?
+  rating         Float?
+  reviews        Int?
+  totalBeds      Int?
+  totalNurses    Int?
+  verified       Boolean?      @default(true)
   achievements   Achievement[]
   doctors        Doctor[]
 }
@@ -117,6 +126,9 @@ model Service {
   serviceId   Int           @id @default(autoincrement())
   name        String
   price       Int
+  duration    String?
+  highlighted Boolean?      @default(false)
+  description String[]
   calender    String
   appointment Appointment[]
 }
@@ -210,6 +222,7 @@ model Notification {
   content        String
   remindAt       DateTime
   sent           Boolean          @default(false)
+  isRead         Boolean          @default(false)
   createdAt      DateTime         @default(now())
   scheduledTime  DateTime
   appointment    Appointment      @relation(fields: [appointmentId], references: [appointmentId])
@@ -253,4 +266,5 @@ enum AppointmentStatus {
   CANCELLED
   COMPLETED
   RESCHEDULED
+  PENDING
 }

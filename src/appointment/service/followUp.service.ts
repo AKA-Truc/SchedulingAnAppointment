@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { EmailService } from 'src/email/email.service';
 import { CreateFollowUp, UpdateFeedback } from '../DTO';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
@@ -17,6 +18,7 @@ export class FollowUpService {
     constructor(
         private prisma: PrismaService, 
         @InjectRedis() private readonly redis: Redis,
+        private emailService: EmailService,
     ) {}
 
     async createFollowUp(dto: CreateFollowUp) {
@@ -42,7 +44,7 @@ export class FollowUpService {
                 appointment: {
                     doctorId: appointment.doctorId,
                 },
-                nextDate: dto.nextDate,
+                nextDate: new Date(dto.nextDate).toISOString(),
             },
         });
 
@@ -95,6 +97,20 @@ export class FollowUpService {
                 );
             }
         }
+
+        const user = await this.prisma.user.findUnique({
+            where: { userId: appointment.userId },
+        });
+
+        // Gửi email nhắc lịch tái khám
+        if (!user?.email) {
+            throw new BadRequestException('User email not found for sending follow-up notification');
+        }
+        await this.emailService.sendFollowUpNoti(user.email, {
+            appointmentId: appointment.appointmentId,
+            nextDate: new Date(dto.nextDate),
+            reason: dto.reason,
+        });
 
         return followUp;
     }

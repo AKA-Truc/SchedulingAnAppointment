@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { CreateUserDto, UpdateUserDto } from './DTO';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt'
@@ -9,21 +9,33 @@ export class UserService {
     constructor(private readonly prisma: PrismaService) { }
 
     //create
-    async createUser(data: CreateUserDto) {
-        const emailExists = await this.prisma.user.findUnique({
-            where: { email: data.email },
+    async createUser(data: CreateUserDto): Promise<User> {
+        const existingUser = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: data.email },
+                    { phone: data.phone },
+                    // { isActive: true },
+                ],
+            },
         });
 
-        if (emailExists) {
-            throw new BadRequestException('email is already exists')
-        }
+        if (existingUser) {
+            if (existingUser.isActive) {
+                // Nếu user đã active, kiểm tra cụ thể email hay phone trùng
+                if (existingUser.email === data.email) {
+                    throw new BadRequestException('Email is already registered');
+                }
 
-        const phoneExists = await this.prisma.user.findFirst({
-            where: { phone: data.phone },
-        });
+                if (existingUser.phone === data.phone) {
+                    throw new BadRequestException('Phone number is already used by an active account');
+                }
 
-        if (phoneExists) {
-            throw new BadRequestException('phone number is already registered.');
+                throw new BadRequestException('This account already active.');
+            } else {
+                // Nếu chưa active, xóa user cũ để tạo mới
+                await this.deleteUser(existingUser.userId);
+            }
         }
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -35,20 +47,25 @@ export class UserService {
                 password: hashedPassword,
                 gender: data.gender,
                 role: data.role,
+<<<<<<< HEAD
                 isActive: true,
+=======
+                isActive: false
+>>>>>>> dev
             },
         });
 
-        return {
-            message: 'User created successfully.',
-            user: {
-                userId: user.userId,
-                email: user.email,
-                fullName: user.fullName,
-                role: user.role,
-                createdAt: user.createdAt,
-            },
-        };
+        return user;
+        // return {
+        //     message: 'User created successfully.',
+        //     user: {
+        //         userId: user.userId,
+        //         email: user.email,
+        //         fullName: user.fullName,
+        //         role: user.role,
+        //         createdAt: user.createdAt,
+        //     },
+        // };
     }
 
     //GetAll
@@ -140,6 +157,10 @@ export class UserService {
         if (!user) {
             throw new NotFoundException(`User with ID ${id} not found`);
         }
+
+        await this.prisma.token.deleteMany({
+            where: { userId: id },
+        });
 
         return this.prisma.user.delete({
             where: { userId: id },

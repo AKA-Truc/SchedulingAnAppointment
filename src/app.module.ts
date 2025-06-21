@@ -16,7 +16,7 @@ import * as path from 'path';
 import { ApplicationInitService } from './config/application.init.service';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
-import { ChatModule } from './chat/chat.module';
+import { ServicesModule } from './service/service.module';
 
 @Module({
   imports: [
@@ -32,6 +32,7 @@ import { ChatModule } from './chat/chat.module';
     HospitalModule,
     PatientProfileModule,
     AppointmentModule,
+    ServicesModule,
     PaymentModule,
     SignalingModule,
     ConfigModule.forRoot({

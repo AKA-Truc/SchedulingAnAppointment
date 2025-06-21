@@ -11,9 +11,19 @@ import { MailModule } from 'src/email/email.module';
 import Redis from 'ioredis';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
+<<<<<<< HEAD
   imports: [RedisModule, PrismaModule, MailModule],
+=======
+ imports: [
+    ScheduleModule.forRoot(),
+    RedisModule,
+    PrismaModule,
+    MailModule,
+  ],
+>>>>>>> dev
   controllers: [AppointmentController],
   providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService, EmailService, NotificationWorker,
     NotificationGateway,

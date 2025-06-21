@@ -1,14 +1,17 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsUrl, Min, Max } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsUrl, Min, Max, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateUserDto } from 'src/user/DTO';
+import { Type } from 'class-transformer';
 
 export class CreateDoctor {
     @ApiProperty({
-        example: 1,
-        description: 'ID người dùng liên kết với bác sĩ',
+        description: 'Thông tin người dùng sẽ được tạo và liên kết với bác sĩ',
+        type: CreateUserDto,
     })
-    @IsInt()
+    @ValidateNested()
+    @Type(() => CreateUserDto)
     @IsNotEmpty()
-    userId: number;
+    user: CreateUserDto;
 
     @ApiProperty({
         example: 2,

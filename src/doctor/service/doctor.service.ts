@@ -2,22 +2,27 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDoctor, UpdateDoctor } from '../DTO';
 import { DoctorScheduleService } from './doctorSchedule.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class DoctorService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly doctorScheduleService: DoctorScheduleService,
+        private readonly userService: UserService,
     ) { }
 
     // 🟢 Tạo bác sĩ mới
     async createDoctor(data: CreateDoctor) {
+
+        const newUser = await this.userService.createUser(data.user)
+
         // Kiểm tra userId đã có bác sĩ chưa
         const existingDoctor = await this.prisma.doctor.findUnique({
-            where: { userId: data.userId },
+            where: { userId: newUser.userId },
         });
         if (existingDoctor) {
-            throw new BadRequestException(`Doctor with userId ${data.userId} already exists.`);
+            throw new BadRequestException(`Doctor with userId ${newUser.userId} already exists.`);
         }
 
         // Kiểm tra specialtyId
@@ -38,7 +43,7 @@ export class DoctorService {
 
         const doctor = await this.prisma.doctor.create({
             data: {
-                userId: data.userId,
+                userId: newUser.userId,
                 specialtyId: data.specialtyId,
                 hospitalId: data.hospitalId,
                 rating: null,
@@ -88,6 +93,77 @@ export class DoctorService {
         };
     }
 
+    //Get all dotors by specialtyId
+    async getDoctors({
+        specialtyId,
+        page,
+        limit,
+    }: {
+        specialtyId?: number;
+        page: number;
+        limit: number;
+    }) {
+        const skip = (page - 1) * limit;
+
+        const where = specialtyId ? { specialtyId } : {};
+
+        const [doctors, totalCount] = await this.prisma.$transaction([
+            this.prisma.doctor.findMany({
+                where,
+                skip,
+                take: limit,
+                select: {
+                    doctorId: true,
+                    rating: true,
+                    bio: true,
+                    yearsOfExperience: true,
+                    education: true,
+                    clinic: true,
+                    user: {
+                        select: {
+                            userId: true,
+                            fullName: true,
+                            email: true,
+                            phone: true,
+                            gender: true,
+                            avatar: true,
+                        },
+                    },
+                    specialty: {
+                        select: {
+                            specialtyId: true,
+                            name: true,
+                        },
+                    },
+                    hospital: {
+                        select: {
+                            hospitalId: true,
+                            name: true,
+                            address: true,
+                        },
+                    },
+                    schedules: true,
+                    appointments: true,
+                },
+            }),
+            this.prisma.doctor.count({ where }),
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+        return {
+            message: "Request successfully handled",
+            code: 200,
+            data: doctors,
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages,
+            },
+        };
+    }
+
+
     // 🔍 Lấy thông tin bác sĩ theo ID
     async getDoctorById(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
@@ -97,8 +173,9 @@ export class DoctorService {
                 specialty: true,
                 hospital: true,
                 schedules: true,
-                appointments: true,
+                appointments: false,
                 achievements: true,
+                certifications: true
             },
         });
 
@@ -154,6 +231,8 @@ export class DoctorService {
         if (dto.rating !== undefined) updateData.rating = dto.rating;
         if (dto.bio !== undefined) updateData.bio = dto.bio;
         if (dto.yearsOfExperience !== undefined) updateData.yearsOfExperience = dto.yearsOfExperience;
+        if (dto.education !== undefined) updateData.education = dto.education;
+        if (dto.clinic !== undefined) updateData.clinic = dto.clinic;
 
         const updatedDoctor = await this.prisma.doctor.update({
             where: { doctorId: id },
@@ -243,9 +322,14 @@ export class DoctorService {
         const where: any = {};
         if (specialtyId) where.specialtyId = +specialtyId;
         if (hospitalId) where.hospitalId = +hospitalId;
-        if (minRating) where.rating = { gte: +minRating };
+        if (typeof minRating !== 'undefined') {
+            where.rating = {
+                not: null,
+                gte: Number(minRating),
+            };
+        }
 
-        const [doctors, total] = await Promise.all([
+        const [doctors, totalCount] = await Promise.all([
             this.prisma.doctor.findMany({
                 where,
                 skip,
@@ -262,11 +346,40 @@ export class DoctorService {
             this.prisma.doctor.count({ where }),
         ]);
 
+        const totalPages = Math.ceil(totalCount / limit);
         return {
+            message: "Request successfully handled",
+            code: 200,
             data: doctors,
-            total,
-            page,
-            totalPages: Math.ceil(total / limit),
+            meta: {
+                total: totalCount,
+                page,
+                limit,
+                totalPages,
+            },
         };
+    }
+
+
+    async getTopRatedDoctors() {
+        return this.prisma.doctor.findMany({
+            where: {
+                rating: {
+                    not: null,
+                },
+            },
+            orderBy: {
+                rating: 'desc',
+            },
+            take: 3,
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                schedules: true,
+                appointments: true,
+                achievements: true,
+            },
+        });
     }
 }
