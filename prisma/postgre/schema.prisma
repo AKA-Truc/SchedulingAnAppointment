@@ -12,8 +12,10 @@ model User {
   fullName       String
   email          String          @unique
   phone          String
-  dateOfBirth    DateTime
-  address        String
+  address        String?
+  dateOfBirth    DateTime?
+  nationalId     String?
+  ethnicity      String?
   password       String
   role           RoleEnum
   gender         GenderEnum

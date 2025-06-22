@@ -48,6 +48,16 @@ export class UpdateUserDto {
     })
     address: string;
 
+    @ApiProperty({
+        example: '079346057694'
+    })
+    nationalId: string;
+
+    @ApiProperty({
+        example: 'Kinh'
+    })
+    ethnicity: string;
+
     @ApiPropertyOptional({
         example: GenderEnum.Male,
         enum: GenderEnum,
