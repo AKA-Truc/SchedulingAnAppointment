@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, ParseIntPipe, Req } from '@nestjs/common';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AppointmentService } from './service/appointment.service';
 import { FeedbackService } from './service/feedBack.service';
@@ -11,6 +11,7 @@ import { NotificationService } from './service/notification.service';
 
 @Controller('appointment')
 export class AppointmentController {
+    notificationsService: any;
     constructor(
         private readonly appointment: AppointmentService,
         private readonly feedback: FeedbackService,
@@ -220,7 +221,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Get all notifications with pagination' })
-    @Get('notification')
+    @Get('notification/get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllNotifications(
@@ -255,6 +256,23 @@ export class AppointmentController {
         @Body() data: UpdateNotification
     ) {
         return this.notification.updateNotification(id, data);
+    }
+    // 1. GET /notifications/unread-count/:userId
+    @Get('notifications/unread-count/:userId')
+    getUnreadCount(@Param('userId') userId: number) {
+        return this.notification.getUnreadCount(userId);
+    }
+
+    // 2. PATCH /notifications/:id/read/:userId
+    @Patch('notifications/:id/read/:userId')
+    markAsRead(@Param('id') id: string, @Param('userId') userId: string) {
+        return this.notification.markAsRead(Number(userId), Number(id));
+    }
+
+    // 3. POST /notifications/read-all/:userId
+    @Post('notifications/read-all/:userId')
+    markAllAsRead(@Param('userId') userId: string) {
+        return this.notification.markAllAsRead(Number(userId));
     }
 
     @ApiOperation({ summary: 'Delete notification by ID' })

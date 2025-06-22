@@ -7,7 +7,7 @@ import {
   UploadedFile,
   UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import { HospitalService } from './services/hospital.service';
 import { CreateHospital, UpdateHospital } from './DTO';
 import { ApiTags, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -79,7 +79,20 @@ export class HospitalController {
 
   @Post()
   async createHospital(@Body() data: CreateHospital) {
-    return this.hospitalService.createHospital(data)
+    try {
+      console.log('🏥 Creating hospital with data:', data);
+      const hospital = await this.hospitalService.createHospital(data);
+      console.log('✅ Hospital created:', hospital);
+      
+      return {
+        message: 'Hospital created successfully',
+        code: 201,
+        data: hospital,
+      };
+    } catch (error) {
+      console.error('❌ Error creating hospital:', error);
+      throw error;
+    }
   }
 
   @Public()
@@ -673,5 +686,219 @@ export class HospitalController {
   @Get('feedback-report/average-rating')
   async topDoctorsByRating(@Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number,) {
     return this.dashboardService.topDoctorsByRating(limit);
+  }
+
+  // ============= New Combined Endpoints =============
+  
+  @Post('create-with-media')
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Create hospital with logo and gallery images',
+    schema: {
+      type: 'object',
+      properties: {
+        // Hospital data fields
+        name: { type: 'string', description: 'Hospital name' },
+        address: { type: 'string', description: 'Hospital address' },
+        phone: { type: 'string', description: 'Hospital phone' },
+        description: { type: 'string', description: 'Hospital description' },
+        email: { type: 'string', description: 'Hospital email' },
+        establishYear: { type: 'number', description: 'Establishment year' },
+        workScheduling: { type: 'string', description: 'Work schedule' },
+        type: { type: 'string', description: 'Hospital type' },
+        website: { type: 'string', description: 'Hospital website' },
+        latitude: { type: 'number', description: 'Latitude coordinate' },
+        longitude: { type: 'number', description: 'Longitude coordinate' },
+        
+        // File upload fields
+        logoFile: { type: 'string', format: 'binary', description: 'Logo image file' },
+        galleryFiles: { 
+          type: 'array', 
+          items: { type: 'string', format: 'binary' },
+          description: 'Gallery image files' 
+        },
+        imageType: {
+          type: 'string',
+          enum: ['exterior', 'interior', 'facility', 'equipment'],
+          description: 'Type of gallery images',
+        },
+      },
+    },
+  })
+  async createHospitalWithMedia(
+    @Body() hospitalData: any,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    try {
+      console.log('Received files:', files?.map(f => ({ fieldname: f.fieldname, filename: f.originalname })));
+      console.log('Received hospitalData:', hospitalData);
+      
+      // Clean and parse hospital data from FormData
+      const cleanHospitalData = {
+        name: hospitalData.name,
+        address: hospitalData.address,
+        phone: hospitalData.phone,
+        description: hospitalData.description,
+        email: hospitalData.email,
+        establishYear: parseInt(hospitalData.establishYear) || new Date().getFullYear(),
+        type: hospitalData.type,
+        logo: hospitalData.logo || '',
+        workScheduling: hospitalData.workScheduling,
+        website: hospitalData.website || undefined,
+        latitude: hospitalData.latitude ? parseFloat(hospitalData.latitude) : undefined,
+        longitude: hospitalData.longitude ? parseFloat(hospitalData.longitude) : undefined,
+      };
+      
+      console.log('Cleaned hospital data:', cleanHospitalData);
+      
+      // Separate logo and gallery files
+      const logoFile = files?.find(file => file.fieldname === 'logoFile');
+      const galleryFiles = files?.filter(file => file.fieldname === 'galleryFiles') || [];
+
+      let logoUrl: string | undefined;
+      let galleryUrls: string[] = [];
+
+      // Upload logo if provided
+      if (logoFile) {
+        const logoUploadResult = await this.cloudinaryService.uploadHospitalLogo(logoFile, 0); // temporary ID
+        logoUrl = logoUploadResult.secure_url;
+      }
+
+      // Upload gallery images if provided
+      if (galleryFiles.length > 0) {
+        const galleryUploadPromises = galleryFiles.map(file => 
+          this.cloudinaryService.uploadHospitalGallery(file, 0, hospitalData.imageType || 'facility')
+        );
+        const galleryUploadResults = await Promise.all(galleryUploadPromises);
+        galleryUrls = galleryUploadResults.map(result => result.secure_url);
+      }
+
+      // Create hospital with media URLs
+      const hospital = await this.hospitalService.createHospitalWithMedia(
+        cleanHospitalData,
+        logoUrl,
+        galleryUrls
+      );
+
+      return {
+        message: 'Hospital created successfully with media',
+        code: 201,
+        data: hospital,
+      };
+    } catch (error) {
+      return {
+        message: 'Failed to create hospital with media',
+        code: 500,
+        error: error.message,
+      };
+    }
+  }
+
+  @Put(':id/update-with-media')
+  @UseInterceptors(AnyFilesInterceptor())
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Update hospital with new logo and gallery images',
+    schema: {
+      type: 'object',
+      properties: {
+        // Hospital data fields (all optional for update)
+        name: { type: 'string', description: 'Hospital name' },
+        address: { type: 'string', description: 'Hospital address' },
+        phone: { type: 'string', description: 'Hospital phone' },
+        description: { type: 'string', description: 'Hospital description' },
+        email: { type: 'string', description: 'Hospital email' },
+        establishYear: { type: 'number', description: 'Establishment year' },
+        workScheduling: { type: 'string', description: 'Work schedule' },
+        type: { type: 'string', description: 'Hospital type' },
+        website: { type: 'string', description: 'Hospital website' },
+        latitude: { type: 'number', description: 'Latitude coordinate' },
+        longitude: { type: 'number', description: 'Longitude coordinate' },
+        
+        // File upload fields
+        logoFile: { type: 'string', format: 'binary', description: 'New logo image file' },
+        galleryFiles: { 
+          type: 'array', 
+          items: { type: 'string', format: 'binary' },
+          description: 'New gallery image files'
+        },
+        imageType: {
+          type: 'string',
+          enum: ['exterior', 'interior', 'facility', 'equipment'],
+          description: 'Type of gallery images',
+        },
+      },
+    },
+  })
+  async updateHospitalWithMedia(
+    @Param('id', ParseIntPipe) hospitalId: number,
+    @Body() hospitalData: any,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    try {
+      console.log('Update - Received files:', files?.map(f => ({ fieldname: f.fieldname, filename: f.originalname })));
+      console.log('Update - Received hospitalData:', hospitalData);
+      
+      // Clean and parse hospital data from FormData
+      const cleanHospitalData: any = {};
+      
+      if (hospitalData.name) cleanHospitalData.name = hospitalData.name;
+      if (hospitalData.address) cleanHospitalData.address = hospitalData.address;
+      if (hospitalData.phone) cleanHospitalData.phone = hospitalData.phone;
+      if (hospitalData.description) cleanHospitalData.description = hospitalData.description;
+      if (hospitalData.email) cleanHospitalData.email = hospitalData.email;
+      if (hospitalData.establishYear) cleanHospitalData.establishYear = parseInt(hospitalData.establishYear);
+      if (hospitalData.type) cleanHospitalData.type = hospitalData.type;
+      if (hospitalData.logo) cleanHospitalData.logo = hospitalData.logo;
+      if (hospitalData.workScheduling) cleanHospitalData.workScheduling = hospitalData.workScheduling;
+      if (hospitalData.website) cleanHospitalData.website = hospitalData.website;
+      if (hospitalData.latitude) cleanHospitalData.latitude = parseFloat(hospitalData.latitude);
+      if (hospitalData.longitude) cleanHospitalData.longitude = parseFloat(hospitalData.longitude);
+      
+      console.log('Update - Cleaned hospital data:', cleanHospitalData);
+      
+      // Separate logo and gallery files
+      const logoFile = files?.find(file => file.fieldname === 'logoFile');
+      const galleryFiles = files?.filter(file => file.fieldname === 'galleryFiles') || [];
+
+      let logoUrl: string | undefined;
+      let galleryUrls: string[] = [];
+
+      // Upload new logo if provided
+      if (logoFile) {
+        const logoUploadResult = await this.cloudinaryService.uploadHospitalLogo(logoFile, hospitalId);
+        logoUrl = logoUploadResult.secure_url;
+      }
+
+      // Upload new gallery images if provided
+      if (galleryFiles.length > 0) {
+        const galleryUploadPromises = galleryFiles.map(file => 
+          this.cloudinaryService.uploadHospitalGallery(file, hospitalId, hospitalData.imageType || 'facility')
+        );
+        const galleryUploadResults = await Promise.all(galleryUploadPromises);
+        galleryUrls = galleryUploadResults.map(result => result.secure_url);
+      }
+
+      // Update hospital with new media URLs
+      const hospital = await this.hospitalService.updateHospitalWithMedia(
+        hospitalId,
+        cleanHospitalData,
+        logoUrl,
+        galleryUrls
+      );
+
+      return {
+        message: 'Hospital updated successfully with media',
+        code: 200,
+        data: hospital,
+      };
+    } catch (error) {
+      return {
+        message: 'Failed to update hospital with media',
+        code: 500,
+        error: error.message,
+      };
+    }
   }
 }

@@ -16,6 +16,7 @@ export class NotificationService {
                 userId: dto.userId,
                 appointmentId: dto.appointmentId,
                 remindAt: dto.remindAt,
+                isRead: dto.isRead,
                 sent: dto.sent,
                 scheduledTime: dto.scheduledTime,
 
@@ -122,6 +123,39 @@ export class NotificationService {
             data: { sent: true },
         });
     }
+
+    async getUnreadCount(userId: number) {
+        const count = await this.prisma.notification.count({
+        where: { userId, isRead: false },
+        });
+        return { count };
+    }
+
+    async markAsRead(userId: number, notificationId: number) {
+        const notification = await this.prisma.notification.findFirst({
+        where: { notificationId: notificationId, userId },
+        });
+
+        if (!notification) throw new NotFoundException('Notification not found');
+
+        const updated = await this.prisma.notification.update({
+        where: { notificationId: notificationId },
+        data: { isRead: true },
+        });
+
+        return updated;
+    }
+
+    // 3. Đánh dấu tất cả là đã đọc
+    async markAllAsRead(userId: number) {
+        const result = await this.prisma.notification.updateMany({
+        where: { userId, isRead: false },
+        data: { isRead: true },
+        });
+
+        return { count: result.count };
+    }
+
 
     async findByUser(userId: number, page = 1, limit = 10) {
         const skip = (page - 1) * limit;

@@ -34,18 +34,6 @@ export class DoctorController {
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    @ApiOperation({ summary: 'Filter' })
-    @Get('/filter')
-    filterDoctors(
-        @Req() req: Request, // ✅ Đưa lên trước
-        @Query('specialty') specialtyId?: number,
-        @Query('minRating') minRating?: number,
-        @Query('hospital') hospitalId?: number,
-    ) {
-        console.log(specialtyId);
-        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId });
-    }
-
     @ApiOperation({ summary: 'Get top 3 rated doctors' })
     @Get('/top-rated')
     getTopRatedDoctors() {
@@ -152,6 +140,22 @@ export class DoctorController {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
 
+    @ApiOperation({ summary: 'Filter' })
+    @Get('/filter/doctor')
+    @ApiQuery({ name: 'specialty', required: false })
+    @ApiQuery({ name: 'minRating', required: false })
+    @ApiQuery({ name: 'hospital', required: false })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    filterDoctors(
+        @Query('specialty') specialtyId?: number,
+        @Query('minRating') minRating?: number,
+        @Query('hospital') hospitalId?: number,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+    ) {
+        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId, page, limit });
+    }
 
     @ApiOperation({ summary: 'Update a doctor by ID' })
     @Put(':id')
@@ -165,7 +169,9 @@ export class DoctorController {
     // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })
     @Post('/certification')
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FileInterceptor('file', {
+        limits: { fileSize: 10 * 1024 * 1024 }, // giới hạn 10MB
+    }))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         schema: {
@@ -181,28 +187,40 @@ export class DoctorController {
         @UploadedFile() file: Express.Multer.File,
         @Body('doctorId', ParseIntPipe) doctorId: number,
     ) {
+        // In log đầu vào ngay khi nhận request
+        console.log('Received doctorId:', doctorId);
+        console.log('Received file info:', {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            size: file.size,
+        });
+
+        // Kiểm tra kích thước file
         const MAX_SIZE_MB = parseInt(this.configService.get<string>('MAX_FILE_SIZE') || '10');
         const sizeInMB = file.size / (1024 * 1024);
-
         if (sizeInMB > MAX_SIZE_MB) {
             throw new BadRequestException(`File size must not exceed ${MAX_SIZE_MB}MB`);
         }
 
+        // Kiểm tra định dạng file
         const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png'];
         if (!allowedMimeTypes.includes(file.mimetype)) {
             throw new BadRequestException(`Unsupported file type: ${file.mimetype}`);
         }
 
+        // Upload lên cloudinary (giả sử service bạn đã có sẵn)
         const result = await this.cloudinaryService.uploadFile(file, {
             context: `doctorId=${doctorId}`,
             public_id: `${Date.now()}_${file.originalname.split('.')[0]}`,
         });
 
+        // Tạo bản ghi chứng chỉ trong DB
         return this.certificationService.create({
             doctorId,
             fileUrl: result.secure_url,
         });
     }
+
 
     @ApiOperation({ summary: 'Get certification by ID' })
     @Get('/certification/:id')
