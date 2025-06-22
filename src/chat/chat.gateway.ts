@@ -10,37 +10,29 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './DTO/SendMessage.dto';
-import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({ namespace: '/chat', cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
     private onlineUsers = new Map<number, string>();
 
-    constructor(
-        private chatService: ChatService,
-        private jwtService: JwtService,
-    ) { }
+    constructor(private chatService: ChatService) { }
 
     async handleConnection(client: Socket) {
         try {
-            const token =
-                client.handshake.auth?.token ||
-                client.handshake.headers?.authorization?.split(' ')[1];
+            const userId = client.handshake.query.userId;
+            if (!userId) throw new Error('Thiếu userId');
 
-            if (!token) throw new UnauthorizedException('Không có token');
+            const userIdNum = parseInt(userId as string, 10);
+            if (isNaN(userIdNum)) throw new Error('userId không hợp lệ');
 
-            const payload = await this.jwtService.verifyAsync(token);
-            const userId = payload.sub;
+            client.join(userIdNum.toString());
+            this.onlineUsers.set(userIdNum, client.id);
 
-            client.join(userId.toString());
-            this.onlineUsers.set(userId, client.id);
-
-            console.log(`✅ User ${userId} kết nối, socketId: ${client.id}`);
-            this.server.emit('userOnline', userId);
+            console.log(`✅ User ${userIdNum} kết nối, socketId: ${client.id}`);
+            this.server.emit('userOnline', userIdNum);
         } catch (err) {
             console.error('❌ Lỗi kết nối client:', err.message);
             client.disconnect();

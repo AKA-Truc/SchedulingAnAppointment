@@ -1,6 +1,7 @@
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { GenderEnum, RoleEnum } from '@prisma/client';
+import { Type } from 'class-transformer';
 
 export class CreateUserDto {
     @ApiProperty({
@@ -29,23 +30,27 @@ export class CreateUserDto {
     @ApiProperty({
         example: '2004-02-02'
     })
-    @IsNotEmpty()
-    dateOfBirth: Date;
+    @IsOptional()
+    @Type(() => Date)
+    dateOfBirth?: Date;
 
     @ApiProperty({
         example: '20 Nguyen Thi Dinh, Ho Chi Minh'
     })
-    address: string;
+    @IsOptional()
+    address?: string;
 
     @ApiProperty({
         example: '079346057694'
     })
-    nationalId: string;
+    @IsOptional()
+    nationalId?: string;
 
     @ApiProperty({
         example: 'Kinh'
     })
-    ethnicity: string;
+    @IsOptional()
+    ethnicity?: string;
 
     @ApiProperty({
         example: 'StrongPass123',

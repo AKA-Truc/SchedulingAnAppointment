@@ -1,6 +1,7 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RoleEnum, GenderEnum } from '@prisma/client';
+import { Type } from 'class-transformer';
 
 export class UpdateUserDto {
     @ApiPropertyOptional({
@@ -27,36 +28,30 @@ export class UpdateUserDto {
     @IsString()
     phone?: string;
 
-    // @ApiPropertyOptional({
-    //     example: 'NewPass123',
-    //     description: 'Mật khẩu mới, ít nhất 8 ký tự',
-    //     minLength: 8,
-    // })
-    // @IsOptional()
-    // @IsString()
-    // @MinLength(8)
-    // password?: String;
-
     @ApiProperty({
         example: '2004-02-02'
     })
-    @IsNotEmpty()
-    dateOfBirth: Date;
+    @IsOptional()
+    @Type(() => Date)
+    dateOfBirth?: Date;
 
     @ApiProperty({
         example: '20 Nguyen Thi Dinh, Ho Chi Minh'
     })
-    address: string;
+    @IsOptional()
+    address?: string;
 
     @ApiProperty({
         example: '079346057694'
     })
-    nationalId: string;
+    @IsOptional()
+    nationalId?: string;
 
     @ApiProperty({
         example: 'Kinh'
     })
-    ethnicity: string;
+    @IsOptional()
+    ethnicity?: string;
 
     @ApiPropertyOptional({
         example: GenderEnum.Male,

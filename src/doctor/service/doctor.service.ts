@@ -382,4 +382,30 @@ export class DoctorService {
             },
         });
     }
+
+    async getDoctorByUserId(id: number) {
+        const doctor = await this.prisma.doctor.findUnique({
+            where: { userId: id },
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                schedules: true,
+                appointments: false,
+                achievements: true,
+                certifications: true
+            },
+        })
+
+        if (!doctor) {
+            throw new NotFoundException("Not Found doctor of userId ", `${id}`
+            )
+        }
+
+        return {
+            message: "Request successfully handled",
+            code: 200,
+            data: doctor,
+        }
+    }
 }

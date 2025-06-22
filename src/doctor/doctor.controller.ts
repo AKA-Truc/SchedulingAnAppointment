@@ -122,6 +122,12 @@ export class DoctorController {
     }
 
     // ──────── Doctor CRUD ────────
+    @ApiOperation({ summary: 'Get a doctor by userId' })
+    @Get('/user/:id')
+    getDoctorByUserId(@Param('id', ParseIntPipe) id: number) {
+        return this.doctorService.getDoctorByUserId(id);
+    }
+
     @ApiOperation({ summary: 'Create a new doctor' })
     @Post()
     createDoctor(@Body() dto: CreateDoctor) {

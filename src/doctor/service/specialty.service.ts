@@ -47,7 +47,7 @@ export class SpecialtyService {
         };
     }
 
-        async findAll(page = 1, limit = 30): Promise<{
+    async findAll(page = 1, limit = 30): Promise<{
         message: string;
         code: number;
         data: {
@@ -106,41 +106,41 @@ export class SpecialtyService {
         hospitalId: number,
         page = 1,
         limit = 6,
-        ): Promise<{
+    ): Promise<{
         specialties: CreateSpecialty[];
         totalCount: number;
         totalPages: number;
         page: number;
         limit: number;
-        }> {
+    }> {
         const skip = (page - 1) * limit;
 
         const [specialtiesWithCount, totalCount] = await this.prisma.$transaction([
             this.prisma.specialty.findMany({
-            where: {
-                doctors: {
-                some: {
-                    hospitalId,
+                where: {
+                    doctors: {
+                        some: {
+                            hospitalId,
+                        },
+                    },
                 },
+                skip,
+                take: limit,
+                orderBy: { name: 'asc' },
+                include: {
+                    _count: {
+                        select: { doctors: true },
+                    },
                 },
-            },
-            skip,
-            take: limit,
-            orderBy: { name: 'asc' },
-            include: {
-                _count: {
-                select: { doctors: true },
-                },
-            },
             }),
             this.prisma.specialty.count({
-            where: {
-                doctors: {
-                some: {
-                    hospitalId,
+                where: {
+                    doctors: {
+                        some: {
+                            hospitalId,
+                        },
+                    },
                 },
-                },
-            },
             }),
         ]);
 
