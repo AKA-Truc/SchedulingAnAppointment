@@ -139,7 +139,11 @@ export class AppointmentService {
             skip,
             take: limit,
             include: {
-                doctor: true,
+                doctor: {
+                    include: {
+                        user: true,
+                    },
+                },
                 user: true,
                 feedback: true,
                 followUps: true,
@@ -215,7 +219,9 @@ export class AppointmentService {
             }
         });
 
-        if (updatedAppointment.user?.email && updatedAppointment.status=='COMPLETED') {
+        if (updatedAppointment.user?.email && status === 'SCHEDULED') {
+            console.log("User email: ", updatedAppointment.user?.email);
+            console.log("Appointment status: ", status);
             try {
                 await this.emailService.sendAppointmentConfirmationWithHandlebars(
                     updatedAppointment.user.email,
