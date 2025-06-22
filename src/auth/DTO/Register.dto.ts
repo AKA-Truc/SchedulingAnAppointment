@@ -27,6 +27,27 @@ export class RegisterDTO {
     phone: string;
 
     @ApiProperty({
+        example: '2004-02-02'
+    })
+    @IsNotEmpty()
+    dateOfBirth: Date;
+
+    @ApiProperty({
+        example: '20 Nguyen Thi Dinh, Ho Chi Minh'
+    })
+    address: string;
+
+    @ApiProperty({
+        example: '079346057694'
+    })
+    nationalId: string;
+
+    @ApiProperty({
+        example: 'Kinh'
+    })
+    ethnicity: string;
+
+    @ApiProperty({
         example: 'StrongPass123',
         description: 'Mật khẩu có ít nhất 8 ký tự',
         minLength: 8,

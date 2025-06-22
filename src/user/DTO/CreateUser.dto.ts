@@ -38,6 +38,16 @@ export class CreateUserDto {
     address: string;
 
     @ApiProperty({
+        example: '079346057694'
+    })
+    nationalId: string;
+
+    @ApiProperty({
+        example: 'Kinh'
+    })
+    ethnicity: string;
+
+    @ApiProperty({
         example: 'StrongPass123',
         description: 'Mật khẩu có ít nhất 8 ký tự',
         minLength: 8,

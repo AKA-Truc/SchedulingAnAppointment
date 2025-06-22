@@ -47,6 +47,10 @@ export class UserService {
                 email: data.email,
                 phone: data.phone,
                 password: hashedPassword,
+                address: data.address,
+                dateOfBirth: data.dateOfBirth,
+                nationalId: data.nationalId,
+                ethnicity: data.ethnicity,
                 gender: data.gender,
                 role: data.role,
                 isActive: false
@@ -54,16 +58,6 @@ export class UserService {
         });
 
         return user;
-        // return {
-        //     message: 'User created successfully.',
-        //     user: {
-        //         userId: user.userId,
-        //         email: user.email,
-        //         fullName: user.fullName,
-        //         role: user.role,
-        //         createdAt: user.createdAt,
-        //     },
-        // };
     }
 
     async uploadAvatar(userId: number, fileUrl: string) {
