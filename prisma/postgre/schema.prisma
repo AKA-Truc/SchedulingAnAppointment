@@ -12,6 +12,8 @@ model User {
   fullName       String
   email          String          @unique
   phone          String
+  dateOfBirth    DateTime
+  address        String
   password       String
   role           RoleEnum
   gender         GenderEnum

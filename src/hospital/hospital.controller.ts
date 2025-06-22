@@ -469,10 +469,10 @@ export class HospitalController {
     };
   }
 
-  @Post('review/:reviewId/reply')
+  @Post('review/:parentReviewId/reply')
   async replyToReview(
     @Param('hospitalId', ParseIntPipe) hospitalId: number,
-    @Param('reviewId') reviewId: string,
+    @Param('parentReviewId') parentReviewId: string,
     @Body()
     body: {
       comment: string;
@@ -481,7 +481,7 @@ export class HospitalController {
       role: RoleEnum;
     },
   ) {
-    const reply = await this.reviewService.replyToReview(reviewId, {
+    const reply = await this.reviewService.replyToReview(parentReviewId, {
       ...body,
       hospitalId,
     });
