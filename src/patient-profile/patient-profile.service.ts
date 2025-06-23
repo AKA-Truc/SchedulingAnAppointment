@@ -19,9 +19,6 @@ export class PatientProfileService {
     const profile = await this.prisma.patientProfile.create({
       data: {
         userId: data.userId,
-        gender: data.gender,
-        dateOfBirth: data.dateOfBirth, // đã là Date nhờ DTO transform
-        address: data.address,
         insurance: data.insurance ?? '',
         allergies: data.allergies ?? '',
         chronicDiseases: data.chronicDiseases ?? '',
@@ -31,7 +28,15 @@ export class PatientProfileService {
         socialHistory: data.socialHistory ?? '',
         medicationHistory: data.medicationHistory ?? '',
       },
-      include: { user: true },
+      include: {
+        user: {
+          select: {
+            gender: true,
+            address: true,
+            dateOfBirth: true,
+          },
+        },
+      },
     });
 
     return profile;
@@ -44,7 +49,15 @@ export class PatientProfileService {
       this.prisma.patientProfile.findMany({
         skip,
         take: limit,
-        include: { user: true },
+        include: {
+          user: {
+            select: {
+              gender: true,
+              address: true,
+              dateOfBirth: true,
+            },
+          },
+        },
       }),
       this.prisma.patientProfile.count(),
     ]);
@@ -63,7 +76,15 @@ export class PatientProfileService {
   async findOne(id: number) {
     const profile = await this.prisma.patientProfile.findUnique({
       where: { profileId: id },
-      include: { user: true },
+      include: {
+        user: {
+          select: {
+            gender: true,
+            address: true,
+            dateOfBirth: true,
+          },
+        },
+      },
     });
     if (!profile) {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
@@ -84,9 +105,6 @@ export class PatientProfileService {
       where: { profileId: id },
       data: {
         userId: dto.userId ?? profile.userId,
-        gender: dto.gender ?? profile.gender,
-        dateOfBirth: dto.dateOfBirth ?? profile.dateOfBirth,
-        address: dto.address ?? profile.address,
         insurance: dto.insurance ?? profile.insurance,
         allergies: dto.allergies ?? profile.allergies,
         chronicDiseases: dto.chronicDiseases ?? profile.chronicDiseases,

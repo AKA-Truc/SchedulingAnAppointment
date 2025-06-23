@@ -1,5 +1,5 @@
 // src/patient-profile/dto/UpdatePatientProfile.dto.ts
-import { IsInt, IsString, IsOptional, IsDate } from 'class-validator';
+import { IsInt, IsString, IsOptional } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -8,22 +8,6 @@ export class UpdatePatientProfile {
   @IsOptional()
   @IsInt()
   userId?: number;
-
-  @ApiPropertyOptional({ description: 'Giới tính', example: 'Male' })
-  @IsOptional()
-  @IsString()
-  gender?: string;
-
-  @ApiPropertyOptional({ description: 'Ngày sinh', type: String, example: '1980-01-01' })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  dateOfBirth?: Date;
-
-  @ApiPropertyOptional({ description: 'Địa chỉ', example: '123 Đường A, Quận B' })
-  @IsOptional()
-  @IsString()
-  address?: string;
 
   @ApiPropertyOptional({ description: 'Số bảo hiểm y tế' })
   @IsOptional()

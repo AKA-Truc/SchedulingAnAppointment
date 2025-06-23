@@ -1,22 +1,10 @@
-import { IsInt, IsString, IsDateString, IsOptional } from 'class-validator';
+import { IsInt, IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PatientImportRowDto {
   @ApiProperty({ description: 'User ID của bệnh nhân', example: 123 })
   @IsInt()
   userId: number;
-
-  @ApiProperty({ description: 'Giới tính', example: 'Male' })
-  @IsString()
-  gender: string;
-
-  @ApiProperty({ description: 'Ngày sinh (YYYY-MM-DD)', example: '1980-01-01' })
-  @IsDateString()
-  dateOfBirth: string;
-
-  @ApiProperty({ description: 'Địa chỉ', example: '123 Đường A, Quận B' })
-  @IsString()
-  address: string;
 
   @ApiProperty({ description: 'Số bảo hiểm y tế', required: false })
   @IsOptional()

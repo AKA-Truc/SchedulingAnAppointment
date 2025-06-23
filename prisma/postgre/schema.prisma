@@ -63,17 +63,14 @@ model Doctor {
 model PatientProfile {
   profileId         Int      @id @default(autoincrement())
   userId            Int      @unique
-  gender            String
-  dateOfBirth       DateTime
-  address           String
-  insurance         String
-  allergies         String
-  chronicDiseases   String
-  obstetricHistory  String
-  surgicalHistory   String
-  familyHistory     String
-  socialHistory     String
-  medicationHistory String
+  insurance         String?
+  allergies         String?
+  chronicDiseases   String?
+  obstetricHistory  String?
+  surgicalHistory   String?
+  familyHistory     String?
+  socialHistory     String?
+  medicationHistory String?
   user              User     @relation(fields: [userId], references: [userId])
 }
 

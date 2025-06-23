@@ -59,9 +59,6 @@ export class PatientProfileController {
       // 1) Map to DTO
       const dto = plainToInstance(PatientImportRowDto, {
         userId: raw['User ID'],
-        gender: raw['Gender'],
-        dateOfBirth: raw['Date of Birth'],
-        address: raw['Address'],
         insurance: raw['Insurance'],
         allergies: raw['Allergies'],
         chronicDiseases: raw['Chronic Diseases'],
@@ -90,9 +87,6 @@ export class PatientProfileController {
       try {
         const created = await this.patientProfileService.create({
           userId: dto.userId,
-          gender: dto.gender,
-          dateOfBirth: new Date(dto.dateOfBirth),
-          address: dto.address,
           insurance: dto.insurance,
           allergies: dto.allergies,
           chronicDiseases: dto.chronicDiseases,
@@ -129,9 +123,6 @@ export class PatientProfileController {
     // Map to sheet rows
     const sheetData = profiles.map(p => ({
       'User ID': p.userId,
-      'Gender': p.gender,
-      'Date of Birth': p.dateOfBirth,
-      'Address': p.address,
       'Insurance': p.insurance,
       'Allergies': p.allergies,
       'Chronic Diseases': p.chronicDiseases,
@@ -140,6 +131,12 @@ export class PatientProfileController {
       'Family History': p.familyHistory,
       'Social History': p.socialHistory,
       'Medication History': p.medicationHistory,
+      // Export các trường chung nếu có trong user
+      ...(p.user && {
+        'Gender': p.user.gender ?? '',
+        'Date of Birth': p.user.dateOfBirth ?? '',
+        'Address': p.user.address ?? '',
+      })
     }));
 
     const worksheet = xlsx.utils.json_to_sheet(sheetData);
