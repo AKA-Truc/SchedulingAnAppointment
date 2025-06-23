@@ -48,7 +48,14 @@ export class DoctorController {
         @Query('page', ParseIntPipe) page = 1,
         @Query('limit', ParseIntPipe) limit = 10,
     ) {
-        return this.doctorService.getAllDoctors(page, limit);
+        return this.achievementService.findAll(page, limit);
+    }
+
+    // ──────── Doctor CRUD ────────
+    @ApiOperation({ summary: 'Create a new doctor' })
+    @Post()
+    createDoctor(@Body() dto: CreateDoctor) {
+        return this.doctorService.createDoctor(dto);
     }
 
     @Get('/by-specialty/:specialtyId')

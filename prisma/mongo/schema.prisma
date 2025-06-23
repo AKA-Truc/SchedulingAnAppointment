@@ -46,6 +46,7 @@ model Conversation {
 }
 
 model Message {
+<<<<<<< HEAD
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
   fromUser       Int
   toUser         Int
@@ -55,6 +56,35 @@ model Message {
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+=======
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser       Int
+  toUser         Int
+  content        String
+  timestamp      DateTime @default(now())
+  read           Boolean  @default(false)
+  readAt         DateTime?     // Thời điểm người nhận đọc tin nhắn
+
+  conversationId String        // Chuỗi định danh duy nhất cho 2 người dùng (gợi ý bên dưới)
+
+  @@index([conversationId])
+  @@index([toUser, read])      // Tối ưu truy vấn tin nhắn chưa đọc
+}
+
+model FHIRResource {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  resourceType String
+  resourceData Json
+  versionId    String
+  lastUpdated  DateTime @default(now())
+  patientId    String?  // Reference to FHIRPatient
+  resourceId   String 
+  source       String   // e.g. "internal", "external-ehr"
+  isDeleted    Boolean  @default(false)
+
+  @@index([resourceType])
+  @@index([patientId])
+>>>>>>> 48616dd19f7507297f5fb759636e78063b730148
 }
 
 enum RoleEnum {

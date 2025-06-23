@@ -13,8 +13,7 @@ export class ApplicationInitService implements OnModuleInit {
 
         if (!admin) {
             await this.prisma.user.create({
-                data: {
-                    fullName: 'Admin',
+                data: {                    fullName: 'Admin',
                     email: 'admin@gmail.com',
                     password: await bcrypt.hash('adminadmin', 10),
                     role: 'ADMIN',

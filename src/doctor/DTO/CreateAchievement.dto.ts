@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsNumber, IsDate } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateAchievement {
     @ApiProperty({ description: 'Tên thành tựu', example: 'Best Cardiologist Award' })
@@ -13,6 +14,7 @@ export class CreateAchievement {
 
     @ApiPropertyOptional({ description: 'Ngày đạt được', example: '2024-12-15T00:00:00Z', type: String, format: 'date-time' })
     @IsDate()
+    @Type(() => Date)
     @IsOptional()
     dateAchieved?: Date;
 

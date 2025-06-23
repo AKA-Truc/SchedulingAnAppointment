@@ -14,12 +14,16 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
+<<<<<<< HEAD
+  imports: [RedisModule, PrismaModule, MailModule],
+=======
  imports: [
     ScheduleModule.forRoot(),
     RedisModule,
     PrismaModule,
     MailModule,
   ],
+>>>>>>> dev
   controllers: [AppointmentController],
   providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService, EmailService, NotificationWorker,
     NotificationGateway,
@@ -28,4 +32,4 @@ import { ScheduleModule } from '@nestjs/schedule';
       useFactory: () => new Redis(process.env.REDIS_URL || 'redis://localhost:6379'),
     },],
 })
-export class AppointmentModule {}
+export class AppointmentModule { }
