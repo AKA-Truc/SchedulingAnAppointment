@@ -47,8 +47,13 @@ export class ChatService {
         });
 
         console.log(`💾 Đã lưu tin nhắn từ ${dto.fromUserId} đến ${dto.toUserId}:`, savedMessage);
-        return savedMessage;
+
+        return {
+            ...savedMessage,
+            conversationId: conversation.id,
+        };
     }
+
 
     async getConversationMessages(userA: number, userB: number, page = 1, limit = 20) {
         const [user1, user2] = [userA, userB].sort((a, b) => a - b);
@@ -97,7 +102,7 @@ export class ChatService {
 
         // 1. Giải mã token để lấy userId
         try {
-            const payload = this.jwtService.verify(token)
+            const payload = this.jwtService.verify(token);
             userId = payload.sub;
             if (!userId) throw new Error();
         } catch (err) {
@@ -129,19 +134,36 @@ export class ChatService {
 
         if (!conversations.length) return [];
 
-        // 4. Lấy userId của đối phương
+        const conversationIds = conversations.map((c) => c.id);
+
+        // 4. Lấy số tin chưa đọc cho từng cuộc trò chuyện
+        const unreadCounts = await this.mongo.message.groupBy({
+            by: ['conversationId'],
+            where: {
+                conversationId: { in: conversationIds },
+                toUser: userId,
+                read: false,
+            },
+            _count: {
+                _all: true,
+            },
+        });
+
+        const unreadMap = new Map(unreadCounts.map((uc) => [uc.conversationId, uc._count._all]));
+
+        // 5. Lấy userId của đối phương
         const otherUserIds = Array.from(
             new Set(conversations.map((c) => (c.user1 === userId ? c.user2 : c.user1)))
         );
 
-        // 5. Lấy thông tin người dùng đối phương
+        // 6. Lấy thông tin người dùng đối phương
         const users = await this.prisma.user.findMany({
             where: { userId: { in: otherUserIds } },
         });
 
         const userMap = new Map(users.map((u) => [u.userId, u]));
 
-        // 6. Kết hợp dữ liệu và trả về
+        // 7. Trả về danh sách cuộc trò chuyện
         return conversations.map((c) => {
             const otherUserId = c.user1 === userId ? c.user2 : c.user1;
             const otherUser = userMap.get(otherUserId);
@@ -151,8 +173,64 @@ export class ChatService {
                 lastMessage: c.messages[0]?.content ?? "",
                 lastTime: c.messages[0]?.timestamp ?? c.updatedAt,
                 otherUser,
+                unreadCount: unreadMap.get(c.id) ?? 0, // ✅ thêm unreadCount
             };
         });
     }
 
+
+    async createConversation(userIdA: number, userIdB: number) {
+        if (userIdA === userIdB) {
+            throw new BadRequestException('Không thể tạo cuộc trò chuyện với chính mình');
+        }
+
+        const [user1, user2] = [userIdA, userIdB].sort((a, b) => a - b);
+
+        // Kiểm tra người dùng tồn tại
+        const users = await this.prisma.user.findMany({
+            where: { userId: { in: [user1, user2] } },
+        });
+
+        if (users.length !== 2) {
+            throw new NotFoundException('Một hoặc cả hai người dùng không tồn tại');
+        }
+
+        // Kiểm tra cuộc trò chuyện đã tồn tại
+        const existing = await this.mongo.conversation.findFirst({
+            where: { user1, user2 },
+        });
+
+        if (existing) {
+            return {
+                message: 'Cuộc trò chuyện đã tồn tại',
+                conversationId: existing.id,
+            };
+        }
+
+        // Tạo mới cuộc trò chuyện
+        const conversation = await this.mongo.conversation.create({
+            data: { user1, user2 },
+        });
+
+        return {
+            message: 'Tạo cuộc trò chuyện thành công',
+            conversationId: conversation.id,
+        };
+    }
+
+    async markMessagesAsRead(conversationId: string, userId: number) {
+        const result = await this.mongo.message.updateMany({
+            where: {
+                conversationId,
+                toUser: userId,     // ✅ Chỉ tin gửi tới user đang đọc
+                read: false,
+            },
+            data: {
+                read: true,
+                readAt: new Date(),
+            },
+        });
+
+        console.log(`✅ Đánh dấu ${result.count} tin nhắn là đã đọc cho user ${userId} trong cuộc trò chuyện ${conversationId}`);
+    }
 }

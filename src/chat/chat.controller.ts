@@ -39,4 +39,23 @@ export class ChatController {
 
         return this.chatService.getUserConversations(token);
     }
+
+    @ApiOperation({ summary: '➕ Tạo cuộc trò chuyện giữa 2 người dùng' })
+    @ApiQuery({ name: 'userA', required: true, type: Number })
+    @ApiQuery({ name: 'userB', required: true, type: Number })
+    @Get('create-conversation')
+    async createConversation(
+        @Query('userA') userA: string,
+        @Query('userB') userB: string,
+    ) {
+        const userIdA = Number(userA);
+        const userIdB = Number(userB);
+
+        if (isNaN(userIdA) || isNaN(userIdB)) {
+            throw new BadRequestException('userId không hợp lệ');
+        }
+
+        return this.chatService.createConversation(userIdA, userIdB);
+    }
+
 }

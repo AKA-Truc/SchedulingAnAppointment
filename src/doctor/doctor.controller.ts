@@ -174,6 +174,7 @@ export class DoctorController {
         return this.doctorService.updateDoctor(id, dto);
     }
 
+
     // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })
     @Post('/certification')

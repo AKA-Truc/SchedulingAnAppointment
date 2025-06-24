@@ -17,38 +17,39 @@ import { ConsentController } from './consent/consent.controller';
 import { ConsentService } from './consent/consent.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    MongoPrismaModule,
-    ScheduleModule.forRoot(),
-    EventEmitterModule.forRoot(),
-    ConfigModule.forFeature(() => ({
-      FHIR_SERVER_URL: {type: 'string',
-      required: true
-    },
-    KAFKA_BROKERS: {
-      type: 'string',
-      required: true,
-      default: 'localhost:9092'
-    },
-    MQTT_BROKER_URL: {
-      type: 'string',
-      required: true,
-      default: 'mqtt://localhost:1883'
-    }
-    }))
-  ],
-  controllers: [PatientProfileController, FHIRController, ConsentController],
-  providers: [
-    PatientProfileService,
-    FHIRService,
-    FhirCacheService, // 🆕 cron job provider
-    PatientFHIRMapper,
-    PatientEncryptionService,
-    PatientTelemetryService,
-    TelemetryKafkaService,
-    ConsentService
-  ],
-  exports: [PatientProfileService, FHIRService, ConsentService]
+    imports: [
+        PrismaModule,
+        MongoPrismaModule,
+        ScheduleModule.forRoot(),
+        EventEmitterModule.forRoot(),
+        ConfigModule.forFeature(() => ({
+            FHIR_SERVER_URL: {
+                type: 'string',
+                required: true
+            },
+            KAFKA_BROKERS: {
+                type: 'string',
+                required: true,
+                default: 'localhost:9092'
+            },
+            MQTT_BROKER_URL: {
+                type: 'string',
+                required: true,
+                default: 'mqtt://localhost:1883'
+            }
+        }))
+    ],
+    controllers: [PatientProfileController, FHIRController, ConsentController],
+    providers: [
+        PatientProfileService,
+        FHIRService,
+        FhirCacheService, // 🆕 cron job provider
+        PatientFHIRMapper,
+        PatientEncryptionService,
+        PatientTelemetryService,
+        TelemetryKafkaService,
+        ConsentService
+    ],
+    exports: [PatientProfileService, FHIRService, ConsentService]
 })
-export class PatientProfileModule {}
+export class PatientProfileModule { }
