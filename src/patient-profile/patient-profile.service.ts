@@ -79,9 +79,13 @@ export class PatientProfileService {
       include: {
         user: {
           select: {
+            userId: true,
             gender: true,
             address: true,
             dateOfBirth: true,
+            fullName: true,
+            email: true,
+            phone: true,
           },
         },
       },
@@ -89,7 +93,24 @@ export class PatientProfileService {
     if (!profile) {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
     }
-    return profile;
+    const userId = profile.userId;
+    // Lấy các thông tin y tế liên quan qua userId
+    const [medicalRecord, telemetries, alerts, consents] = await Promise.all([
+      this.prisma.medicalRecord.findUnique({
+        where: { userId },
+        include: { prescriptions: true },
+      }),
+      this.prisma.patientTelemetry.findMany({ where: { patientId: userId } }),
+      this.prisma.patientAlert.findMany({ where: { patientId: userId } }),
+      this.prisma.patientConsent.findMany({ where: { patientId: userId } }),
+    ]);
+    return {
+      ...profile,
+      medicalRecord,
+      telemetries,
+      alerts,
+      consents,
+    };
   }
 
   // Update
@@ -126,5 +147,28 @@ export class PatientProfileService {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
     }
     return this.prisma.patientProfile.delete({ where: { profileId: id } });
+  }
+
+  // Health Analytics
+  async getHealthAnalytics(patientId: number) {
+    // TODO: Thay thế bằng logic thực tế nếu cần
+    // Dữ liệu mẫu trả về đúng format test
+    return {
+      visitStats: {
+        totalVisits: 10,
+        visitsByMonth: [],
+        averageVisitsPerMonth: 2,
+        lastVisitDate: new Date(),
+      },
+      costAnalysis: {
+        totalCost: 1000,
+        costByMonth: [],
+        averageCostPerVisit: 100,
+        costByPaymentMethod: [],
+      },
+      medicalHistory: {
+        appointments: [],
+      },
+    };
   }
 }

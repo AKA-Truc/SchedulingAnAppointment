@@ -13,17 +13,16 @@ export interface ConsentReport {
 
 export interface ConsentSummary {
   id: number;
-  grantedTo: {
-    userId: number;
-    role: string;
-    name: string;
-  };
-  dataType: string;
-  purpose: string;
-  validFrom: Date;
-  validUntil: Date;
-  status: 'ACTIVE' | 'REVOKED';
-  revokedAt?: Date;
+  consentType: string;
+  status: string;
+  startDate: Date;
+  endDate: Date | null;
+  scope: string[];
+  terms: string;
+  witness?: string | null;
+  witnessContact?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AccessLogSummary {

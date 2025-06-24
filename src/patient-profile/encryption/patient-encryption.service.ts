@@ -1,7 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import SEAL from 'node-seal';
 import { ConfigService } from '@nestjs/config';
+
+// Import SEAL đúng cách
+const SEAL = require('node-seal');
 
 @Injectable()
 export class PatientEncryptionService implements OnModuleInit {
@@ -20,35 +22,45 @@ export class PatientEncryptionService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.seal = await SEAL();
+  const sealModule = await SEAL(); // ✅ Đúng cú pháp
+  this.seal = sealModule;
 
-    const schemeType = this.seal.SchemeType.bfv;
-    const securityLevel = this.seal.SecurityLevel.tc128;
-    const polyModulusDegree = 4096;
+  const schemeType = this.seal.SchemeType.bfv;
+  const securityLevel = this.seal.SecurityLevel.tc128;
+  const polyModulusDegree = 4096;
 
-    const coeffModulus = this.seal.CoeffModulus.BFVDefault(polyModulusDegree);
-    const plainModulus = this.seal.PlainModulus.Batching(polyModulusDegree, 20);
+  const coeffModulus = this.seal.CoeffModulus.BFVDefault(polyModulusDegree);
+  const plainModulus = this.seal.PlainModulus.Batching(polyModulusDegree, 20);
 
-    const encParams = this.seal.EncryptionParameters(schemeType);
-    encParams.setPolyModulusDegree(polyModulusDegree);
-    encParams.setCoeffModulus(coeffModulus);
-    encParams.setPlainModulus(plainModulus);
+  const encParams = this.seal.EncryptionParameters(schemeType);
+  encParams.setPolyModulusDegree(polyModulusDegree);
+  encParams.setCoeffModulus(coeffModulus);
+  encParams.setPlainModulus(plainModulus);
 
-    this.context = this.seal.Context(encParams, true, securityLevel);
+  this.context = this.seal.Context(encParams, true, securityLevel);
 
-    const keyGenerator = this.seal.KeyGenerator(this.context);
-    this.publicKey = keyGenerator.createPublicKey();
-    this.secretKey = keyGenerator.secretKey();
-
-    this.encoder = this.seal.BatchEncoder(this.context);
-    this.encryptor = this.seal.Encryptor(this.context, this.publicKey);
-    this.decryptor = this.seal.Decryptor(this.context, this.secretKey);
-    this.evaluator = this.seal.Evaluator(this.context);
+  if (!this.context.parametersSet()) {
+    throw new Error('SEAL context not set correctly.');
   }
 
+  const keyGenerator = this.seal.KeyGenerator(this.context);
+  this.publicKey = keyGenerator.createPublicKey();
+  this.secretKey = keyGenerator.secretKey();
+
+  this.encoder = this.seal.BatchEncoder(this.context);
+  this.encryptor = this.seal.Encryptor(this.context, this.publicKey);
+  this.decryptor = this.seal.Decryptor(this.context, this.secretKey);
+  this.evaluator = this.seal.Evaluator(this.context);
+}
+
+
   async encryptString(value: string): Promise<string> {
-    const codes = Array.from(value).map(c => c.charCodeAt(0));
-    while (codes.length < this.encoder.slotCount) codes.push(0);
+    const codes = Array.from(value).map(char => char.charCodeAt(0));
+
+    // Đảm bảo mảng đủ độ dài cho batch encoder
+    while (codes.length < this.encoder.slotCount) {
+      codes.push(0);
+    }
 
     const plain = this.encoder.encode(Int32Array.from(codes));
     const cipher = this.seal.CipherText();
