@@ -9,7 +9,7 @@ import { NotificationGateway } from './notification.gateway';
 import { CreateAppointment, UpdateAppointment } from '../DTO';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
-import { AppointmentStatus } from '@prisma/client';
+import { AppointmentStatus, Prisma } from '@prisma/client';
 import { NotificationType } from '@prisma/client';
 
 enum ReminderOffset {
@@ -132,24 +132,47 @@ export class AppointmentService {
     }
 
 
-    async getAllAppointments(page: number, limit: number) {
-        const total = await this.prisma.appointment.count();
+    async getAllAppointmentFilter(
+        page: number,
+        limit: number,
+        filters: { userId?: string; status?: string }
+    ) {
+        // Xây dựng mệnh đề `where` một cách linh hoạt
+        const whereClause: Prisma.AppointmentWhereInput = {};
+
+        if (filters.userId) {
+            whereClause.userId = Number(filters.userId);
+        }
+
+        if (filters.status) {
+            whereClause.status = filters.status as AppointmentStatus;
+        }
+
+        const total = await this.prisma.appointment.count({
+            where: whereClause,
+        });
+
         const skip = (page - 1) * limit;
+
         const appointments = await this.prisma.appointment.findMany({
+            where: whereClause,
             skip,
             take: limit,
             include: {
                 doctor: {
                     include: {
                         user: true,
+                        specialty: true,
                     },
                 },
                 user: true,
                 feedback: true,
+                service: true,
                 followUps: true,
                 payments: true,
             },
         });
+
         return {
             data: appointments,
             meta: {
@@ -159,6 +182,34 @@ export class AppointmentService {
                 totalPages: Math.ceil(total / limit),
             },
         };
+    }
+
+    async getAppointmentCounts(userId: number) {
+        const countsByStatus = await this.prisma.appointment.groupBy({
+            by: ['status'],
+            where: {
+                userId: userId,
+            },
+            _count: {
+                status: true,
+            },
+        });
+
+        const result = {
+            SCHEDULED: 0,
+            COMPLETED: 0,
+            CANCELLED: 0,
+            PENDING: 0,
+            ALL: 0,
+        };
+
+        countsByStatus.forEach((item) => {
+            result[item.status] = item._count.status;
+        });
+        
+        result.ALL = Object.values(result).reduce((sum, count) => sum + count, 0);
+
+        return result;
     }
 
     async getAppointmentById(id: number) {
