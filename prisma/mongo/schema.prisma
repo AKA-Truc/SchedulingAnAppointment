@@ -16,7 +16,7 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId     Int  
+  userId     Int
   doctorId   Int?
   hospitalId Int?
   role       RoleEnum
@@ -34,41 +34,31 @@ model Review {
 }
 
 model Conversation {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  user1     Int
-  user2     Int
-  messages  Message[] // 👉 Quan hệ 1-n
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1    Int
+  user2    Int
+  messages Message[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([user1, user2])
 }
 
 model Message {
-<<<<<<< HEAD
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  fromUser       Int
-  toUser         Int
-  content        String
-  timestamp      DateTime     @default(now())
-  read           Boolean      @default(false)
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser  Int
+  toUser    Int
+  content   String
+  timestamp DateTime  @default(now())
+  read      Boolean   @default(false)
+  readAt    DateTime? // Thời điểm người nhận đọc tin nhắn
 
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-=======
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  fromUser       Int
-  toUser         Int
-  content        String
-  timestamp      DateTime @default(now())
-  read           Boolean  @default(false)
-  readAt         DateTime?     // Thời điểm người nhận đọc tin nhắn
-
-  conversationId String        // Chuỗi định danh duy nhất cho 2 người dùng (gợi ý bên dưới)
+  conversationId String       @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   @@index([conversationId])
-  @@index([toUser, read])      // Tối ưu truy vấn tin nhắn chưa đọc
+  @@index([toUser, read]) // Tối ưu truy vấn tin nhắn chưa đọc
 }
 
 model FHIRResource {
@@ -77,14 +67,13 @@ model FHIRResource {
   resourceData Json
   versionId    String
   lastUpdated  DateTime @default(now())
-  patientId    String?  // Reference to FHIRPatient
-  resourceId   String 
-  source       String   // e.g. "internal", "external-ehr"
+  patientId    String? // Reference to FHIRPatient
+  resourceId   String
+  source       String // e.g. "internal", "external-ehr"
   isDeleted    Boolean  @default(false)
 
   @@index([resourceType])
   @@index([patientId])
->>>>>>> 48616dd19f7507297f5fb759636e78063b730148
 }
 
 enum RoleEnum {

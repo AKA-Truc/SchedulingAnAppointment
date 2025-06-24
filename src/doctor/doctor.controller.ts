@@ -52,11 +52,6 @@ export class DoctorController {
     }
 
     // ──────── Doctor CRUD ────────
-    @ApiOperation({ summary: 'Create a new doctor' })
-    @Post()
-    createDoctor(@Body() dto: CreateDoctor) {
-        return this.doctorService.createDoctor(dto);
-    }
 
     @Get('/by-specialty/:specialtyId')
     @ApiQuery({ name: 'page', required: false, example: 1 })
