@@ -7,7 +7,6 @@ import { Headers } from '@nestjs/common';
 @Controller('chat')
 export class ChatController {
     constructor(private readonly chatService: ChatService) { }
-
     @ApiOperation({ summary: '📜 Lấy lịch sử tin nhắn theo conversationId (có phân trang)' })
     @ApiQuery({ name: 'conversationId', required: true, type: String })
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Trang hiện tại (mặc định 1)' })

@@ -14,19 +14,17 @@ export class PatientConsentService {
   ) {}
   async grantConsent(params: {
     patientId: number;
-    grantedToId: number;
-    dataType: string;
-    purpose: string;
-    validUntil: Date;
+    consentType: string;
+    startDate: Date;
+    terms: string;
   }) {
     const consent = await this.prisma.patientConsent.create({
       data: {
         patientId: params.patientId,
-        grantedToId: params.grantedToId,
-        dataType: params.dataType,
-        purpose: params.purpose,
-        validUntil: params.validUntil,
-        status: 'ACTIVE'
+        consentType: params.consentType as any,
+        startDate: params.startDate,
+        terms: params.terms,
+        status: 'GRANTED'
       }
     });
 
@@ -34,8 +32,6 @@ export class PatientConsentService {
     this.eventEmitter.emit('consent.granted', {
       consentId: consent.id,
       patientId: params.patientId,
-      grantedToId: params.grantedToId,
-      dataType: params.dataType,
       timestamp: new Date()
     });
 
@@ -52,8 +48,7 @@ export class PatientConsentService {
     const consent = await this.prisma.patientConsent.update({
       where: { id: consentId },
       data: { 
-        status: 'REVOKED',
-        revokedAt: new Date()
+        status: 'WITHDRAWN'
       }
     });
 
@@ -76,50 +71,14 @@ export class PatientConsentService {
 
   async verifyConsent(params: {
     patientId: number;
-    requestedById: number;
-    dataType: string;
   }) {
     const consent = await this.prisma.patientConsent.findFirst({
       where: {
         patientId: params.patientId,
-        grantedToId: params.requestedById,
-        dataType: params.dataType,
-        status: 'ACTIVE',
-        validUntil: {
-          gte: new Date()
-        }
+        status: 'GRANTED',
       }
     });
 
     return !!consent;
-  }
-
-  async logAccess(params: {
-    patientId: number;
-    accessedById: number;
-    dataType: string;
-    purpose: string;
-  }) {
-    return this.prisma.accessLog.create({
-      data: {
-        patientId: params.patientId,
-        accessedById: params.accessedById,
-        dataType: params.dataType,
-        purpose: params.purpose,
-        timestamp: new Date()
-      }
-    });
-  }
-
-  async getAccessLogs(patientId: number) {
-    return this.prisma.accessLog.findMany({
-      where: { patientId },
-      include: {
-        accessedBy: true
-      },
-      orderBy: {
-        timestamp: 'desc'
-      }
-    });
   }
 }

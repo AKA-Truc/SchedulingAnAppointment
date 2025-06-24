@@ -19,21 +19,23 @@ export class ComplianceReportService {
   ) {}
 
   async generateComplianceReport(patientId: number, startDate: Date, endDate: Date): Promise<ConsentReport> {
-    const [activeConsents, revokedConsents, accessLogs] = await Promise.all([
+    const [activeConsents, revokedConsents] = await Promise.all([
       this.getActiveConsents(patientId, startDate, endDate),
-      this.getRevokedConsents(patientId, startDate, endDate),
-      this.getAccessLogs(patientId, startDate, endDate)
+      this.getRevokedConsents(patientId, startDate, endDate)
+      // this.getAccessLogs(patientId, startDate, endDate) // Không có accessLog trong schema
     ]);
 
-    const gdprCompliance = await this.checkGDPRCompliance(patientId, activeConsents, accessLogs);
-    const hipaaCompliance = await this.checkHIPAACompliance(patientId, activeConsents, accessLogs);
+    // const gdprCompliance = await this.checkGDPRCompliance(patientId, activeConsents, accessLogs);
+    // const hipaaCompliance = await this.checkHIPAACompliance(patientId, activeConsents, accessLogs);
+    const gdprCompliance = await this.checkGDPRCompliance(patientId, activeConsents, []);
+    const hipaaCompliance = await this.checkHIPAACompliance(patientId, activeConsents, []);
 
     return {
       patientId,
       period: { start: startDate, end: endDate },
       activeConsents,
       revokedConsents,
-      dataAccesses: accessLogs,
+      dataAccesses: [], // Không có accessLog
       gdprCompliance,
       hipaaCompliance
     };
@@ -56,33 +58,27 @@ export class ComplianceReportService {
     const consents = await this.prisma.patientConsent.findMany({
       where: {
         patientId,
-        status: 'ACTIVE',
-        validUntil: { gte: end },
-        createdAt: { lte: end }
+        status: 'GRANTED',
+        startDate: { lte: end },
+        OR: [
+          { endDate: null },
+          { endDate: { gte: start } },
+        ],
       },
-      include: {
-        grantedTo: {
-          select: {
-            userId: true,
-            role: true,
-            fullName: true
-          }
-        }
-      }
     });
 
     return consents.map(c => ({
       id: c.id,
-      grantedTo: {
-        userId: c.grantedTo.userId,
-        role: c.grantedTo.role,
-        name: c.grantedTo.fullName
-      },
-      dataType: c.dataType,
-      purpose: c.purpose,
-      validFrom: c.createdAt,
-      validUntil: c.validUntil,
-      status: 'ACTIVE'
+      consentType: c.consentType,
+      status: c.status,
+      startDate: c.startDate,
+      endDate: c.endDate,
+      scope: c.scope,
+      terms: c.terms,
+      witness: c.witness,
+      witnessContact: c.witnessContact,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt
     }));
   }
 
@@ -90,90 +86,52 @@ export class ComplianceReportService {
     const consents = await this.prisma.patientConsent.findMany({
       where: {
         patientId,
-        status: 'REVOKED',
-        revokedAt: {
+        status: 'WITHDRAWN',
+        updatedAt: {
           gte: start,
           lte: end
         }
       },
-      include: {
-        grantedTo: {
-          select: {
-            userId: true,
-            role: true,
-            fullName: true
-          }
-        }
-      }
     });
 
     return consents.map(c => ({
       id: c.id,
-      grantedTo: {
-        userId: c.grantedTo.userId,
-        role: c.grantedTo.role,
-        name: c.grantedTo.fullName
-      },
-      dataType: c.dataType,
-      purpose: c.purpose,
-      validFrom: c.createdAt,
-      validUntil: c.validUntil,
-      status: 'REVOKED',
-      revokedAt: c.revokedAt || undefined
+      consentType: c.consentType,
+      status: c.status,
+      startDate: c.startDate,
+      endDate: c.endDate,
+      scope: c.scope,
+      terms: c.terms,
+      witness: c.witness,
+      witnessContact: c.witnessContact,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt
     }));
   }
 
-  private async getAccessLogs(patientId: number, start: Date, end: Date): Promise<AccessLogSummary[]> {
-    const logs = await this.prisma.accessLog.findMany({
-      where: {
-        patientId,
-        timestamp: {
-          gte: start,
-          lte: end
-        }
-      },
-      include: {
-        accessedBy: {
-          select: {
-            userId: true,
-            role: true,
-            fullName: true
-          }
-        }
-      }
-    });
-
-    return logs.map(log => ({
-      id: log.id,
-      accessedBy: {
-        userId: log.accessedBy.userId,
-        role: log.accessedBy.role,
-        name: log.accessedBy.fullName
-      },
-      dataType: log.dataType,
-      purpose: log.purpose,
-      timestamp: log.timestamp,
-      consentId: log.consentId
-    }));
-  }
+  // private async getAccessLogs(patientId: number, start: Date, end: Date): Promise<AccessLogSummary[]> {
+  //   // Không có accessLog trong schema
+  //   return [];
+  // }
 
   private async checkGDPRCompliance(
     patientId: number,
     activeConsents: ConsentSummary[],
-    accessLogs: AccessLogSummary[]
+    accessLogs: any[]
   ): Promise<GDPRComplianceStatus> {
     const issues: ComplianceIssue[] = [];
 
+    const now = new Date();
     const hasValidConsents = activeConsents.every(consent =>
-      consent.validUntil > new Date() && this.isConsentPurposeValid(consent.purpose)
+      (!consent.endDate || consent.endDate > now) && consent.terms && consent.scope && consent.scope.length > 0
     );
 
     if (!hasValidConsents) {
       issues.push({
         type: 'CONSENT',
         severity: 'HIGH',
-        description: 'Some consents lack valid purpose or have expired',
-        recommendation: 'Review and update consent purposes and validity periods',
+        description: 'Some consents lack valid terms, scope or have expired',
+        recommendation: 'Review and update consent terms, scope and validity periods',
         regulation: 'GDPR Article 6 - Lawfulness of processing',
         affectedData: ['Patient consents']
       });
@@ -253,16 +211,18 @@ export class ComplianceReportService {
   }
 
   private async storeComplianceReport(report: ConsentReport) {
-    await this.prisma.complianceReport.create({
-      data: {
-        patientId: report.patientId,
-        reportDate: new Date(),
-        reportData: report as any,
-        gdprCompliant: report.gdprCompliance.isCompliant,
-        hipaaCompliant: report.hipaaCompliance.isCompliant,
-        issues: report.gdprCompliance.issues.length + report.hipaaCompliance.issues.length
-      }
-    });
+    // await this.prisma.complianceReport.create({
+    //   data: {
+    //     patientId: report.patientId,
+    //     reportDate: new Date(),
+    //     reportData: report as any,
+    //     gdprCompliant: report.gdprCompliance.isCompliant,
+    //     hipaaCompliant: report.hipaaCompliance.isCompliant,
+    //     issues: report.gdprCompliance.issues.length + report.hipaaCompliance.issues.length
+    //   }
+    // });
+    // Không có complianceReport trong schema
+    return;
   }
 
   private isConsentPurposeValid(purpose: string): boolean {
@@ -278,17 +238,15 @@ export class ComplianceReportService {
   }
 
   private async checkDataMinimization(patientId: number) {
-    const profile = await this.prisma.patientProfile.findUnique({
-      where: { profileId: patientId },
-      include: {
-        telemetry: true,
-        accessLogs: true
-      }
-    });
-
-    const excessiveFields: string[] = [];
+    // const profile = await this.prisma.patientProfile.findUnique({
+    //   where: { profileId: patientId },
+    //   include: {
+    //     telemetry: true,
+    //     accessLogs: true
+    //   }
+    // });
     // TODO: Add logic to identify redundant/unnecessary fields.
-
+    const excessiveFields: string[] = [];
     return {
       compliant: excessiveFields.length === 0,
       excessiveFields

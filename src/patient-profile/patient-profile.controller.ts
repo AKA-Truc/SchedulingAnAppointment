@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   Res,
   BadRequestException,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -157,5 +158,13 @@ export class PatientProfileController {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
     res.send(buffer);
+  }
+
+  @Get(':patientId/health-analytics')
+  @ApiOperation({ summary: 'Get health analytics for a patient' })
+  async getHealthAnalytics(
+    @Param('patientId') patientId: number
+  ) {
+    return this.patientProfileService.getHealthAnalytics(patientId);
   }
 }

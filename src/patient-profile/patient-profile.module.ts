@@ -13,6 +13,8 @@ import { MongoPrismaModule } from '../prisma/mongo-prisma.module'; // 🆕 cần
 import { PatientTelemetryService } from './telemetry/patient-telemetry.service';
 import { TelemetryKafkaService } from './telemetry/services/telemetry-kafka.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ConsentController } from './consent/consent.controller';
+import { ConsentService } from './consent/consent.service';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     }
     }))
   ],
-  controllers: [PatientProfileController, FHIRController],
+  controllers: [PatientProfileController, FHIRController, ConsentController],
   providers: [
     PatientProfileService,
     FHIRService,
@@ -44,8 +46,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     PatientFHIRMapper,
     PatientEncryptionService,
     PatientTelemetryService,
-    TelemetryKafkaService
+    TelemetryKafkaService,
+    ConsentService
   ],
-  exports: [PatientProfileService, FHIRService]
+  exports: [PatientProfileService, FHIRService, ConsentService]
 })
 export class PatientProfileModule {}

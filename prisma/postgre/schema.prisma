@@ -8,26 +8,29 @@ datasource db {
 }
 
 model User {
-  userId         Int             @id @default(autoincrement())
-  fullName       String
-  email          String          @unique
-  phone          String
-  address        String?
-  dateOfBirth    DateTime?
-  nationalId     String?
-  ethnicity      String?
-  password       String
-  role           RoleEnum
-  gender         GenderEnum
-  createdAt      DateTime        @default(now())
-  avatar         String?
-  isActive       Boolean
-  appointments   Appointment[]
-  doctor         Doctor?
-  medicalRecord  MedicalRecord?
-  notifications  Notification[]
-  patientProfile PatientProfile?
-  tokens         Token[]
+  userId             Int                @id @default(autoincrement())
+  fullName           String
+  email              String             @unique
+  phone              String
+  address            String?
+  dateOfBirth        DateTime?
+  nationalId         String?
+  ethnicity          String?
+  password           String
+  role               RoleEnum
+  gender             GenderEnum
+  createdAt          DateTime           @default(now())
+  avatar             String?
+  isActive           Boolean
+  appointments       Appointment[]
+  doctor             Doctor?
+  medicalRecord      MedicalRecord?
+  notifications      Notification[]
+  patientProfile     PatientProfile?
+  tokens             Token[]
+  patientTelemetries PatientTelemetry[] @relation("UserTelemetry")
+  patientAlerts      PatientAlert[]     @relation("UserAlert")
+  patientConsents    PatientConsent[]   @relation("UserConsent")
 }
 
 model Token {
@@ -61,8 +64,8 @@ model Doctor {
 }
 
 model PatientProfile {
-  profileId         Int      @id @default(autoincrement())
-  userId            Int      @unique
+  profileId         Int     @id @default(autoincrement())
+  userId            Int     @unique
   insurance         String?
   allergies         String?
   chronicDiseases   String?
@@ -71,7 +74,7 @@ model PatientProfile {
   familyHistory     String?
   socialHistory     String?
   medicationHistory String?
-  user              User     @relation(fields: [userId], references: [userId])
+  user              User    @relation(fields: [userId], references: [userId])
 }
 
 model Specialty {
@@ -230,6 +233,47 @@ model Notification {
   user           User             @relation(fields: [userId], references: [userId])
 }
 
+model PatientTelemetry {
+  id           Int      @id @default(autoincrement())
+  patientId    Int
+  deviceId     String
+  metricType   String
+  value        String
+  timestamp    DateTime
+  deviceType   String?
+  batteryLevel Float?
+
+  patient User @relation("UserTelemetry", fields: [patientId], references: [userId])
+}
+
+model PatientAlert {
+  id        Int      @id @default(autoincrement())
+  patientId Int
+  alertType String
+  value     String
+  timestamp DateTime
+  status    String
+
+  patient User @relation("UserAlert", fields: [patientId], references: [userId])
+}
+
+model PatientConsent {
+  id              Int       @id @default(autoincrement())
+  patientId       Int
+  consentType     ConsentTypeEnum
+  status          ConsentStatusEnum
+  startDate       DateTime
+  endDate         DateTime?
+  scope           String[]
+  terms           String
+  witness         String?
+  witnessContact  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  patient         User      @relation("UserConsent", fields: [patientId], references: [userId])
+}
+
 enum NotificationType {
   APPOINTMENT
   FOLLOW_UP
@@ -268,4 +312,21 @@ enum AppointmentStatus {
   COMPLETED
   RESCHEDULED
   PENDING
+}
+
+enum ConsentTypeEnum {
+  TREATMENT
+  DATA_SHARING
+  RESEARCH
+  EMERGENCY_CARE
+  TELEHEALTH
+  MEDICATION
+  PROCEDURE
+}
+
+enum ConsentStatusEnum {
+  GRANTED
+  DENIED
+  WITHDRAWN
+  EXPIRED
 }
