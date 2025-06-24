@@ -40,11 +40,11 @@ export class DoctorController {
         return this.doctorService.getTopRatedDoctors();
     }
 
-    @ApiOperation({ summary: 'Get all doctors with pagination' })
-    @Get()
+    @ApiOperation({ summary: 'Get all achievement with pagination' })
+    @Get('get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
-    getAllDoctors(
+    getAllAchievements(
         @Query('page', ParseIntPipe) page = 1,
         @Query('limit', ParseIntPipe) limit = 10,
     ) {
@@ -124,6 +124,12 @@ export class DoctorController {
     }
 
     // ──────── Doctor CRUD ────────
+    @ApiOperation({ summary: 'Create a new doctor' })
+    @Post()
+    createDoctor(@Body() dto: CreateDoctor) {
+        return this.doctorService.createDoctor(dto);
+    }
+
     @ApiOperation({ summary: 'Get a doctor by userId' })
     @Get('/user/:id')
     getDoctorByUserId(@Param('id', ParseIntPipe) id: number) {
