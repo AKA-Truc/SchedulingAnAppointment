@@ -130,12 +130,6 @@ export class DoctorController {
         return this.doctorService.getDoctorByUserId(id);
     }
 
-    @ApiOperation({ summary: 'Create a new doctor' })
-    @Post()
-    createDoctor(@Body() dto: CreateDoctor) {
-        return this.doctorService.createDoctor(dto);
-    }
-
     @ApiOperation({ summary: 'Get a doctor by ID' })
     @Get(':id')
     getDoctorById(@Param('id', ParseIntPipe) id: number) {
@@ -173,6 +167,7 @@ export class DoctorController {
     ) {
         return this.doctorService.updateDoctor(id, dto);
     }
+
 
     // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })

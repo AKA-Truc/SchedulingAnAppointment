@@ -26,18 +26,31 @@ export class AppointmentController {
         return this.appointment.create(data);
     }
 
+    @Get('counts')
+    @ApiOperation({ summary: 'Lấy số lượng cuộc hẹn theo từng trạng thái' })
+    @ApiQuery({ name: 'userId', required: true, description: 'ID của người dùng' })
+    async getCounts(@Query('userId') userId: number) {
+        return this.appointment.getAppointmentCounts(userId);
+    }
+
     @ApiOperation({ summary: 'Get all appointments with pagination' })
     @Get()
-    @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 10 })
-    async getAllAppointments(
+    @ApiQuery({ name: 'page', required: false, description: 'Số trang', example: 1 })
+    @ApiQuery({ name: 'limit', required: false, description: 'Số lượng trên một trang', example: 10 })
+    @ApiQuery({ name: 'userId', required: false, description: 'ID của người dùng', example: '1' })
+    @ApiQuery({ name: 'status', required: false, description: 'Trạng thái cuộc hẹn', example: 'SCHEDULED' })
+    async getAllAppointmentFilter(
+        @Query('userId') userId?: string,
+        @Query('status') status?: string,
         @Query('page') page?: string,
         @Query('limit') limit?: string,
     ) {
-        // parseInt với fallback
-        const pageNumber = page ? parseInt(page) : 1;
-        const limitNumber = limit ? parseInt(limit) : 10;
-        return this.appointment.getAllAppointments(pageNumber, limitNumber);
+        const pageNumber = page ? parseInt(page, 10) : 1;
+        const limitNumber = limit ? parseInt(limit, 10) : 10;
+
+        const filters = { userId, status };
+
+        return this.appointment.getAllAppointmentFilter(pageNumber, limitNumber, filters);
     }
 
     @ApiOperation({ summary: 'Get appointment statistics' })
