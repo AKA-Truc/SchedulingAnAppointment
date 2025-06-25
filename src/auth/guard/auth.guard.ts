@@ -1,4 +1,3 @@
-
 import { CanActivate, ExecutionContext, Injectable, NotFoundException, UnauthorizedException, } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
@@ -20,8 +19,15 @@ export class AuthGuard implements CanActivate {
         }
 
         const request = context.switchToHttp().getRequest();
+        // Log chi tiết network
+        console.log('AuthGuard - IP:', request.ip);
+        console.log('AuthGuard - Method:', request.method);
+        console.log('AuthGuard - URL:', request.originalUrl || request.url);
+        console.log('AuthGuard - Authorization Header:', request.headers.authorization ? request.headers.authorization.slice(0, 20) + '...' : undefined);
         const token = this.extractTokenFromHeader(request);
+        console.log('AuthGuard - Token:', token ? token.slice(0, 10) + '...' : undefined);
         if (!token) {
+            console.error('AuthGuard - No token found');
             throw new UnauthorizedException();
         }
         try {
@@ -31,9 +37,10 @@ export class AuthGuard implements CanActivate {
                     secret: process.env.JWT_ACCESS_TOKEN_SECRET
                 }
             );
-
+            console.log('AuthGuard - Payload:', payload);
             request['user'] = payload;
-        } catch {
+        } catch (error) {
+            console.error('AuthGuard - Verify error:', error);
             throw new UnauthorizedException();
         }
         return true;

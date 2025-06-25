@@ -7,7 +7,10 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:4000',
+    credentials: true,
+  });
 
   //auto check condition
   app.useGlobalPipes(new ValidationPipe({
