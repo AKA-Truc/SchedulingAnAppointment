@@ -164,4 +164,8 @@ export class UserService {
             where: { userId: id },
         });
     }
+
+    getUserCount() {
+        return this.prisma.user.count();
+    }
 }

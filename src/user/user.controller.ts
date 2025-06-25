@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe, UseInterceptors, UploadedFile, ParseFilePipeBuilder, FileValidator, FileTypeValidator, BadRequestException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './DTO';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Public } from 'src/auth/guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
@@ -15,6 +15,13 @@ export class UserController {
         private readonly configService: ConfigService,
         private readonly cloudinaryService: CloudinaryService,
     ) { }
+
+    @ApiOperation({ summary: 'Get count of user' })
+    @Get('count')
+    @Public()
+    async getUserCount() {
+        return this.userService.getUserCount();
+    }
 
     @Post()
     @Public()

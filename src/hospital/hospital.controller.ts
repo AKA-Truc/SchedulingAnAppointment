@@ -34,6 +34,18 @@ export class HospitalController {
 
   //HOSPITAL=================================================================
   @Public()
+  @Get('statistics')
+  async getHospitalStats() {
+    const stats = await this.hospitalService.getHospitalStatistics();
+
+    return {
+      message: 'Hospital statistics retrieved successfully',
+      code: 200,
+      data: stats,
+    };
+  }
+  
+  @Public()
   @Get('search/:searchString')
   async searchHospitals(
     @Param('searchString') searchString: string,
@@ -236,17 +248,6 @@ export class HospitalController {
     };
   }
 
-  @Public()
-  @Get('statistics')
-  async getHospitalStats() {
-    const stats = await this.hospitalService.getHospitalStatistics();
-
-    return {
-      message: 'Hospital statistics retrieved successfully',
-      code: 200,
-      data: stats,
-    };
-  }
 
   @Patch(':id/coordinates')
   async updateHospitalCoordinates(

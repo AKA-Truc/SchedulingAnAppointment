@@ -54,6 +54,7 @@ model Doctor {
   yearsOfExperience String?
   education         String?
   clinic            String?
+  slotCapacity      Int              @default(5)
   achievements      Achievement[]
   appointments      Appointment[]
   certifications    Certification[]
@@ -115,6 +116,7 @@ model Appointment {
   userId        Int
   serviceId     Int
   scheduledTime DateTime
+  createdAt     DateTime          @default(now())
   note          String?
   status        AppointmentStatus
   doctor        Doctor            @relation(fields: [doctorId], references: [doctorId])
