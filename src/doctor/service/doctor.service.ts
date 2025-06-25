@@ -418,4 +418,89 @@ export class DoctorService {
             };
         });
     }
+
+    async getDoctorsByUserIdsPaginated(
+        userIds: number[],
+        page = 1,
+        limit = 10
+    ) {
+        const skip = (page - 1) * limit;
+
+        // Bỏ trùng
+        const uniqueUserIds = Array.from(new Set(userIds));
+
+        // Lấy danh sách userId có role là DOCTOR
+        const doctorUsers = await this.prisma.user.findMany({
+            where: {
+                userId: { in: uniqueUserIds },
+                role: 'DOCTOR',
+            },
+            select: { userId: true },
+        });
+
+        const doctorUserIds = doctorUsers.map(user => user.userId);
+
+        if (doctorUserIds.length === 0) {
+            return {
+                message: 'No doctor users found in the given list.',
+                data: [],
+                meta: {
+                    total: 0,
+                    page,
+                    limit,
+                    totalPages: 0,
+                },
+            };
+        }
+
+        const total = await this.prisma.doctor.count({
+            where: {
+                userId: { in: doctorUserIds },
+            },
+        });
+
+        const doctors = await this.prisma.doctor.findMany({
+            where: {
+                userId: { in: doctorUserIds },
+            },
+            skip,
+            take: limit,
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                achievements: true,
+                appointments: {
+                    include: {
+                        feedback: true,
+                    },
+                },
+            },
+        });
+
+        // Tính số review cho từng bác sĩ
+        const doctorsWithReviewCount = doctors.map(doctor => {
+            const reviewCount = doctor.appointments.filter(a => a.feedback !== null).length;
+            const { appointments, ...rest } = doctor;
+            return {
+                ...rest,
+                reviews: reviewCount,
+            };
+        });
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            message: 'Doctors fetched successfully.',
+            data: doctorsWithReviewCount,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages,
+            },
+        };
+    }
+
+
 }

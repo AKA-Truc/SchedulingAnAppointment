@@ -38,7 +38,7 @@ export class DoctorController {
     @Get('/top-rated')
     getTopRatedDoctors() {
         return this.doctorService.getTopRatedDoctors();
-    }k
+    } k
 
     // ──────── Doctor CRUD ────────
 
@@ -51,6 +51,24 @@ export class DoctorController {
         @Query('limit', ParseIntPipe) limit = 10,
     ) {
         return this.doctorService.getDoctors({ specialtyId, page, limit });
+    }
+
+    @ApiOperation({ summary: 'Get doctors by a list of userIds (only doctors) with pagination' })
+    @Get('/by-userIds')
+    @ApiQuery({ name: 'userIds', type: 'string', required: true, example: '1,2,3' })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    getDoctorsByUserIds(
+        @Query('userIds') userIdsStr: string,
+        @Query('page', ParseIntPipe) page = 1,
+        @Query('limit', ParseIntPipe) limit = 10,
+    ) {
+        const userIds = userIdsStr.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+        if (userIds.length === 0) {
+            throw new BadRequestException('Invalid or empty userIds');
+        }
+
+        return this.doctorService.getDoctorsByUserIdsPaginated(userIds, page, limit);
     }
 
     @ApiOperation({ summary: 'Get all certifications (paginated)' })
@@ -120,7 +138,7 @@ export class DoctorController {
         return this.doctorService.getCountOfDoctors();
     }
 
-    
+
     @ApiOperation({ summary: 'Create a new doctor' })
     @Post()
     createDoctor(@Body() dto: CreateDoctor) {

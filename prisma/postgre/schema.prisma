@@ -222,7 +222,7 @@ model Certification {
 model Notification {
   notificationId Int              @id @default(autoincrement())
   userId         Int
-  appointmentId  Int?
+  appointmentId  Int
   type           NotificationType
   title          String
   content        String
@@ -231,7 +231,7 @@ model Notification {
   isRead         Boolean          @default(false)
   createdAt      DateTime         @default(now())
   scheduledTime  DateTime
-  appointment    Appointment?      @relation(fields: [appointmentId], references: [appointmentId])
+  appointment    Appointment      @relation(fields: [appointmentId], references: [appointmentId])
   user           User             @relation(fields: [userId], references: [userId])
 }
 
