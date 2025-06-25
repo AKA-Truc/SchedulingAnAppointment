@@ -151,7 +151,7 @@ export class DoctorService {
 
         const totalPages = Math.ceil(totalCount / limit);
         return {
-            message: "Request successfully handled",
+            message: "Request successfully handled get all",
             code: 200,
             data: doctors,
             meta: {

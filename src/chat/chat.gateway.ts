@@ -50,15 +50,33 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
+    @SubscribeMessage("markAsRead")
+    async handleMarkAsRead(
+        @MessageBody() conversationId: string,
+        @ConnectedSocket() client: Socket,
+    ) {
+        const userIdRaw = client.handshake.query.userId;
+        const userId = parseInt(userIdRaw as string, 10);
+
+        if (!conversationId || isNaN(userId)) return;
+
+        try {
+            await this.chatService.markMessagesAsRead(conversationId, userId);
+            client.emit('messagesMarkedAsRead', conversationId);
+        } catch (err) {
+            console.error('❗ Lỗi khi đánh dấu đã đọc:', err.message);
+        }
+    }
+
     @SubscribeMessage('privateMessage')
     async handlePrivateMessage(
         @MessageBody() dto: SendMessageDto,
         @ConnectedSocket() client: Socket,
     ) {
         try {
-            console.log(`📨 Nhận tin nhắn từ ${dto.fromUserId} đến ${dto.toUserId}: ${dto.content}`);
             const savedMessage = await this.chatService.saveMessage(dto);
 
+            // Emit to both users
             this.server.to(dto.fromUserId.toString()).emit('privateMessage', savedMessage);
             this.server.to(dto.toUserId.toString()).emit('privateMessage', savedMessage);
         } catch (err) {
