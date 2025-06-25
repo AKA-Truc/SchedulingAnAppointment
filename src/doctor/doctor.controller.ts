@@ -38,18 +38,7 @@ export class DoctorController {
     @Get('/top-rated')
     getTopRatedDoctors() {
         return this.doctorService.getTopRatedDoctors();
-    }
-
-    @ApiOperation({ summary: 'Get all achievement with pagination' })
-    @Get('get-all')
-    @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 10 })
-    getAllAchievements(
-        @Query('page', ParseIntPipe) page = 1,
-        @Query('limit', ParseIntPipe) limit = 10,
-    ) {
-        return this.achievementService.findAll(page, limit);
-    }
+    }k
 
     // ──────── Doctor CRUD ────────
 
@@ -124,6 +113,14 @@ export class DoctorController {
     }
 
     // ──────── Doctor CRUD ────────
+
+    @ApiOperation({ summary: 'Get count of doctors' })
+    @Get('/count')
+    getCountDoctors() {
+        return this.doctorService.getCountOfDoctors();
+    }
+
+    
     @ApiOperation({ summary: 'Create a new doctor' })
     @Post()
     createDoctor(@Body() dto: CreateDoctor) {
@@ -173,7 +170,6 @@ export class DoctorController {
     ) {
         return this.doctorService.updateDoctor(id, dto);
     }
-
 
     // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })
