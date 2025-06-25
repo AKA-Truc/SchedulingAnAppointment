@@ -81,15 +81,29 @@ export class AppointmentService {
 
 
     async create(data: CreateAppointment) {
-        const conflict = await this.prisma.appointment.findFirst({
+        const doctor = await this.prisma.doctor.findUnique({
+            where: { doctorId: data.doctorId },
+        });
+
+        if (!doctor) {
+            throw new BadRequestException('Doctor not found');
+        }
+
+        const slotCapacity = doctor.slotCapacity;
+
+        // 2. Đếm số lịch hẹn đã có tại slot này
+        const existingAppointmentsCount = await this.prisma.appointment.count({
             where: {
                 doctorId: data.doctorId,
                 scheduledTime: data.scheduledTime,
+                status: {
+                    in: [AppointmentStatus.PENDING, AppointmentStatus.SCHEDULED],
+                },
             },
         });
 
-        if (conflict) {
-            throw new BadRequestException('Doctor already has an appointment at this time');
+        if (existingAppointmentsCount >= slotCapacity) {
+            throw new BadRequestException(`Slot đã đầy. Sức chứa tối đa là ${slotCapacity} người.`);
         }
 
         const appointment = await this.prisma.appointment.create({

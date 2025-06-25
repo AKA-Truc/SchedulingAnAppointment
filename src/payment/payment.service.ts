@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePayment } from './DTO/CreatePayment.dto';
 import { UpdatePayment } from './DTO/UpdatePayment.dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class PaymentService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly httpService: HttpService,
+    ) { }
 
     async create(dto: CreatePayment) {
         const payment = await this.prisma.payment.create({
@@ -284,5 +289,54 @@ export class PaymentService {
             dailyStats,
             payments,
         };
+    }
+
+    async createMomoPayment(amount: number, orderId: string, orderInfo: string) {
+        const partnerCode = process.env.MOMO_PARTNER_CODE;
+        const accessKey = process.env.MOMO_ACCESS_KEY;
+        const secretKey = process.env.MOMO_SECRET_KEY;
+        const endpoint = process.env.MOMO_ENDPOINT;
+        const redirectUrl = process.env.MOMO_REDIRECT_URL;
+        const ipnUrl = process.env.MOMO_IPN_URL;
+        const requestId = Date.now().toString();
+        const requestType = 'captureWallet';
+        const extraData = '';
+
+        if (!secretKey) throw new Error('MOMO_SECRET_KEY is not set');
+        if (!partnerCode) throw new Error('MOMO_PARTNER_CODE is not set');
+        if (!accessKey) throw new Error('MOMO_ACCESS_KEY is not set');
+        if (!endpoint) throw new Error('MOMO_ENDPOINT is not set');
+        if (!redirectUrl) throw new Error('MOMO_REDIRECT_URL is not set');
+        if (!ipnUrl) throw new Error('MOMO_IPN_URL is not set');
+
+        const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
+        const signature = crypto.createHmac('sha256', secretKey).update(rawSignature).digest('hex');
+
+        const body = {
+            partnerCode,
+            accessKey,
+            requestId,
+            amount: amount.toString(),
+            orderId,
+            orderInfo,
+            redirectUrl,
+            ipnUrl,
+            requestType,
+            signature,
+            extraData,
+            lang: 'vi',
+        };
+
+        console.log('Request body gửi MoMo:', body);
+        try {
+            const response = await this.httpService.axiosRef.post(endpoint, body, {
+                headers: { 'Content-Type': 'application/json' },
+            });
+            console.log('MoMo response:', response.data); // log chi tiết
+            return response.data;
+        } catch (error) {
+            console.error('MoMo error:', error?.response?.data || error.message || error);
+            return { message: error?.response?.data?.message || error.message || 'Lỗi khi gọi MoMo', ...error?.response?.data };
+        }
     }
 }

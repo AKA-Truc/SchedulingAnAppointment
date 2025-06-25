@@ -408,4 +408,14 @@ export class DoctorService {
             data: doctor,
         }
     }
+
+    getCountOfDoctors() {
+        return this.prisma.doctor.count().then(count => {
+            return {
+                message: "Request successfully handled",
+                code: 200,
+                data: count,
+            };
+        });
+    }
 }
