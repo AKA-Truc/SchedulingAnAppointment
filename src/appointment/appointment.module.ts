@@ -14,7 +14,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [RedisModule, PrismaModule, MailModule,
+  imports: [
     ScheduleModule.forRoot(),
     RedisModule,
     PrismaModule,

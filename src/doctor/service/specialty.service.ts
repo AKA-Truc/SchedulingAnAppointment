@@ -107,11 +107,13 @@ export class SpecialtyService {
         page = 1,
         limit = 6,
     ): Promise<{
-        specialties: CreateSpecialty[];
-        totalCount: number;
-        totalPages: number;
-        page: number;
-        limit: number;
+        data: CreateSpecialty[];
+        meta: {
+            totalCount: number;
+            totalPages: number;
+            page: number;
+            limit: number;
+        };
     }> {
         const skip = (page - 1) * limit;
 
@@ -146,7 +148,7 @@ export class SpecialtyService {
 
         const totalPages = Math.ceil(totalCount / limit);
 
-        const specialties = specialtiesWithCount.map((specialty) => ({
+        const data = specialtiesWithCount.map((specialty) => ({
             id: specialty.specialtyId.toString(),
             name: specialty.name,
             description: specialty.description,
@@ -154,13 +156,16 @@ export class SpecialtyService {
         }));
 
         return {
-            specialties,
-            totalCount,
-            totalPages,
-            page,
-            limit,
+            data,
+            meta: {
+                totalCount,
+                totalPages,
+                page,
+                limit,
+            },
         };
     }
+
 
 
     //  Lấy thông tin chi tiết của một chuyên khoa theo ID.

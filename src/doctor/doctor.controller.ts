@@ -40,11 +40,11 @@ export class DoctorController {
         return this.doctorService.getTopRatedDoctors();
     }
 
-    @ApiOperation({ summary: 'Get all doctors with pagination' })
-    @Get()
+    @ApiOperation({ summary: 'Get all achievement with pagination' })
+    @Get('get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
-    getAllDoctors(
+    getAllAchievements(
         @Query('page', ParseIntPipe) page = 1,
         @Query('limit', ParseIntPipe) limit = 10,
     ) {
@@ -52,11 +52,6 @@ export class DoctorController {
     }
 
     // ──────── Doctor CRUD ────────
-    @ApiOperation({ summary: 'Create a new doctor' })
-    @Post()
-    createDoctor(@Body() dto: CreateDoctor) {
-        return this.doctorService.createDoctor(dto);
-    }
 
     @Get('/by-specialty/:specialtyId')
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -128,56 +123,57 @@ export class DoctorController {
         return this.achievementService.findAll(page, limit);
     }
 
-    // // ──────── Doctor CRUD ────────
-    // @ApiOperation({ summary: 'Get a doctor by userId' })
-    // @Get('/user/:id')
-    // getDoctorByUserId(@Param('id', ParseIntPipe) id: number) {
-    //     return this.doctorService.getDoctorByUserId(id);
-    // }
+    // ──────── Doctor CRUD ────────
+    @ApiOperation({ summary: 'Create a new doctor' })
+    @Post()
+    createDoctor(@Body() dto: CreateDoctor) {
+        return this.doctorService.createDoctor(dto);
+    }
 
-    // @ApiOperation({ summary: 'Create a new doctor' })
-    // @Post()
-    // createDoctor(@Body() dto: CreateDoctor) {
-    //     return this.doctorService.createDoctor(dto);
-    // }
+    @ApiOperation({ summary: 'Get a doctor by userId' })
+    @Get('/user/:id')
+    getDoctorByUserId(@Param('id', ParseIntPipe) id: number) {
+        return this.doctorService.getDoctorByUserId(id);
+    }
 
-    // @ApiOperation({ summary: 'Get a doctor by ID' })
-    // @Get(':id')
-    // getDoctorById(@Param('id', ParseIntPipe) id: number) {
-    //     return this.doctorService.getDoctorById(id);
-    // }
+    @ApiOperation({ summary: 'Get a doctor by ID' })
+    @Get(':id')
+    getDoctorById(@Param('id', ParseIntPipe) id: number) {
+        return this.doctorService.getDoctorById(id);
+    }
 
-    // @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
-    // @Get('perfomance/:id')
-    // getPerformanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
-    //     return this.doctorService.getDoctorPerformanceCurrentMonth(id);
-    // }
+    @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
+    @Get('perfomance/:id')
+    getPerformanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
+        return this.doctorService.getDoctorPerformanceCurrentMonth(id);
+    }
 
-    // @ApiOperation({ summary: 'Filter' })
-    // @Get('/filter/doctor')
-    // @ApiQuery({ name: 'specialty', required: false })
-    // @ApiQuery({ name: 'minRating', required: false })
-    // @ApiQuery({ name: 'hospital', required: false })
-    // @ApiQuery({ name: 'page', required: false, example: 1 })
-    // @ApiQuery({ name: 'limit', required: false, example: 10 })
-    // filterDoctors(
-    //     @Query('specialty') specialtyId?: number,
-    //     @Query('minRating') minRating?: number,
-    //     @Query('hospital') hospitalId?: number,
-    //     @Query('page') page?: number,
-    //     @Query('limit') limit?: number,
-    // ) {
-    //     return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId, page, limit });
-    // }
+    @ApiOperation({ summary: 'Filter' })
+    @Get('/filter/doctor')
+    @ApiQuery({ name: 'specialty', required: false })
+    @ApiQuery({ name: 'minRating', required: false })
+    @ApiQuery({ name: 'hospital', required: false })
+    @ApiQuery({ name: 'page', required: false, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, example: 10 })
+    filterDoctors(
+        @Query('specialty') specialtyId?: number,
+        @Query('minRating') minRating?: number,
+        @Query('hospital') hospitalId?: number,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number,
+    ) {
+        return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId, page, limit });
+    }
 
-    // @ApiOperation({ summary: 'Update a doctor by ID' })
-    // @Put(':id')
-    // updateDoctor(
-    //     @Param('id', ParseIntPipe) id: number,
-    //     @Body() dto: UpdateDoctor,
-    // ) {
-    //     return this.doctorService.updateDoctor(id, dto);
-    // }
+    @ApiOperation({ summary: 'Update a doctor by ID' })
+    @Put(':id')
+    updateDoctor(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateDoctor,
+    ) {
+        return this.doctorService.updateDoctor(id, dto);
+    }
+
 
     // ──────── Certification CRUD ────────
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })

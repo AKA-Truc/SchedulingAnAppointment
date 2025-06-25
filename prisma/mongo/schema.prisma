@@ -37,7 +37,7 @@ model Conversation {
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   user1    Int
   user2    Int
-  messages Message[] // 👉 Quan hệ 1-n
+  messages Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -52,7 +52,7 @@ model Message {
   content   String
   timestamp DateTime  @default(now())
   read      Boolean   @default(false)
-  readAt    DateTime? // Thời điểm người nhận đọc tin nhắn
+  readAt    DateTime?
 
   conversationId String       @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])

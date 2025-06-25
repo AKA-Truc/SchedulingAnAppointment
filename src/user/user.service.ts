@@ -52,7 +52,7 @@ export class UserService {
                 ethnicity: data.ethnicity,
                 gender: data.gender,
                 role: data.role,
-                isActive: true
+                isActive: false
             },
         });
 
