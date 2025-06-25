@@ -33,31 +33,36 @@ export class NotificationService {
     }
 
     async getAllNotifications(page = 1, limit = 10) {
+        page = Math.max(1, page);
+        limit = Math.max(1, limit);
+    
         const skip = (page - 1) * limit;
+        
         const [notifications, total] = await Promise.all([
             this.prisma.notification.findMany({
                 skip,
                 take: limit,
-                include: {
-                    user: true
-                },
-                orderBy: {
-                    createdAt: 'desc',
-                },
+                include: { user: true },
+                orderBy: { createdAt: 'desc' },
             }),
             this.prisma.notification.count(),
         ]);
-
+    
+        const totalPages = Math.ceil(total / limit);
+    
         return {
             data: notifications,
             meta: {
                 total,
                 page,
                 limit,
-                totalPages: Math.ceil(total / limit),
+                totalPages,
             },
         };
     }
+
+    
+    
 
     async getNotification(id: number) {
         const notification = await this.prisma.notification.findUnique({
@@ -130,6 +135,7 @@ export class NotificationService {
         });
         return { count };
     }
+    
 
     async markAsRead(userId: number, notificationId: number) {
         const notification = await this.prisma.notification.findFirst({
@@ -173,15 +179,53 @@ export class NotificationService {
             }),
             this.prisma.notification.count({ where: { userId } }),
         ]);
-
+    
+        const totalPages = Math.ceil(total / limit);
+    
         return {
             data: notifications,
             meta: {
                 total,
                 page,
                 limit,
-                totalPages: Math.ceil(total / limit),
+                totalPages,
             },
         };
     }
+
+    async createBroadcastNotification(dto: { title: string; content: string; type: string }) {
+        // Get all active users
+        const users = await this.prisma.user.findMany({
+            select: { userId: true }
+        });
+
+        // Create notifications for all users
+        const notifications = await Promise.all(
+            users.map(user => 
+                this.prisma.notification.create({
+                    data: {
+                        type: 'CUSTOM' as any,
+                        title: dto.title,
+                        content: dto.content,
+                        userId: user.userId,
+                        appointmentId: undefined,
+                        remindAt: new Date(),
+                        scheduledTime: new Date(),
+                        isRead: false,
+                        sent: true,
+                    },
+                    include: {
+                        user: true,
+                    },
+                })
+            )
+        );
+
+        return {
+            message: 'Broadcast notification created successfully',
+            count: notifications.length,
+            notifications: notifications.slice(0, 5), // Return first 5 for preview
+        };
+    }
+    
 }

@@ -12,6 +12,8 @@ import Redis from 'ioredis';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UserService } from 'src/user/user.service';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -19,10 +21,11 @@ import { ScheduleModule } from '@nestjs/schedule';
     RedisModule,
     PrismaModule,
     MailModule,
+    UserModule
   ],
   controllers: [AppointmentController],
   providers: [AppointmentService, NotificationService, FollowUpService, FeedbackService, EmailService, NotificationWorker,
-    NotificationGateway,
+    NotificationGateway,UserService,
     {
       provide: Redis,
       useFactory: () => new Redis(process.env.REDIS_URL || 'redis://localhost:6379'),

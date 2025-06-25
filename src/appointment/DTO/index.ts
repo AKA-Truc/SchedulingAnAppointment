@@ -7,3 +7,4 @@ export * from './CreateFeedBack.dto';
 export * from './UpdateFeedBack.dto'
 export * from './CreateNotification.dto';
 export * from './UpdateNotification.dto';
+export * from './CreateBroadcastNotification.dto';

@@ -6,8 +6,10 @@ import { CreateAppointment, UpdateAppointment, UpdateAppointmentStatusDto } from
 import { CreateFeedback, UpdateFeedback } from './DTO';
 import { CreateFollowUp, UpdateFollowUp } from './DTO';
 import { CreateNotification, UpdateNotification } from './DTO';
+import { CreateBroadcastNotification } from './DTO/CreateBroadcastNotification.dto';
 import { FollowUpService } from './service/followUp.service';
 import { NotificationService } from './service/notification.service';
+import { NotificationGateway } from './service/notification.gateway';
 
 @Controller('appointment')
 export class AppointmentController {
@@ -17,6 +19,7 @@ export class AppointmentController {
         private readonly feedback: FeedbackService,
         private readonly followUp: FollowUpService,
         private readonly notification: NotificationService,
+        private readonly notificationGateway: NotificationGateway,
     ) { }
 
     //apointment controller
@@ -294,5 +297,41 @@ export class AppointmentController {
         @Param('id', ParseIntPipe) id: number
     ) {
         return this.notification.deleteNotification(id);
+    }
+
+    @ApiOperation({ summary: 'Broadcast notification to all users' })
+    @Post('notification/broadcast')
+    async broadcastNotification(@Body() data: CreateBroadcastNotification) {
+        try {
+            // Create notifications for all users
+            const result = await this.notification.createBroadcastNotification({
+                title: data.title,
+                content: data.content,
+                type: data.type
+            });
+
+            // Broadcast to all connected users via WebSocket
+            const broadcastData = {
+                type: data.type,
+                title: data.title,
+                content: data.content,
+                createdAt: new Date().toISOString(),
+                isBroadcast: true
+            };
+
+            this.notificationGateway.broadcastToAll(broadcastData);
+
+            return {
+                success: true,
+                message: 'Notification broadcasted successfully',
+                data: result
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: 'Failed to broadcast notification',
+                error: error.message
+            };
+        }
     }
 }
