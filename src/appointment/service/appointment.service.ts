@@ -149,13 +149,16 @@ export class AppointmentService {
     async getAllAppointmentFilter(
         page: number,
         limit: number,
-        filters: { userId?: string; status?: string }
-    ) {
-        // Xây dựng mệnh đề `where` một cách linh hoạt
+        filters: { userId?: string; status?: string; doctorId?: string }
+        ) {
         const whereClause: Prisma.AppointmentWhereInput = {};
 
         if (filters.userId) {
             whereClause.userId = Number(filters.userId);
+        }
+
+        if (filters.doctorId) {
+            whereClause.doctorId = Number(filters.doctorId);
         }
 
         if (filters.status) {
@@ -173,39 +176,48 @@ export class AppointmentService {
             skip,
             take: limit,
             include: {
-                doctor: {
-                    include: {
-                        user: true,
-                        specialty: true,
-                    },
-                },
+            doctor: {
+                include: {
                 user: true,
-                feedback: true,
-                service: true,
-                followUps: true,
-                payments: true,
+                specialty: true,
+                },
+            },
+            user: true,
+            feedback: true,
+            service: true,
+            followUps: true,
+            payments: true,
             },
         });
 
         return {
             data: appointments,
             meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
             },
         };
     }
 
-    async getAppointmentCounts(userId: number) {
+
+    async getAppointmentCounts(filters: { userId?: number; doctorId?: number }) {
+        const whereClause: Prisma.AppointmentWhereInput = {};
+
+        if (filters.userId) {
+            whereClause.userId = filters.userId;
+        }
+
+        if (filters.doctorId) {
+            whereClause.doctorId = filters.doctorId;
+        }
+
         const countsByStatus = await this.prisma.appointment.groupBy({
             by: ['status'],
-            where: {
-                userId: userId,
-            },
+            where: whereClause,
             _count: {
-                status: true,
+            status: true,
             },
         });
 
@@ -225,6 +237,7 @@ export class AppointmentService {
 
         return result;
     }
+
 
     async getAppointmentById(id: number) {
         const appointment = await this.prisma.appointment.findUnique({

@@ -31,19 +31,29 @@ export class AppointmentController {
 
     @Get('counts')
     @ApiOperation({ summary: 'Lấy số lượng cuộc hẹn theo từng trạng thái' })
-    @ApiQuery({ name: 'userId', required: true, description: 'ID của người dùng' })
-    async getCounts(@Query('userId') userId: number) {
-        return this.appointment.getAppointmentCounts(userId);
+    @ApiQuery({ name: 'userId', required: false, description: 'ID của người dùng (patient)' })
+    @ApiQuery({ name: 'doctorId', required: false, description: 'ID của bác sĩ' })
+    async getCounts(
+    @Query('userId') userId?: string,
+    @Query('doctorId') doctorId?: string,
+    ) {
+        return this.appointment.getAppointmentCounts({
+            userId: userId ? +userId : undefined,
+            doctorId: doctorId ? +doctorId : undefined,
+        });
     }
+
 
     @ApiOperation({ summary: 'Get all appointments with pagination' })
     @Get()
     @ApiQuery({ name: 'page', required: false, description: 'Số trang', example: 1 })
     @ApiQuery({ name: 'limit', required: false, description: 'Số lượng trên một trang', example: 10 })
     @ApiQuery({ name: 'userId', required: false, description: 'ID của người dùng', example: '1' })
+    @ApiQuery({ name: 'doctorId', required: false, description: 'ID của bác sĩ', example: '1' })
     @ApiQuery({ name: 'status', required: false, description: 'Trạng thái cuộc hẹn', example: 'SCHEDULED' })
     async getAllAppointmentFilter(
         @Query('userId') userId?: string,
+        @Query('doctorId') doctorId?: string,
         @Query('status') status?: string,
         @Query('page') page?: string,
         @Query('limit') limit?: string,
@@ -51,7 +61,7 @@ export class AppointmentController {
         const pageNumber = page ? parseInt(page, 10) : 1;
         const limitNumber = limit ? parseInt(limit, 10) : 10;
 
-        const filters = { userId, status };
+        const filters = { userId, status, doctorId};
 
         return this.appointment.getAllAppointmentFilter(pageNumber, limitNumber, filters);
     }
