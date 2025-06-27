@@ -28,6 +28,7 @@ import { PatientImportRowDto } from './DTO/PatientImportRow.dto';
 import { UpdatePatientProfile } from './DTO/UpdatePatientProfile.dto';
 import { Req, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Request } from 'express';
+import { Public } from '../auth/guard/auth.guard';
 
 @ApiTags('Patient Profile')
 @ApiBearerAuth()
@@ -179,6 +180,7 @@ export class PatientProfileController {
   // ✅ Update profile by userId
   @Get('by-user/:userId')
 @ApiOperation({ summary: 'Lấy hồ sơ bệnh nhân theo userId' })
+@Public()
 async getPatientProfileByUserId(@Param('userId') userId: number) {
   const profile = await this.patientProfileService.findByUserId(Number(userId));
 
