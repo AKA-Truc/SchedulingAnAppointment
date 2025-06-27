@@ -41,8 +41,8 @@ export class AuthController {
 
 
     @Post('logout')
-    async logout(@Req() req, @Body() refreshToken: string) {
-        return this.authService.logout(req.user, refreshToken);
+    async logout(@Req() req, @Body() body: LogoutDto) {
+        return this.authService.logout(req.user, body.refreshToken);
     }
 
     @Public()

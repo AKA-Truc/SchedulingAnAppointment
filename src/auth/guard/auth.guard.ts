@@ -38,6 +38,29 @@ export class AuthGuard implements CanActivate {
                 }
             );
             console.log('AuthGuard - Payload:', payload);
+            
+            // CRITICAL FIX: Kiểm tra token có tồn tại trong database không
+            // Điều này đảm bảo rằng token đã logout sẽ không thể sử dụng
+            const tokenRecord = await this.prismaService.token.findFirst({
+                where: { 
+                    accessToken: token, // Kiểm tra exact token
+                    accessExpiresAt: { gt: new Date() } // Token chưa hết hạn
+                },
+                include: { user: true }
+            });
+
+            if (!tokenRecord) {
+                console.error('AuthGuard - Token not found in database or expired');
+                throw new UnauthorizedException('Token has been revoked or expired');
+            }
+
+            // Kiểm tra user có còn active không
+            if (!tokenRecord.user.isActive) {
+                console.error('AuthGuard - User account is inactive');
+                throw new UnauthorizedException('User account is inactive');
+            }
+
+            console.log('AuthGuard - Token validated successfully');
             request['user'] = payload;
         } catch (error) {
             console.error('AuthGuard - Verify error:', error);
