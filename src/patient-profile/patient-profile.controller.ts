@@ -1,4 +1,3 @@
-// src/patient-profile/patient-profile.controller.ts
 import {
   Controller,
   Post,
@@ -8,22 +7,32 @@ import {
   Res,
   BadRequestException,
   Param,
+  Body,
+  Put,
 } from '@nestjs/common';
-import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiConsumes,
+  ApiBody,
+  ApiOperation,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
+import { Req, ForbiddenException } from '@nestjs/common';
+import { Request } from 'express';
 import * as xlsx from 'xlsx';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PatientProfileService } from './patient-profile.service';
 import { PatientImportRowDto } from './DTO/PatientImportRow.dto';
+import { UpdatePatientProfile } from './DTO/UpdatePatientProfile.dto';
 
 @ApiTags('Patient Profile')
+@ApiBearerAuth()
 @Controller('patient-profile')
 export class PatientProfileController {
-  constructor(
-    private readonly patientProfileService: PatientProfileService,
-  ) {}
+  constructor(private readonly patientProfileService: PatientProfileService) {}
 
   @Post('import')
   @ApiOperation({ summary: 'Bulk import patient profiles from Excel/CSV' })
@@ -49,15 +58,19 @@ export class PatientProfileController {
     failed: number;
     results: Array<{ success: boolean; userId?: number; error?: string }>;
   }> {
-    // Parse workbook
     const workbook = xlsx.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
-    const rawRows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]) as any[];
+    const rawRows = xlsx.utils.sheet_to_json(
+      workbook.Sheets[sheetName],
+    ) as any[];
 
-    const results: Array<{ success: boolean; userId?: number; error?: string }> = [];
+    const results: Array<{
+      success: boolean;
+      userId?: number;
+      error?: string;
+    }> = [];
 
     for (const raw of rawRows) {
-      // 1) Map to DTO
       const dto = plainToInstance(PatientImportRowDto, {
         userId: raw['User ID'],
         insurance: raw['Insurance'],
@@ -70,11 +83,10 @@ export class PatientProfileController {
         medicationHistory: raw['Medication History'],
       });
 
-      // 2) Validate
       const errors = await validate(dto);
       if (errors.length) {
         const errMsgs = errors
-          .map(e => Object.values(e.constraints || {}).join(', '))
+          .map((e) => Object.values(e.constraints || {}).join(', '))
           .join('; ');
         results.push({
           success: false,
@@ -84,7 +96,6 @@ export class PatientProfileController {
         continue;
       }
 
-      // 3) Save via service
       try {
         const created = await this.patientProfileService.create({
           userId: dto.userId,
@@ -109,35 +120,32 @@ export class PatientProfileController {
 
     return {
       total: rawRows.length,
-      imported: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      imported: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
       results,
     };
-  }
+  } 
 
   @Get('export')
   @ApiOperation({ summary: 'Export patient profiles to Excel' })
   async exportPatientProfiles(@Res() res: Response): Promise<void> {
-    // Fetch up to 1000 profiles
     const { data: profiles } = await this.patientProfileService.findAll(1, 1000);
 
-    // Map to sheet rows
-    const sheetData = profiles.map(p => ({
+    const sheetData = profiles.map((p) => ({
       'User ID': p.userId,
-      'Insurance': p.insurance,
-      'Allergies': p.allergies,
+      Insurance: p.insurance,
+      Allergies: p.allergies,
       'Chronic Diseases': p.chronicDiseases,
       'Obstetric History': p.obstetricHistory,
       'Surgical History': p.surgicalHistory,
       'Family History': p.familyHistory,
       'Social History': p.socialHistory,
       'Medication History': p.medicationHistory,
-      // Export các trường chung nếu có trong user
       ...(p.user && {
-        'Gender': p.user.gender ?? '',
+        Gender: p.user.gender ?? '',
         'Date of Birth': p.user.dateOfBirth ?? '',
-        'Address': p.user.address ?? '',
-      })
+        Address: p.user.address ?? '',
+      }),
     }));
 
     const worksheet = xlsx.utils.json_to_sheet(sheetData);
@@ -160,11 +168,33 @@ export class PatientProfileController {
     res.send(buffer);
   }
 
-  @Get(':patientId/health-analytics')
-  @ApiOperation({ summary: 'Get health analytics for a patient' })
-  async getHealthAnalytics(
-    @Param('patientId') patientId: number
-  ) {
-    return this.patientProfileService.getHealthAnalytics(patientId);
-  }
+  @Get('by-user/:userId')
+@ApiOperation({ summary: 'Lấy hồ sơ bệnh nhân theo userId' })
+async getProfileByUserId(@Param('userId') userId: number) {
+  return this.patientProfileService.findByUserId(userId);
 }
+
+
+  @Get(':userId/health-analytics')
+  @ApiOperation({ summary: 'Get health analytics for a patient by userId' })
+  async getHealthAnalytics(@Param('userId') userId: number) {
+    return this.patientProfileService.getHealthAnalytics(userId);
+  }
+
+  // ✅ Update profile by userId
+  @Put('by-user/:userId')
+@ApiOperation({ summary: 'Cập nhật hồ sơ bệnh nhân theo userId' })
+async updatePatientProfileByUserId(
+  @Param('userId') userId: number,
+  @Body() dto: UpdatePatientProfile,
+  @Req() req: Request,
+) {
+  const currentUser = req.user as { role: string; userId: number };
+
+  // ✅ USER không được phép update
+  // if (currentUser.role === 'USER') {
+  //   throw new ForbiddenException('Bạn không có quyền cập nhật hồ sơ.');
+  // }
+
+  return this.patientProfileService.updateByUserId(userId, dto);
+}}

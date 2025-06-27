@@ -34,13 +34,52 @@ export class AuthService {
     }
 
     async register(data: CreateUserDto) {
-        const user = await this.userService.createUser(data);
-        const { accessToken, refreshToken } = await this.generateToken(user);
-        await this.saveToken(user.userId, accessToken, refreshToken);
-        await this.emailService.sendVerificationEmail(user.email, user.fullName, accessToken);
-        return {
-            message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
-        };
+        try {
+            const user = await this.userService.createUser(data);
+
+            try {
+                await this.prismaService.patientProfile.create({
+                    data: {
+                        userId: user.userId,
+                        insurance: '',
+                        allergies: '',
+                        chronicDiseases: '',
+                        obstetricHistory: '',
+                    }
+                });
+            } catch (profileError) {
+                // If patient profile creation fails, rollback user creation
+                await this.prismaService.user.delete({
+                    where: { userId: user.userId }
+                }).catch(() => {}); // Ignore rollback errors
+                
+                console.error('Patient profile creation failed:', profileError);
+                throw new BadRequestException('Có lỗi xảy ra khi tạo hồ sơ bệnh nhân. Vui lòng thử lại.');
+            }
+
+            try {
+                const { accessToken, refreshToken } = await this.generateToken(user);
+                await this.saveToken(user.userId, accessToken, refreshToken);
+                await this.emailService.sendVerificationEmail(user.email, user.fullName, accessToken);
+            } catch (tokenError) {
+                console.error('Token generation or email sending failed:', tokenError);
+                // User is created, profile is created, but token/email failed
+                // This is not critical, user can still login later
+            }
+
+            return {
+                message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
+                success: true
+            };
+        } catch (error) {
+            // Handle specific user creation errors that come from userService
+            if (error instanceof BadRequestException) {
+                throw error; // Re-throw BadRequestException from userService (email/phone already exists)
+            }
+            
+            console.error('Registration error:', error);
+            throw new BadRequestException('Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.');
+        }
     }
 
     async verifyEmail(token: string) {
@@ -51,6 +90,7 @@ export class AuthService {
             },
             include: { user: true },
         });
+
 
         if (!tokenRecord) {
             throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');

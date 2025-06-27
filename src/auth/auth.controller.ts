@@ -11,6 +11,7 @@ import { LogoutDto } from "./DTO/Logout.dto";
 import { RefreshTokenDto } from "src/user/DTO/RefreshToken.dto";
 import { RegisterDTO } from "./DTO/Register.dto";
 import { GoogleAuthGuard } from "./guard/google-auth.guard";
+import { CreateUserDto } from "src/user/DTO";
 
 
 @Controller('auth')
@@ -28,7 +29,7 @@ export class AuthController {
 
     @Public()
     @Post('register')
-    async register(@Body() data: RegisterDTO) {
+    async register(@Body() data: CreateUserDto) {
         return this.authService.register(data);
     }
 
@@ -73,20 +74,27 @@ export class AuthController {
     // }
 
     @Public()
-    @Get('google/login')
+    @Get('google')
     @UseGuards(GoogleAuthGuard)
     googleLogin() {
-
+        // This will redirect to Google OAuth
     }
 
     @Public()
     @UseGuards(GoogleAuthGuard)
     @Get('google/redirect')
     async googleAuthRedirect(@Req() req, @Res() res) {
-        // const response = await this.authService.login(req.user.id);
-        // res.redirect(`http://localhost:3000?token=${response.accessToken}`);
-        const response = await this.authService.googleLogin(req.user);
-        res.redirect('http://localhost:3000/api')
+        try {
+            const response = await this.authService.googleLogin(req.user);
+            
+            // Redirect to frontend callback page with tokens
+            const callbackUrl = `http://localhost:4000/auth/google-callback?token=${response.accessToken}&refreshToken=${response.refreshToken}`;
+            res.redirect(callbackUrl);
+        } catch (error) {
+            // Redirect to login page with error
+            const errorUrl = `http://localhost:4000/auth/login?error=${encodeURIComponent(error.message || 'Google login failed')}`;
+            res.redirect(errorUrl);
+        }
     }
 
     // @Get('google/redirect')

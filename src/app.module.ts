@@ -6,7 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { DoctorModule } from './doctor/doctor.module';
 import { HospitalModule } from './hospital/hospital.module';
-// import { PatientProfileModule } from './patient-profile/patient-profile.module';
+import { PatientProfileModule } from './patient-profile/patient-profile.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
@@ -31,7 +31,7 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     DoctorModule,
     HospitalModule,
-    // PatientProfileModule,
+    PatientProfileModule,
     AppointmentModule,
     ServicesModule,
     PaymentModule,
