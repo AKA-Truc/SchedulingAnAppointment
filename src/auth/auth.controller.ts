@@ -11,6 +11,7 @@ import { LogoutDto } from "./DTO/Logout.dto";
 import { RefreshTokenDto } from "src/user/DTO/RefreshToken.dto";
 import { RegisterDTO } from "./DTO/Register.dto";
 import { GoogleAuthGuard } from "./guard/google-auth.guard";
+import { CreateUserDto } from "src/user/DTO";
 
 
 @Controller('auth')
@@ -28,7 +29,7 @@ export class AuthController {
 
     @Public()
     @Post('register')
-    async register(@Body() data: RegisterDTO) {
+    async register(@Body() data: CreateUserDto) {
         return this.authService.register(data);
     }
 

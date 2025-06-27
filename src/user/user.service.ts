@@ -25,38 +25,61 @@ export class UserService {
             if (existingUser.isActive) {
                 // Nếu user đã active, kiểm tra cụ thể email hay phone trùng
                 if (existingUser.email === data.email) {
-                    throw new BadRequestException('Email is already registered');
+                    throw new BadRequestException('Email này đã được đăng ký và đang hoạt động. Vui lòng sử dụng email khác hoặc đăng nhập.');
                 }
 
                 if (existingUser.phone === data.phone) {
-                    throw new BadRequestException('Phone number is already used by an active account');
+                    throw new BadRequestException('Số điện thoại này đã được sử dụng bởi tài khoản khác. Vui lòng sử dụng số điện thoại khác.');
                 }
 
-                throw new BadRequestException('This account already active.');
+                throw new BadRequestException('Tài khoản này đã tồn tại và đang hoạt động. Vui lòng đăng nhập.');
             } else {
                 // Nếu chưa active, xóa user cũ để tạo mới
-                await this.deleteUser(existingUser.userId);
+                try {
+                    await this.deleteUser(existingUser.userId);
+                } catch (deleteError) {
+                    console.error('Error deleting inactive user:', deleteError);
+                    throw new BadRequestException('Có lỗi xảy ra khi xử lý tài khoản cũ. Vui lòng thử lại.');
+                }
             }
         }
 
-        const hashedPassword = await bcrypt.hash(data.password, 10);
+        try {
+            const hashedPassword = await bcrypt.hash(data.password, 10);
 
-        const user = await this.prisma.user.create({
-            data: {                fullName: data.fullName,
-                email: data.email,
-                phone: data.phone,
-                password: hashedPassword,
-                address: data.address,
-                dateOfBirth: data.dateOfBirth,
-                nationalId: data.nationalId,
-                ethnicity: data.ethnicity,
-                gender: data.gender,
-                role: data.role,
-                isActive: false
-            },
-        });
+            const user = await this.prisma.user.create({
+                data: {
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone,
+                    password: hashedPassword,
+                    address: data.address,
+                    dateOfBirth: data.dateOfBirth,
+                    nationalId: data.nationalId,
+                    ethnicity: data.ethnicity,
+                    gender: data.gender,
+                    role: data.role,
+                    isActive: false
+                },
+            });
 
-        return user;
+            return user;
+        } catch (error) {
+            console.error('Error creating user:', error);
+            
+            // Handle Prisma unique constraint errors
+            if (error.code === 'P2002') {
+                const field = error.meta?.target?.[0];
+                if (field === 'email') {
+                    throw new BadRequestException('Email này đã được đăng ký. Vui lòng sử dụng email khác.');
+                } else if (field === 'phone') {
+                    throw new BadRequestException('Số điện thoại này đã được sử dụng. Vui lòng sử dụng số khác.');
+                }
+                throw new BadRequestException('Thông tin đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.');
+            }
+            
+            throw new BadRequestException('Có lỗi xảy ra khi tạo tài khoản. Vui lòng thử lại.');
+        }
     }
 
     async uploadAvatar(userId: number, fileUrl: string) {
