@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, IsEnum, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PaymentMethodEnum, PaymentStatusEnum } from '@prisma/client';
 
 export class CreatePayment {
     @ApiProperty({ example: 1, description: 'ID cuộc hẹn' })
-    @IsInt()
+    @Type(() => Number)
+    @IsNumber()
     @IsNotEmpty()
     appointmentId: number;
 

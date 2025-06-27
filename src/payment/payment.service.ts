@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePayment } from './DTO/CreatePayment.dto';
@@ -13,9 +13,15 @@ export class PaymentService {
     ) { }
 
     async create(dto: CreatePayment) {
+        // Ép kiểu và kiểm tra appointmentId
+        const appointmentId = Number(dto.appointmentId);
+        console.log('Received appointmentId:', appointmentId);
+        if (isNaN(appointmentId)) {
+            throw new BadRequestException('appointmentId is required and must be a valid number');
+        }
         const payment = await this.prisma.payment.create({
             data: {
-                appointmentId: dto.appointmentId,
+                appointmentId: appointmentId,
                 price: dto.price,
                 paymentMethod: dto.paymentMethod,
                 paymentStatus: dto.paymentStatus,

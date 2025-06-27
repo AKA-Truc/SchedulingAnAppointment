@@ -9,6 +9,7 @@ import {
   Param,
   Body,
   Put,
+  
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,14 +20,14 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { Req, ForbiddenException } from '@nestjs/common';
-import { Request } from 'express';
 import * as xlsx from 'xlsx';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PatientProfileService } from './patient-profile.service';
 import { PatientImportRowDto } from './DTO/PatientImportRow.dto';
 import { UpdatePatientProfile } from './DTO/UpdatePatientProfile.dto';
+import { Req, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Request } from 'express';
 
 @ApiTags('Patient Profile')
 @ApiBearerAuth()
@@ -124,7 +125,7 @@ export class PatientProfileController {
       failed: results.filter((r) => !r.success).length,
       results,
     };
-  } 
+  }
 
   @Get('export')
   @ApiOperation({ summary: 'Export patient profiles to Excel' })
@@ -167,13 +168,7 @@ export class PatientProfileController {
     );
     res.send(buffer);
   }
-
-  @Get('by-user/:userId')
-@ApiOperation({ summary: 'Lấy hồ sơ bệnh nhân theo userId' })
-async getProfileByUserId(@Param('userId') userId: number) {
-  return this.patientProfileService.findByUserId(userId);
-}
-
+  
 
   @Get(':userId/health-analytics')
   @ApiOperation({ summary: 'Get health analytics for a patient by userId' })
@@ -182,7 +177,21 @@ async getProfileByUserId(@Param('userId') userId: number) {
   }
 
   // ✅ Update profile by userId
-  @Put('by-user/:userId')
+  @Get('by-user/:userId')
+@ApiOperation({ summary: 'Lấy hồ sơ bệnh nhân theo userId' })
+async getPatientProfileByUserId(@Param('userId') userId: number) {
+  const profile = await this.patientProfileService.findByUserId(Number(userId));
+
+  if (!profile) {
+    throw new NotFoundException(`Không tìm thấy hồ sơ cho userId ${userId}`);
+  }
+
+  return profile;
+}
+
+
+
+@Put('by-user/:userId')
 @ApiOperation({ summary: 'Cập nhật hồ sơ bệnh nhân theo userId' })
 async updatePatientProfileByUserId(
   @Param('userId') userId: number,
@@ -197,4 +206,5 @@ async updatePatientProfileByUserId(
   // }
 
   return this.patientProfileService.updateByUserId(userId, dto);
-}}
+}
+}
