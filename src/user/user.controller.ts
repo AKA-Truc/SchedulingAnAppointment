@@ -62,8 +62,8 @@ export class UserController {
         return this.userService.uploadAvatar(userId, result.secure_url);
     }
 
-
     @Get()
+    @Public()
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllUsers(

@@ -7,6 +7,7 @@ import { ThrottlerModule } from "@nestjs/throttler";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MailModule } from "src/email/email.module";
 import { EmailService } from "src/email/email.service";
+import { GoogleStrategy } from "./strategy/google.strategy";
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { EmailService } from "src/email/email.service";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, EmailService],
+  providers: [AuthService, EmailService, GoogleStrategy],
   exports: [AuthService]
 })
 export class AuthModule { }

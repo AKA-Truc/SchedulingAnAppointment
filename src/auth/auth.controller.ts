@@ -41,8 +41,8 @@ export class AuthController {
 
 
     @Post('logout')
-    async logout(@Req() req, @Body() refreshToken: string) {
-        return this.authService.logout(req.user, refreshToken);
+    async logout(@Req() req, @Body() body: LogoutDto) {
+        return this.authService.logout(req.user, body.refreshToken);
     }
 
     @Public()
@@ -74,20 +74,27 @@ export class AuthController {
     // }
 
     @Public()
-    @Get('google/login')
+    @Get('google')
     @UseGuards(GoogleAuthGuard)
     googleLogin() {
-
+        // This will redirect to Google OAuth
     }
 
     @Public()
     @UseGuards(GoogleAuthGuard)
     @Get('google/redirect')
     async googleAuthRedirect(@Req() req, @Res() res) {
-        // const response = await this.authService.login(req.user.id);
-        // res.redirect(`http://localhost:3000?token=${response.accessToken}`);
-        const response = await this.authService.googleLogin(req.user);
-        res.redirect('http://localhost:3000/api')
+        try {
+            const response = await this.authService.googleLogin(req.user);
+            
+            // Redirect to frontend callback page with tokens
+            const callbackUrl = `http://localhost:4000/auth/google-callback?token=${response.accessToken}&refreshToken=${response.refreshToken}`;
+            res.redirect(callbackUrl);
+        } catch (error) {
+            // Redirect to login page with error
+            const errorUrl = `http://localhost:4000/auth/login?error=${encodeURIComponent(error.message || 'Google login failed')}`;
+            res.redirect(errorUrl);
+        }
     }
 
     // @Get('google/redirect')

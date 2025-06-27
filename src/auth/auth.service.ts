@@ -116,6 +116,21 @@ export class AuthService {
             throw new BadRequestException('Refresh token is required');
         }
 
+        // Option 1: Logout khỏi tất cả devices (recommended for security)
+        // Xóa tất cả tokens của user này
+        const deletedTokens = await this.prismaService.token.deleteMany({
+            where: { userId: user.userId },
+        });
+
+        if (deletedTokens.count > 0) {
+            return { 
+                message: 'Logout successful from all devices',
+                deletedTokens: deletedTokens.count 
+            };
+        }
+
+        // Option 2: Chỉ logout khỏi device hiện tại (backup)
+        // Tìm và xóa token cụ thể
         const tokens = await this.prismaService.token.findMany({
             where: { userId: user.userId },
         });
@@ -126,7 +141,7 @@ export class AuthService {
                 await this.prismaService.token.delete({
                     where: { tokenId: tokenRecord.tokenId },
                 });
-                return { message: 'Logout successful' };
+                return { message: 'Logout successful from current device' };
             }
         }
 

@@ -118,6 +118,17 @@ export class FollowUpService {
     async getFollowUpsByAppointmentId(appointmentId: number) {
         const followUps = await this.prisma.followUp.findMany({
             where: { appointmentId },
+            include: {
+                appointment: {
+                    include: {
+                        doctor: {
+                            include: {
+                                schedules: true,
+                            },
+                        }
+                    },
+                }
+            },
         });
 
         if (followUps.length === 0) {
