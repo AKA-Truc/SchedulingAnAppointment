@@ -55,10 +55,10 @@ export class AuthGuard implements CanActivate {
             }
 
             // Kiểm tra user có còn active không
-            if (!tokenRecord.user.isActive) {
-                console.error('AuthGuard - User account is inactive');
-                throw new UnauthorizedException('User account is inactive');
-            }
+            // if (!tokenRecord.user.isActive) {
+            //     console.error('AuthGuard - User account is inactive');
+            //     throw new UnauthorizedException('User account is inactive');
+            // }
 
             console.log('AuthGuard - Token validated successfully');
             request['user'] = payload;
