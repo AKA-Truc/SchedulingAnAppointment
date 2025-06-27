@@ -1,4 +1,3 @@
-// src/patient-profile/patient-profile.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePatientProfile, UpdatePatientProfile } from './DTO';
@@ -72,7 +71,7 @@ export class PatientProfileService {
     };
   }
 
-  // Get by ID
+  // Get by profileId
   async findOne(id: number) {
     const profile = await this.prisma.patientProfile.findUnique({
       where: { profileId: id },
@@ -94,7 +93,6 @@ export class PatientProfileService {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
     }
     const userId = profile.userId;
-    // Lấy các thông tin y tế liên quan qua userId
     const [medicalRecord, telemetries, alerts, consents] = await Promise.all([
       this.prisma.medicalRecord.findUnique({
         where: { userId },
@@ -113,7 +111,7 @@ export class PatientProfileService {
     };
   }
 
-  // Update
+  // Update by profileId
   async update(id: number, dto: UpdatePatientProfile) {
     const profile = await this.prisma.patientProfile.findUnique({
       where: { profileId: id },
@@ -138,6 +136,31 @@ export class PatientProfileService {
     });
   }
 
+  // ✅ Update by userId (for /by-user/:userId)
+  async updateByUserId(userId: number, dto: UpdatePatientProfile) {
+    const profile = await this.prisma.patientProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new NotFoundException(`Patient profile for user ${userId} not found`);
+    }
+
+    return this.prisma.patientProfile.update({
+      where: { profileId: profile.profileId },
+      data: {
+        insurance: dto.insurance ?? profile.insurance,
+        allergies: dto.allergies ?? profile.allergies,
+        chronicDiseases: dto.chronicDiseases ?? profile.chronicDiseases,
+        obstetricHistory: dto.obstetricHistory ?? profile.obstetricHistory,
+        surgicalHistory: dto.surgicalHistory ?? profile.surgicalHistory,
+        familyHistory: dto.familyHistory ?? profile.familyHistory,
+        socialHistory: dto.socialHistory ?? profile.socialHistory,
+        medicationHistory: dto.medicationHistory ?? profile.medicationHistory,
+      },
+    });
+  }
+
   // Delete
   async remove(id: number) {
     const profile = await this.prisma.patientProfile.findUnique({
@@ -148,11 +171,36 @@ export class PatientProfileService {
     }
     return this.prisma.patientProfile.delete({ where: { profileId: id } });
   }
+  async findByUserId(userId: number) {
+  const profile = await this.prisma.patientProfile.findUnique({
+    where: { userId },
+    include: {
+      user: {
+        select: {
+          userId: true,
+          fullName: true,
+          phone: true,
+          email: true,
+          gender: true,
+          address: true,
+          dateOfBirth: true,
+          ethnicity: true,
+          nationalId: true,
+        },
+      },
+    },
+  });
+
+  if (!profile) {
+    throw new NotFoundException(`Không tìm thấy hồ sơ cho userId = ${userId}`);
+  }
+
+  return profile;
+}
+
 
   // Health Analytics
   async getHealthAnalytics(patientId: number) {
-    // TODO: Thay thế bằng logic thực tế nếu cần
-    // Dữ liệu mẫu trả về đúng format test
     return {
       visitStats: {
         totalVisits: 10,
