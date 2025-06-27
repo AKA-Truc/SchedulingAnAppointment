@@ -194,7 +194,7 @@ export class AppointmentController {
     }
 
     @ApiOperation({ summary: 'Get all follow-ups with pagination' })
-    @Get('follow-up')
+    @Get('follow-up/get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
     async getAllFollowUps(

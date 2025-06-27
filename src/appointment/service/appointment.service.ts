@@ -173,6 +173,7 @@ export class AppointmentService {
 
         const appointments = await this.prisma.appointment.findMany({
             where: whereClause,
+            orderBy: { createdAt: 'desc' },
             skip,
             take: limit,
             include: {
@@ -180,6 +181,7 @@ export class AppointmentService {
                 include: {
                 user: true,
                 specialty: true,
+                schedules: true,
                 },
             },
             user: true,
@@ -237,7 +239,6 @@ export class AppointmentService {
 
         return result;
     }
-
 
     async getAppointmentById(id: number) {
         const appointment = await this.prisma.appointment.findUnique({
