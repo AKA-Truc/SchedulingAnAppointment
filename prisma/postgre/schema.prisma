@@ -24,13 +24,9 @@ model User {
   isActive           Boolean
   appointments       Appointment[]
   doctor             Doctor?
-  medicalRecord      MedicalRecord?
   notifications      Notification[]
   patientProfile     PatientProfile?
   tokens             Token[]
-  patientTelemetries PatientTelemetry[] @relation("UserTelemetry")
-  patientAlerts      PatientAlert[]     @relation("UserAlert")
-  patientConsents    PatientConsent[]   @relation("UserConsent")
 }
 
 model Token {
@@ -148,30 +144,6 @@ model Feedback {
   appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
 }
 
-model MedicalRecord {
-  medicalRecordId       Int                @id @default(autoincrement())
-  userId                Int                @unique
-  historyPresentIllness String
-  chiefComplaint        String
-  diagnosis             String
-  testResult            String
-  doctorNotes           String
-  treatmentPlan         String
-  treatmentGoals        String
-  user                  User               @relation(fields: [userId], references: [userId])
-  prescriptions         PrescriptionItem[]
-}
-
-model PrescriptionItem {
-  itemId          Int           @id @default(autoincrement())
-  medicalRecordId Int
-  medicineName    String
-  dosage          String
-  frequency       String
-  duration        String
-  notes           String
-  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [medicalRecordId])
-}
 
 model DoctorSchedule {
   scheduleId Int    @id @default(autoincrement())
@@ -235,46 +207,6 @@ model Notification {
   user           User             @relation(fields: [userId], references: [userId])
 }
 
-model PatientTelemetry {
-  id           Int      @id @default(autoincrement())
-  patientId    Int
-  deviceId     String
-  metricType   String
-  value        String
-  timestamp    DateTime
-  deviceType   String?
-  batteryLevel Float?
-
-  patient User @relation("UserTelemetry", fields: [patientId], references: [userId])
-}
-
-model PatientAlert {
-  id        Int      @id @default(autoincrement())
-  patientId Int
-  alertType String
-  value     String
-  timestamp DateTime
-  status    String
-
-  patient User @relation("UserAlert", fields: [patientId], references: [userId])
-}
-
-model PatientConsent {
-  id              Int       @id @default(autoincrement())
-  patientId       Int
-  consentType     ConsentTypeEnum
-  status          ConsentStatusEnum
-  startDate       DateTime
-  endDate         DateTime?
-  scope           String[]
-  terms           String
-  witness         String?
-  witnessContact  String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  patient         User      @relation("UserConsent", fields: [patientId], references: [userId])
-}
 
 enum NotificationType {
   APPOINTMENT

@@ -99,21 +99,8 @@ export class PatientProfileService {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
     }
     const userId = profile.userId;
-    const [medicalRecord, telemetries, alerts, consents] = await Promise.all([
-      this.prisma.medicalRecord.findUnique({
-        where: { userId },
-        include: { prescriptions: true },
-      }),
-      this.prisma.patientTelemetry.findMany({ where: { patientId: userId } }),
-      this.prisma.patientAlert.findMany({ where: { patientId: userId } }),
-      this.prisma.patientConsent.findMany({ where: { patientId: userId } }),
-    ]);
     return {
       ...profile,
-      medicalRecord,
-      telemetries,
-      alerts,
-      consents,
     };
   }
 

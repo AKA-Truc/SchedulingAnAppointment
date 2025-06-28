@@ -25,7 +25,7 @@ export class NotificationWorker {
     return `${minutesLeft} phút`;
   }
 
-  @Cron('*/10 * * * * *') // Mỗi 10s
+  @Cron('*/30 * * * * *') // Every 30 seconds (reduced from 10s)
   async handleReminders() {
     const now = Date.now();
     console.log(`[Worker] Cron started at ${new Date(now).toISOString()}`);
@@ -33,10 +33,19 @@ export class NotificationWorker {
     const userKeys = await this.redis.keys('notifications:*');
     console.log(`[Worker] Found ${userKeys.length} notification keys in Redis`);
 
-    for (const key of userKeys) {
-      console.log(`[Worker] Checking key: ${key}`);
+    if (userKeys.length === 0) {
+      console.log(`[Worker] No notification keys found, ending cron job early`);
+      return;
+    }
 
+    let totalProcessed = 0;
+    for (const key of userKeys) {
       const dueNotifs = await this.redis.zrangebyscore(key, 0, now);
+      
+      if (dueNotifs.length === 0) {
+        continue; // Skip keys with no due notifications
+      }
+
       console.log(`[Worker] Found ${dueNotifs.length} due notifications in ${key}`);
 
       for (const raw of dueNotifs) {
@@ -45,17 +54,42 @@ export class NotificationWorker {
           notif = JSON.parse(raw);
         } catch (error) {
           console.error(`[Worker] Failed to parse JSON for key ${key}:`, error);
+          // Remove invalid JSON from Redis
+          await this.redis.zrem(key, raw);
           continue;
         }
 
-        console.log(`[Worker] Processing notif ID: ${notif.id}, userId: ${notif.userId}`);
+        // Validate notification before processing
+        if (!notif.id || !notif.userId || !notif.title) {
+          console.warn(`[Worker] Invalid notification structure:`, notif);
+          await this.redis.zrem(key, raw);
+          continue;
+        }
 
-        // Gửi WebSocket
+        console.log(`[Worker] Processing notif ID: ${notif.id}, userId: ${notif.userId}, title: "${notif.title}"`);
+
+        // Check if notification was already sent (safety check)
+        try {
+          const dbNotif = await this.prisma.notification.findUnique({
+            where: { notificationId: notif.id },
+            select: { sent: true }
+          });
+
+          if (dbNotif?.sent) {
+            console.log(`[Worker] Notification ${notif.id} already marked as sent, removing from Redis`);
+            await this.redis.zrem(key, raw);
+            continue;
+          }
+        } catch (error) {
+          console.error(`[Worker] Failed to check notification status for ID ${notif.id}:`, error);
+        }
+
+        // Send WebSocket notification
         try {
           this.gateway.sendToUser(`${notif.userId}`, notif);
-          console.log(`[Worker] Sent WebSocket notif to user ${notif.userId}`);
+          console.log(`[Worker] ✅ Sent WebSocket notif to user ${notif.userId}`);
         } catch (error) {
-          console.error(`[Worker] Failed to send WebSocket to user ${notif.userId}:`, error);
+          console.error(`[Worker] ❌ Failed to send WebSocket to user ${notif.userId}:`, error);
           continue;
         }
 
@@ -85,27 +119,28 @@ export class NotificationWorker {
           continue;
         }
 
-        // Cập nhật DB
+        // Update database to mark as sent
         try {
           await this.prisma.notification.update({
             where: { notificationId: notif.id },
             data: { sent: true },
           });
-          console.log(`[Worker] Updated DB: notif ID ${notif.id} marked as sent`);
+          console.log(`[Worker] ✅ Updated DB: notif ID ${notif.id} marked as sent`);
         } catch (error) {
-          console.error(`[Worker] Failed to update DB for notif ID ${notif.id}:`, error);
+          console.error(`[Worker] ❌ Failed to update DB for notif ID ${notif.id}:`, error);
         }
 
-        // Xoá khỏi Redis
+        // Remove from Redis after successful processing
         try {
           await this.redis.zrem(key, raw);
-          console.log(`[Worker] Removed notif ID ${notif.id} from Redis key ${key}`);
+          console.log(`[Worker] ✅ Removed notif ID ${notif.id} from Redis`);
+          totalProcessed++;
         } catch (error) {
-          console.error(`[Worker] Failed to remove notif ID ${notif.id} from Redis:`, error);
+          console.error(`[Worker] ❌ Failed to remove notif ID ${notif.id} from Redis:`, error);
         }
       }
     }
 
-    console.log(`[Worker] Cron finished\n`);
+    console.log(`[Worker] 🎯 Cron finished - Processed ${totalProcessed} notifications\n`);
   }
 }
