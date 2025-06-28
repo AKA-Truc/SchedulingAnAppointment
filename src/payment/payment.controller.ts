@@ -69,7 +69,9 @@ export class PaymentController {
     @Body('amount') amount: number,
     @Body('orderId') orderId: string,
     @Body('orderInfo') orderInfo: string,
-    @Body('appointmentId') appointmentId: number, 
+    @Body('appointmentId') appointmentId: number,
+    @Body('paymentMethod') paymentMethod: PaymentMethodEnum,
+    @Body('paymentStatus') paymentStatus: PaymentStatusEnum,
   ) {
     // Validate số tiền
     if (typeof amount !== 'number' || amount < 1000 || amount > 50000000) {
@@ -83,10 +85,10 @@ export class PaymentController {
     try {
       // ✅ Bước 1: Lưu thông tin thanh toán với trạng thái PENDING
       await this.paymentService.create({
-        appointmentId: Number(orderId),
+        appointmentId: appointmentId, // SỬA: lấy đúng trường từ body
         price: Number(amount),
-        paymentMethod: PaymentMethodEnum.MOMO,
-        paymentStatus: PaymentStatusEnum.PENDING,
+        paymentMethod: paymentMethod ?? PaymentMethodEnum.MOMO,
+        paymentStatus: paymentStatus ?? PaymentStatusEnum.PENDING,
       });
 
       // ✅ Bước 2: Tạo yêu cầu thanh toán MoMo
