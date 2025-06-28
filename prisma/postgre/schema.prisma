@@ -226,6 +226,7 @@ enum PaymentMethodEnum {
   CARD
   BANK_TRANSFER
   MOMO
+  VNPAY
 }
 
 enum PaymentStatusEnum {
