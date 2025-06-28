@@ -219,4 +219,10 @@ async updatePatientProfileByUserId(
 
   return this.patientProfileService.updateByUserId(userId, dto);
 }
+
+@Get('allUser')
+@ApiOperation({ summary: 'Lấy tất cả hồ sơ bệnh nhân' })
+async getAllPatientProfiles() {
+  return this.patientProfileService.findAll();
+}
 }
