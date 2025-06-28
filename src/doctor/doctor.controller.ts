@@ -21,6 +21,8 @@ import { CertificationService } from './service/certification.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { ConfigService } from '@nestjs/config';
 
+import { Roles } from 'src/auth/guard/roles.guard';
+
 @ApiTags('Doctor')
 @Controller('doctor')
 export class DoctorController {
@@ -34,6 +36,7 @@ export class DoctorController {
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get top 3 rated doctors' })
     @Get('/top-rated')
     getTopRatedDoctors() {
@@ -41,7 +44,7 @@ export class DoctorController {
     } k
 
     // ──────── Doctor CRUD ────────
-
+    @Roles('ADMIN', 'USER', "DOCTOR")
     @Get('/by-specialty/:specialtyId')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -53,6 +56,7 @@ export class DoctorController {
         return this.doctorService.getDoctors({ specialtyId, page, limit });
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get doctors by a list of userIds (only doctors) with pagination' })
     @Get('/by-userIds')
     @ApiQuery({ name: 'userIds', type: 'string', required: true, example: '1,2,3' })
@@ -71,6 +75,7 @@ export class DoctorController {
         return this.doctorService.getDoctorsByUserIdsPaginated(userIds, page, limit);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Get all certifications (paginated)' })
     @Get('/certification')
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -85,6 +90,7 @@ export class DoctorController {
         );
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all doctor schedules (paginated)' })
     @Get('/doctorSchedule')
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -96,6 +102,7 @@ export class DoctorController {
         return this.doctorScheduleService.findAll(page, limit);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 30 })
@@ -107,6 +114,7 @@ export class DoctorController {
         return this.specialtyService.findAll(page, limit);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 6 })
@@ -119,6 +127,7 @@ export class DoctorController {
         return this.specialtyService.getSpecialtiesByHospitalId(hospitalId, page, limit);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all achievements (paginated)' })
     @Get('/achievement')
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -132,37 +141,42 @@ export class DoctorController {
 
     // ──────── Doctor CRUD ────────
 
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Get count of doctors' })
     @Get('/count')
     getCountDoctors() {
         return this.doctorService.getCountOfDoctors();
     }
 
-
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Create a new doctor' })
     @Post()
     createDoctor(@Body() dto: CreateDoctor) {
         return this.doctorService.createDoctor(dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get a doctor by userId' })
     @Get('/user/:id')
     getDoctorByUserId(@Param('id', ParseIntPipe) id: number) {
         return this.doctorService.getDoctorByUserId(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get a doctor by ID' })
     @Get(':id')
     getDoctorById(@Param('id', ParseIntPipe) id: number) {
         return this.doctorService.getDoctorById(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Get performance of Doctor Now (1 month)' })
     @Get('perfomance/:id')
     getPerformanceOfDoctor(@Param(':id', ParseIntPipe) id: number) {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Filter' })
     @Get('/filter/doctor')
     @ApiQuery({ name: 'specialty', required: false })
@@ -180,6 +194,7 @@ export class DoctorController {
         return this.doctorService.filterDoctors({ specialtyId, minRating, hospitalId, page, limit });
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Update a doctor by ID' })
     @Put(':id')
     updateDoctor(
@@ -190,6 +205,8 @@ export class DoctorController {
     }
 
     // ──────── Certification CRUD ────────
+
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Upload a certification for a doctor (PDF/JPG/PNG)' })
     @Post('/certification')
     @UseInterceptors(FileInterceptor('file', {
@@ -244,13 +261,14 @@ export class DoctorController {
         });
     }
 
-
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get certification by ID' })
     @Get('/certification/:id')
     findCertification(@Param('id', ParseIntPipe) id: number) {
         return this.certificationService.findOne(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Update a certification by ID' })
     @Put('/certification/:id')
     updateCertification(
@@ -260,6 +278,7 @@ export class DoctorController {
         return this.certificationService.update(id, dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Delete a certification by ID' })
     @Delete('/certification/:id')
     removeCertification(@Param('id', ParseIntPipe) id: number) {
@@ -267,18 +286,21 @@ export class DoctorController {
     }
 
     // ──────── Achievement CRUD ────────
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Create a new doctor achievement' })
     @Post('/achievement')
     createAchievement(@Body() dto: CreateAchievement) {
         return this.achievementService.create(dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get achievement by ID' })
     @Get('/achievement/:id')
     findAchievement(@Param('id', ParseIntPipe) id: number) {
         return this.achievementService.findOne(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Update an achievement by ID' })
     @Put('/achievement/:id')
     updateAchievement(
@@ -288,6 +310,7 @@ export class DoctorController {
         return this.achievementService.update(id, dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Delete an achievement by ID' })
     @Delete('/achievement/:id')
     removeAchievement(@Param('id', ParseIntPipe) id: number) {
@@ -295,18 +318,21 @@ export class DoctorController {
     }
 
     // ──────── Specialty CRUD ────────
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Create a new specialty' })
     @Post('/specialty')
     createSpecialty(@Body() dto: CreateSpecialty) {
         return this.specialtyService.create(dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get specialty by ID' })
     @Get('/specialty/:id')
     findSpecialty(@Param('id', ParseIntPipe) id: number) {
         return this.specialtyService.findOne(id);
     }
 
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Update a specialty by ID' })
     @Put('/specialty/:id')
     updateSpecialty(
@@ -316,6 +342,7 @@ export class DoctorController {
         return this.specialtyService.update(id, dto);
     }
 
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Delete a specialty by ID' })
     @Delete('/specialty/:id')
     removeSpecialty(@Param('id', ParseIntPipe) id: number) {
@@ -323,18 +350,21 @@ export class DoctorController {
     }
 
     // ──────── Doctor Schedule CRUD ────────
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Create a new doctor schedule' })
     @Post('/doctorSchedule')
     createDoctorSchedule(@Body() dto: CreateDoctorSchedule) {
         return this.doctorScheduleService.create(dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get doctor schedule by ID' })
     @Get('/doctorSchedule/:id')
     findDoctorSchedule(@Param('id', ParseIntPipe) id: number) {
         return this.doctorScheduleService.findOne(id);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Update a doctor schedule by ID' })
     @Put('/doctorSchedule/:id')
     updateDoctorSchedule(
@@ -344,6 +374,7 @@ export class DoctorController {
         return this.doctorScheduleService.update(id, dto);
     }
 
+    @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Delete a doctor schedule by ID' })
     @Delete('/doctorSchedule/:id')
     removeDoctorSchedule(@Param('id', ParseIntPipe) id: number) {
