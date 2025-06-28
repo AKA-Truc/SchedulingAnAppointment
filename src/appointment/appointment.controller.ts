@@ -10,6 +10,7 @@ import { CreateBroadcastNotification } from './DTO/CreateBroadcastNotification.d
 import { FollowUpService } from './service/followUp.service';
 import { NotificationService } from './service/notification.service';
 import { NotificationGateway } from './service/notification.gateway';
+import { Roles } from 'src/auth/guard/roles.guard';
 
 @Controller('appointment')
 export class AppointmentController {
@@ -23,12 +24,14 @@ export class AppointmentController {
     ) { }
 
     //apointment controller
+    @Roles('USER')
     @ApiOperation({ summary: 'Create a new appointment' })
     @Post()
     async createAppointment(@Body() data: CreateAppointment) {
         return this.appointment.create(data);
     }
 
+    @Roles('USER', 'DOCTOR')
     @Get('counts')
     @ApiOperation({ summary: 'Lấy số lượng cuộc hẹn theo từng trạng thái' })
     @ApiQuery({ name: 'userId', required: false, description: 'ID của người dùng (patient)' })
@@ -66,12 +69,14 @@ export class AppointmentController {
         return this.appointment.getAllAppointmentFilter(pageNumber, limitNumber, filters);
     }
 
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Get appointment statistics' })
     @Get('statistics')
     async getAppointmentStatistics() {
         return this.appointment.getDashboardStats();
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get appointment by ID' })
     @Get(':id')
     async getAppointmentById(
@@ -80,6 +85,7 @@ export class AppointmentController {
         return this.appointment.getAppointmentById(id);
     }
 
+    @Roles('ADMIN')
     @ApiOperation({ summary: 'Update appointment' })
     @Put(':id')
     async updateAppointment(
@@ -89,6 +95,7 @@ export class AppointmentController {
         return this.appointment.updateAppointment(id, data);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Update appointment status' })
     @Patch(':id/status')
     async updateAppointmentStatus(
@@ -100,38 +107,14 @@ export class AppointmentController {
     return this.appointment.updateStatus(id, status);
     }
 
+
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Cancel appointment' })
     @Delete(':id')
     async deleteAppointment(
         @Param('id', ParseIntPipe) id: number
     ) {
         return this.appointment.cancelAppointment(id);
-    }
-
-    @ApiOperation({ summary: 'Get appointments today by doctor ID' })
-    @ApiQuery({ name: 'page', required: false, example: 1 })
-    @ApiQuery({ name: 'limit', required: false, example: 10 })
-    @Get('doctor/:doctorId')
-    async getAppointmentsByDoctorId(
-        @Param('doctorId', ParseIntPipe) doctorId: number,
-        @Query('page') page?: string,
-        @Query('limit') limit?: string,
-    ) {
-        const pageNumber = page ? parseInt(page) : 1;
-        const limitNumber = limit ? parseInt(limit) : 10;
-        return this.appointment.getTodaysAppointmentsByDoctor(doctorId, pageNumber, limitNumber);
-    }
-
-    @ApiOperation({ summary: 'Get appointments by patient ID' })
-    @Get('patient/:patientId')
-    async getAppointmentsByPatientId(
-        @Param('patientId', ParseIntPipe) patientId: number,
-        @Query('page') page?: string,
-        @Query('limit') limit?: string,
-    ) {
-        const pageNumber = page ? parseInt(page) : 1;
-        const limitNumber = limit ? parseInt(limit) : 10;
-        return this.appointment.getAppointmentsByUserId(patientId, pageNumber, limitNumber);
     }
 
     @ApiOperation({ summary: 'Get doctor with most appointments' })
@@ -141,7 +124,6 @@ export class AppointmentController {
     }
 
     //Feedback controller
-
     @ApiOperation({ summary: 'Create feedback for an appointment' })
     @Post('feedback')
     async createFeedback(@Body() data: CreateFeedback) {
@@ -193,6 +175,7 @@ export class AppointmentController {
         return this.followUp.createFollowUp(data);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all follow-ups with pagination' })
     @Get('follow-up/get-all')
     @ApiQuery({ name: 'page', required: false, example: 1 })
@@ -214,7 +197,7 @@ export class AppointmentController {
         return this.followUp.getFollowUpById(id);
     }
 
-
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get follow-ups by appointment ID' })
     @Get('follow-up/appointment/:appointmentId')
     async getFollowUpsByAppointmentId(
@@ -222,14 +205,6 @@ export class AppointmentController {
     ) {
         return this.followUp.getFollowUpsByAppointmentId(appointmentId);
     }
-
-    // @Put('follow-up/:id')
-    // async updateFollowUp(
-    //     @Param('id', ParseIntPipe) id: number,
-    //     @Body() data: UpdateFollowUp
-    // ) {
-    //     return this.followUpService.updateFollowUp(id, data);
-    // }
 
     @ApiOperation({ summary: 'Delete follow-up by ID' })
     @Delete('follow-up/:id')

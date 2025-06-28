@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RoleEnum, GenderEnum } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -58,8 +58,9 @@ export class UpdateUserDto {
         enum: GenderEnum,
         description: 'Giới tính người dùng',
     })
+    @IsOptional()
     @IsEnum(GenderEnum)
-    gender: GenderEnum;
+    gender?: GenderEnum;
 
     @ApiPropertyOptional({
         example: RoleEnum.ADMIN,
@@ -69,4 +70,12 @@ export class UpdateUserDto {
     @IsOptional()
     @IsEnum(RoleEnum)
     role?: RoleEnum;
+
+    @ApiPropertyOptional({
+        example: true,
+        description: 'Trạng thái hoạt động của người dùng',
+    })
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
 }

@@ -180,12 +180,22 @@ export class PatientProfileController {
   // ✅ Update profile by userId
   @Get('by-user/:userId')
 @ApiOperation({ summary: 'Lấy hồ sơ bệnh nhân theo userId' })
-@Public()
 async getPatientProfileByUserId(@Param('userId') userId: number) {
-  const profile = await this.patientProfileService.findByUserId(Number(userId));
+  let profile = await this.patientProfileService.findByUserId(Number(userId));
 
   if (!profile) {
-    throw new NotFoundException(`Không tìm thấy hồ sơ cho userId ${userId}`);
+    // Nếu chưa có thì tạo hồ sơ rỗng
+    profile = await this.patientProfileService.create({
+      userId: Number(userId),
+      insurance: '',
+      allergies: '',
+      chronicDiseases: '',
+      obstetricHistory: '',
+      surgicalHistory: '',
+      familyHistory: '',
+      socialHistory: '',
+      medicationHistory: '',
+    });
   }
 
   return profile;
@@ -208,5 +218,11 @@ async updatePatientProfileByUserId(
   // }
 
   return this.patientProfileService.updateByUserId(userId, dto);
+}
+
+@Get('allUser')
+@ApiOperation({ summary: 'Lấy tất cả hồ sơ bệnh nhân' })
+async getAllPatientProfiles() {
+  return this.patientProfileService.findAll();
 }
 }

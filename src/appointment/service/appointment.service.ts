@@ -14,8 +14,9 @@ import { NotificationType } from '@prisma/client';
 
 enum ReminderOffset {
     BEFORE_30_MINUTES = 30,
-    BEFORE_1_HOUR = 60,
-    BEFORE_1_DAY = 1440,
+    // Only use main reminder - remove multiple notifications
+    // BEFORE_1_HOUR = 60,
+    // BEFORE_1_DAY = 1440,
 }
 
 function getTimeLeftText(from: Date, to: Date): string {
@@ -42,41 +43,58 @@ export class AppointmentService {
     private async scheduleNotificationsForAppointment(data: CreateAppointment, appointmentId: number) {
         const scheduledTime = new Date(data.scheduledTime).getTime();
 
-        for (const offsetMinutes of Object.values(ReminderOffset).filter(v => typeof v === 'number') as number[]) {
-            const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
-            if (remindAtTimestamp <= Date.now()) continue;
-
-            const remindAt = new Date(remindAtTimestamp);
-            const timeLeftText = getTimeLeftText(remindAt, new Date(scheduledTime));
-
-            const dbNotification = await this.prisma.notification.create({
-                data: {
-                    userId: data.userId,
-                    appointmentId,
-                    type: NotificationType.APPOINTMENT,
-                    title: 'Nhắc lịch khám',
-                    content: `Bạn có lịch khám vào lúc ${data.scheduledTime} (còn ${timeLeftText} nữa)`,
-                    remindAt,
-                    scheduledTime: new Date(data.scheduledTime),
-                },
-            });
-
-            const redisNotification = {
-                id: dbNotification.notificationId,
-                userId: dbNotification.userId,
-                title: dbNotification.title,
-                content: dbNotification.content,
-                remindAt: dbNotification.remindAt.toISOString(),
-                type: dbNotification.type,
-                scheduledTime: dbNotification.scheduledTime.toISOString(),
-            };
-
-            await this.redis.zadd(
-                `notifications:${data.userId}`,
-                remindAtTimestamp,
-                JSON.stringify(redisNotification),
-            );
+        // Create only main reminder (30 minutes before) to avoid duplicate notifications
+        const offsetMinutes = ReminderOffset.BEFORE_30_MINUTES;
+        const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
+        
+        // Skip if reminder time has already passed
+        if (remindAtTimestamp <= Date.now()) {
+            console.log(`[Schedule] Skipping notification for appointment ${appointmentId} - remind time has passed`);
+            return;
         }
+
+        const remindAt = new Date(remindAtTimestamp);
+        
+        // Format time for Vietnamese locale
+        const formattedTime = new Date(data.scheduledTime).toLocaleString('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+
+        const dbNotification = await this.prisma.notification.create({
+            data: {
+                userId: data.userId,
+                appointmentId,
+                type: NotificationType.APPOINTMENT,
+                title: 'Nhắc lịch khám',
+                content: `Bạn có lịch khám vào lúc ${formattedTime}`,
+                remindAt,
+                scheduledTime: new Date(data.scheduledTime),
+            },
+        });
+
+        const redisNotification = {
+            id: dbNotification.notificationId,
+            userId: dbNotification.userId,
+            title: dbNotification.title,
+            content: dbNotification.content,
+            remindAt: dbNotification.remindAt.toISOString(),
+            type: dbNotification.type,
+            scheduledTime: dbNotification.scheduledTime.toISOString(),
+        };
+
+        await this.redis.zadd(
+            `notifications:${data.userId}`,
+            remindAtTimestamp,
+            JSON.stringify(redisNotification),
+        );
+
+        console.log(`[Schedule] Created single notification for appointment ${appointmentId}, remind at: ${remindAt.toISOString()}`);
     }
 
 

@@ -1,4 +1,4 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -18,6 +18,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/guard/auth.guard';
 import { ServicesModule } from './service/service.module';
 import { ChatModule } from './chat/chat.module';
+import { RolesGuard } from './auth/guard/roles.guard';
 
 @Module({
   imports: [
@@ -42,6 +43,6 @@ import { ChatModule } from './chat/chat.module';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, ApplicationInitService, { provide: APP_GUARD, useClass: AuthGuard, }],
+  providers: [AppService, ApplicationInitService, { provide: APP_GUARD, useClass: AuthGuard, }, { provide: APP_GUARD, useClass: RolesGuard }],
 })
 export class AppModule { }

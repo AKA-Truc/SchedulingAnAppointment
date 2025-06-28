@@ -30,9 +30,15 @@ export class PatientProfileService {
       include: {
         user: {
           select: {
-            gender: true,
+            userId: true,
+            fullName: true,
+            email: true,
+            phone: true,
             address: true,
             dateOfBirth: true,
+            nationalId: true,
+            ethnicity: true,
+            gender: true,
           },
         },
       },
@@ -93,21 +99,8 @@ export class PatientProfileService {
       throw new NotFoundException(`Patient profile with ID ${id} not found`);
     }
     const userId = profile.userId;
-    const [medicalRecord, telemetries, alerts, consents] = await Promise.all([
-      this.prisma.medicalRecord.findUnique({
-        where: { userId },
-        include: { prescriptions: true },
-      }),
-      this.prisma.patientTelemetry.findMany({ where: { patientId: userId } }),
-      this.prisma.patientAlert.findMany({ where: { patientId: userId } }),
-      this.prisma.patientConsent.findMany({ where: { patientId: userId } }),
-    ]);
     return {
       ...profile,
-      medicalRecord,
-      telemetries,
-      alerts,
-      consents,
     };
   }
 
@@ -172,31 +165,28 @@ export class PatientProfileService {
     return this.prisma.patientProfile.delete({ where: { profileId: id } });
   }
   async findByUserId(userId: number) {
-  const profile = await this.prisma.patientProfile.findUnique({
-    where: { userId },
-    include: {
-      user: {
-        select: {
-          userId: true,
-          fullName: true,
-          phone: true,
-          email: true,
-          gender: true,
-          address: true,
-          dateOfBirth: true,
-          ethnicity: true,
-          nationalId: true,
+    const profile = await this.prisma.patientProfile.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            fullName: true,
+            phone: true,
+            email: true,
+            gender: true,
+            address: true,
+            dateOfBirth: true,
+            ethnicity: true,
+            nationalId: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!profile) {
-    throw new NotFoundException(`Không tìm thấy hồ sơ cho userId = ${userId}`);
+    // Nếu không có profile, trả về null để FE biết là hồ sơ mới, cho phép nhập thông tin
+    return profile ?? null;
   }
-
-  return profile;
-}
 
 
   // Health Analytics
