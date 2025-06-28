@@ -8,8 +8,9 @@ import { NotificationType } from '@prisma/client';
 
 enum ReminderOffset {
   BEFORE_30_MINUTES = 30,
-  BEFORE_1_HOUR = 60,
-  BEFORE_1_DAY = 1440,
+  // Only use main reminder for follow-ups to avoid duplicates
+  // BEFORE_1_HOUR = 60,
+  // BEFORE_1_DAY = 1440,
 }
 
 @Injectable()
@@ -62,40 +63,55 @@ export class FollowUpService {
 
         const scheduledTime = new Date(dto.nextDate).getTime();
 
-        for (const offsetMinutes of Object.values(ReminderOffset).filter(v => typeof v === 'number') as number[]) {
-            const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
+        // Create only main reminder (30 minutes before) to avoid duplicate notifications
+        const offsetMinutes = ReminderOffset.BEFORE_30_MINUTES;
+        const remindAtTimestamp = scheduledTime - offsetMinutes * 60 * 1000;
 
-            if (remindAtTimestamp > Date.now()) {
-                const remindAt = new Date(remindAtTimestamp);
+        if (remindAtTimestamp > Date.now()) {
+            const remindAt = new Date(remindAtTimestamp);
 
-                const dbNotification = await this.prisma.notification.create({
-                    data: {
-                        userId: appointment.userId,
-                        appointmentId: appointment.appointmentId,
-                        type: NotificationType.FOLLOW_UP,
-                        title: 'Nhắc lịch tái khám',
-                        content: `Bạn có lịch tái khám vào lúc ${dto.nextDate}`,
-                        remindAt,
-                        scheduledTime: new Date(dto.nextDate),
-                    },
-                });
+            // Format time for Vietnamese locale
+            const formattedTime = new Date(dto.nextDate).toLocaleString('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+            });
 
-                const redisNotification = {
-                    id: dbNotification.notificationId,
-                    userId: dbNotification.userId,
-                    title: dbNotification.title,
-                    content: dbNotification.content,
-                    remindAt: dbNotification.remindAt.toISOString(),
-                    type: dbNotification.type,
-                    scheduledTime: dbNotification.scheduledTime.toISOString(),
-                };
+            const dbNotification = await this.prisma.notification.create({
+                data: {
+                    userId: appointment.userId,
+                    appointmentId: appointment.appointmentId,
+                    type: NotificationType.FOLLOW_UP,
+                    title: 'Nhắc lịch tái khám',
+                    content: `Bạn có lịch tái khám vào lúc ${formattedTime}`,
+                    remindAt,
+                    scheduledTime: new Date(dto.nextDate),
+                },
+            });
 
-                await this.redis.zadd(
-                    `notifications:${appointment.userId}`,
-                    remindAtTimestamp,
-                    JSON.stringify(redisNotification),
-                );
-            }
+            const redisNotification = {
+                id: dbNotification.notificationId,
+                userId: dbNotification.userId,
+                title: dbNotification.title,
+                content: dbNotification.content,
+                remindAt: dbNotification.remindAt.toISOString(),
+                type: dbNotification.type,
+                scheduledTime: dbNotification.scheduledTime.toISOString(),
+            };
+
+            await this.redis.zadd(
+                `notifications:${appointment.userId}`,
+                remindAtTimestamp,
+                JSON.stringify(redisNotification),
+            );
+
+            console.log(`[FollowUp] Created single follow-up notification for appointment ${appointment.appointmentId}, remind at: ${remindAt.toISOString()}`);
+        } else {
+            console.log(`[FollowUp] Skipping follow-up notification - remind time has passed`);
         }
 
         const user = await this.prisma.user.findUnique({
