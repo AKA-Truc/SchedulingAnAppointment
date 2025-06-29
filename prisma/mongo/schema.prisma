@@ -8,31 +8,6 @@ datasource db {
   url      = env("MONGODB_URL")
 }
 
-model Review {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  comment   String
-  rating    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId     Int
-  doctorId   Int?
-  hospitalId Int?
-  role       RoleEnum
-
-  parentId String?  @db.ObjectId
-  parent   Review?  @relation("ReplyThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies  Review[] @relation("ReplyThread")
-
-  isVisible     Boolean @default(true)
-  isFlagged     Boolean @default(false)
-  flaggedReason String?
-
-  @@index([hospitalId])
-  @@index([doctorId])
-}
-
 model Conversation {
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   user1    Int
@@ -59,21 +34,6 @@ model Message {
 
   @@index([conversationId])
   @@index([toUser, read]) // Tối ưu truy vấn tin nhắn chưa đọc
-}
-
-model FHIRResource {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  resourceType String
-  resourceData Json
-  versionId    String
-  lastUpdated  DateTime @default(now())
-  patientId    String? // Reference to FHIRPatient
-  resourceId   String
-  source       String // e.g. "internal", "external-ehr"
-  isDeleted    Boolean  @default(false)
-
-  @@index([resourceType])
-  @@index([patientId])
 }
 
 enum RoleEnum {

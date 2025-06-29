@@ -2,11 +2,14 @@ import { Controller, Get, Query, BadRequestException, UnauthorizedException } fr
 import { ChatService } from './chat.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Headers } from '@nestjs/common';
+import { Roles } from 'src/auth/guard/roles.guard';
 
 @ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
     constructor(private readonly chatService: ChatService) { }
+
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: '📜 Lấy lịch sử tin nhắn theo conversationId (có phân trang)' })
     @ApiQuery({ name: 'conversationId', required: true, type: String })
     @ApiQuery({ name: 'page', required: false, type: Number, description: 'Trang hiện tại (mặc định 1)' })
@@ -27,6 +30,7 @@ export class ChatController {
         return this.chatService.getConversationMessagesById(conversationId, pageNumber, limitNumber);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: '📁 Lấy danh sách cuộc trò chuyện của người dùng' })
     @ApiBearerAuth() // để hiển thị ô nhập Bearer token trên Swagger
     @Get('conversations')
@@ -40,6 +44,7 @@ export class ChatController {
         return this.chatService.getUserConversations(token);
     }
 
+    @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: '➕ Tạo cuộc trò chuyện giữa 2 người dùng' })
     @ApiQuery({ name: 'userA', required: true, type: Number })
     @ApiQuery({ name: 'userB', required: true, type: Number })

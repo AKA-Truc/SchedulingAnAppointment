@@ -186,7 +186,7 @@ export class DoctorService {
         return doctor;
     }
 
-    // ✏️ Cập nhật bác sĩ
+    //Cập nhật bác sĩ
     async updateDoctor(id: number, dto: UpdateDoctor) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { doctorId: id },
@@ -248,7 +248,7 @@ export class DoctorService {
         };
     }
 
-    // ❌ Xoá bác sĩ
+    //Xoá bác sĩ
     async deleteDoctor(id: number) {
         const doctor = await this.prisma.doctor.findUnique({
             where: { doctorId: id },
@@ -360,6 +360,43 @@ export class DoctorService {
         };
     }
 
+   async updateDoctorRating(doctorId: number, newRating: number) {
+        const doctor = await this.prisma.doctor.findUnique({
+            where: { doctorId },
+        });
+
+        if (!doctor) {
+            throw new NotFoundException(`Doctor with ID ${doctorId} not found`);
+        }
+
+        if (newRating < 0 || newRating > 5) {
+            throw new BadRequestException('Rating must be between 0 and 5');
+        }
+
+        // Nếu rating cũ null (chưa có đánh giá nào), lấy newRating luôn
+        const currentRating = doctor.rating ?? newRating;
+        const averageRating = (currentRating + newRating) / 2;
+
+        const updatedDoctor = await this.prisma.doctor.update({
+            where: { doctorId },
+            data: {
+                rating: averageRating,
+            },
+            include: {
+                user: true,
+                specialty: true,
+                hospital: true,
+                schedules: true,
+                appointments: true,
+                achievements: true,
+            },
+        });
+
+        return {
+            message: 'Doctor rating updated successfully.',
+            doctor: updatedDoctor,
+        };
+    }
 
     async getTopRatedDoctors() {
         return this.prisma.doctor.findMany({
