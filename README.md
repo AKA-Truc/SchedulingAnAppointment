@@ -225,16 +225,6 @@ prisma/
 'user-joined'         // User joined conversation
 'user-left'          // User left conversation
 ```
-
-### Video Call Events
-```typescript
-// WebRTC Signaling
-'offer'              // WebRTC offer
-'answer'             // WebRTC answer
-'ice-candidate'      // ICE candidate
-'call-ended'         // Call termination
-```
-
 ## 💳 Payment Integration
 
 ### VNPay Configuration
