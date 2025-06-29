@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import * as xlsx from 'xlsx';
+import * as xlsx from 'node-xlsx';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PatientProfileService } from './patient-profile.service';
@@ -60,11 +60,18 @@ export class PatientProfileController {
     failed: number;
     results: Array<{ success: boolean; userId?: number; error?: string }>;
   }> {
-    const workbook = xlsx.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const rawRows = xlsx.utils.sheet_to_json(
-      workbook.Sheets[sheetName],
-    ) as any[];
+    const workbook = xlsx.parse(file.buffer);
+    const rawRows = workbook[0].data.slice(1).map((row: any[]) => ({
+      'User ID': row[0],
+      'Insurance': row[1],
+      'Allergies': row[2],
+      'Chronic Diseases': row[3],
+      'Obstetric History': row[4],
+      'Surgical History': row[5],
+      'Family History': row[6],
+      'Social History': row[7],
+      'Medication History': row[8],
+    })) as any[];
 
     const results: Array<{
       success: boolean;
@@ -126,48 +133,6 @@ export class PatientProfileController {
       failed: results.filter((r) => !r.success).length,
       results,
     };
-  }
-
-  @Get('export')
-  @ApiOperation({ summary: 'Export patient profiles to Excel' })
-  async exportPatientProfiles(@Res() res: Response): Promise<void> {
-    const { data: profiles } = await this.patientProfileService.findAll(1, 1000);
-
-    const sheetData = profiles.map((p) => ({
-      'User ID': p.userId,
-      Insurance: p.insurance,
-      Allergies: p.allergies,
-      'Chronic Diseases': p.chronicDiseases,
-      'Obstetric History': p.obstetricHistory,
-      'Surgical History': p.surgicalHistory,
-      'Family History': p.familyHistory,
-      'Social History': p.socialHistory,
-      'Medication History': p.medicationHistory,
-      ...(p.user && {
-        Gender: p.user.gender ?? '',
-        'Date of Birth': p.user.dateOfBirth ?? '',
-        Address: p.user.address ?? '',
-      }),
-    }));
-
-    const worksheet = xlsx.utils.json_to_sheet(sheetData);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, 'Patient Profiles');
-
-    const buffer = xlsx.write(workbook, {
-      bookType: 'xlsx',
-      type: 'buffer',
-    });
-
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="patient-profiles.xlsx"',
-    );
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    res.send(buffer);
   }
   
 

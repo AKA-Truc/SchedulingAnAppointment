@@ -8,7 +8,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: 'http://localhost:4000',
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.FRONTEND_URL, /\.railway\.app$/] 
+      : ['http://localhost:4000', 'http://localhost:3000'],
     credentials: true,
   });
 
@@ -46,7 +48,8 @@ async function bootstrap() {
     }
   });
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log('🚀 Server is running on http://localhost:3000');
+  const port = process.env.PORT ?? 3000;
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 Server is running on port ${port}`);
 }
 bootstrap();
