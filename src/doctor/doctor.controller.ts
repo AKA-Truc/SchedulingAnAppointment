@@ -1,6 +1,6 @@
 import {
     BadRequestException, Body, Controller, DefaultValuePipe, Delete, Get,
-    Param, ParseIntPipe, Post, Put, Query, Req, UploadedFile, UseInterceptors,
+    Param, ParseIntPipe, Patch, Post, Put, Query, Req, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiQuery, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -202,6 +202,21 @@ export class DoctorController {
         @Body() dto: UpdateDoctor,
     ) {
         return this.doctorService.updateDoctor(id, dto);
+    }
+
+    @Roles('USER')
+    @ApiOperation({ summary: 'Update rating of a doctor' })
+    @Put('/rating/:id')
+    updateDoctorRating(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('rating', ParseIntPipe) rating: number,
+    ) {
+        // Kiểm tra rating hợp lệ
+        if (rating < 1 || rating > 5) {
+            throw new BadRequestException('Rating must be between 1 and 5');
+        }
+
+        return this.doctorService.updateDoctorRating(id, rating);
     }
 
     // ──────── Certification CRUD ────────
