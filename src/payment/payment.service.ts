@@ -617,4 +617,21 @@ export class PaymentService {
 
         return updatedPayment;
     }
+
+    async findPaymentByAppointmentAndMethod(appointmentId: number, paymentMethod: PaymentMethodEnum) {
+        console.log('🔍 [Payment Service] Searching payment for appointment:', appointmentId, 'method:', paymentMethod);
+        
+        const payment = await this.prisma.payment.findFirst({
+            where: {
+                appointmentId: appointmentId,
+                paymentMethod: paymentMethod,
+            },
+            orderBy: {
+                createdAt: 'desc', // Get the latest payment if multiple exist
+            }
+        });
+
+        console.log('🔍 [Payment Service] Found payment:', payment ? `ID: ${payment.paymentId}, Status: ${payment.paymentStatus}` : 'None');
+        return payment;
+    }
 }

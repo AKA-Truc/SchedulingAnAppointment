@@ -1,14 +1,18 @@
-import { Controller, Get, Query, ParseIntPipe, Post, Body, Req, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe, Post, Body, Req, Param, BadRequestException, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { ApiTags, ApiOperation, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { Public } from '../auth/guard/auth.guard';
 import { PaymentMethodEnum, PaymentStatusEnum } from '@prisma/client';
 import { Request } from 'express';
+import { AppointmentService } from '../appointment/service/appointment.service';
 
 @ApiTags('payment')
 @Controller('payment')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly appointmentService: AppointmentService,
+  ) {}
 
   @Get('statistics/monthly')
   @ApiOperation({ summary: 'Get monthly payment statistics' })
@@ -229,7 +233,7 @@ export class PaymentController {
   @Get('vnpay/ipn')
   @Public()
   @ApiOperation({ summary: 'VNPay IPN callback' })
-  async vnpayIpn(@Query() query: any) {
+  async vnpayIpn(@Query() query: any, @Res() res: any) {
     console.log('🔔 [VNPay IPN] Received IPN callback:', query);
     
     try {
@@ -237,58 +241,85 @@ export class PaymentController {
       const vnpParams = { ...query };
       const isValidSignature = this.paymentService.verifyVnpaySignature(vnpParams);
       
-      if (isValidSignature) {
-        const orderId = query['vnp_TxnRef'];
-        const responseCode = query['vnp_ResponseCode'];
-        const amount = parseInt(query['vnp_Amount']) / 100; // Convert from VND cents to VND
-        const transactionNo = query['vnp_TransactionNo'];
-        const bankCode = query['vnp_BankCode'];
-        const payDate = query['vnp_PayDate'];
+      if (!isValidSignature) {
+        console.error('❌ [VNPay IPN] Invalid signature');
+        return res.status(200).json({ RspCode: '97', Message: 'Fail checksum' });
+      }
 
-        console.log('✅ [VNPay IPN] Valid signature - Payment details:', { 
-          orderId, responseCode, amount, transactionNo, bankCode, payDate 
-        });
+      const orderId = query['vnp_TxnRef'];
+      const responseCode = query['vnp_ResponseCode'];
+      const transactionStatus = query['vnp_TransactionStatus'];
+      const amount = parseInt(query['vnp_Amount']) / 100; // Convert from VND cents to VND
+      const transactionNo = query['vnp_TransactionNo'];
+      const bankCode = query['vnp_BankCode'];
+      const payDate = query['vnp_PayDate'];
 
-        // Extract appointmentId from orderId (format: VNP_{appointmentId}_{timestamp})
-        const appointmentIdMatch = orderId.match(/VNP_(\d+)_/);
-        if (appointmentIdMatch) {
-          const appointmentId = parseInt(appointmentIdMatch[1]);
-          console.log('🎯 [VNPay IPN] Extracted appointmentId:', appointmentId);
+      console.log('✅ [VNPay IPN] Valid signature - Payment details:', { 
+        orderId, responseCode, transactionStatus, amount, transactionNo, bankCode, payDate 
+      });
 
-          try {
-            // Find payment record by appointmentId
-            const existingPayments = await this.paymentService.findAll(1, 100);
-            const paymentRecord = existingPayments.data.find(p => 
-              p.appointmentId === appointmentId && 
-              p.paymentMethod === 'VNPAY' &&
-              p.paymentStatus === 'PENDING'
-            );
+      // Extract appointmentId from orderId (format: VNP_{appointmentId}_{timestamp})
+      const appointmentIdMatch = orderId.match(/VNP_(\d+)_/);
+      if (!appointmentIdMatch) {
+        console.error('❌ [VNPay IPN] Invalid orderId format:', orderId);
+        return res.status(200).json({ RspCode: '01', Message: 'Order not found' });
+      }
 
-            if (paymentRecord) {
-              // Update payment status based on responseCode
-              if (responseCode === '00') {
-                await this.paymentService.updateStatus(paymentRecord.paymentId, 'PAID');
-                console.log('💰 [VNPay IPN] Payment marked as PAID for appointment:', appointmentId);
-              } else {
-                await this.paymentService.updateStatus(paymentRecord.paymentId, 'UNPAID');
-                console.log('❌ [VNPay IPN] Payment marked as UNPAID for appointment:', appointmentId);
-              }
-            } else {
-              console.log('⚠️ [VNPay IPN] No matching payment record found for appointment:', appointmentId);
-            }
-          } catch (updateError) {
-            console.error('💥 [VNPay IPN] Error updating payment status:', updateError);
-          }
+      const appointmentId = parseInt(appointmentIdMatch[1]);
+      console.log('🎯 [VNPay IPN] Extracted appointmentId:', appointmentId);
+
+      try {
+        // ✅ Find payment record more efficiently by appointmentId and method
+        const paymentRecord = await this.paymentService.findPaymentByAppointmentAndMethod(appointmentId, PaymentMethodEnum.VNPAY);
+        console.log('🔍 [VNPay IPN] Found payment record:', paymentRecord ? 'YES' : 'NO');
+
+        if (!paymentRecord) {
+          console.log('⚠️ [VNPay IPN] No payment record found for appointment:', appointmentId);
+          return res.status(200).json({ RspCode: '01', Message: 'Order not found' });
         }
 
-        return { RspCode: '00', Message: 'success' };
-      } else {
-        console.error('❌ [VNPay IPN] Invalid signature');
-        return { RspCode: '97', Message: 'Fail checksum' };
+        // Check if payment already processed
+        if (paymentRecord.paymentStatus !== 'PENDING') {
+          console.log('⚠️ [VNPay IPN] Payment already processed. Current status:', paymentRecord.paymentStatus);
+          return res.status(200).json({ RspCode: '02', Message: 'This order has been updated to the payment status' });
+        }
+
+        // Verify amount matches
+        if (Math.abs(paymentRecord.price - amount) > 1) { // Allow 1 VND tolerance for rounding
+          console.error('❌ [VNPay IPN] Amount mismatch. Expected:', paymentRecord.price, 'Got:', amount);
+          return res.status(200).json({ RspCode: '04', Message: 'Amount invalid' });
+        }
+
+        // Update payment status based on responseCode and transactionStatus
+        if (responseCode === '00' && transactionStatus === '00') {
+          // ✅ Payment successful
+          await this.paymentService.updateStatus(paymentRecord.paymentId, 'PAID');
+          console.log('💰 [VNPay IPN] Payment marked as PAID for appointment:', appointmentId);
+          
+          // ✅ Update appointment status to SCHEDULED
+          try {
+            await this.appointmentService.updateStatus(appointmentId, 'SCHEDULED');
+            console.log('📅 [VNPay IPN] Appointment status updated to SCHEDULED for appointment:', appointmentId);
+          } catch (appointmentError) {
+            console.error('💥 [VNPay IPN] Error updating appointment status:', appointmentError);
+            // Still return success for payment update, appointment update failure is separate
+          }
+
+          return res.status(200).json({ RspCode: '00', Message: 'Success' });
+        } else {
+          // ❌ Payment failed
+          await this.paymentService.updateStatus(paymentRecord.paymentId, 'UNPAID');
+          console.log('❌ [VNPay IPN] Payment marked as UNPAID for appointment:', appointmentId, 'Response code:', responseCode);
+          
+          return res.status(200).json({ RspCode: '00', Message: 'Success' });
+        }
+      } catch (updateError) {
+        console.error('💥 [VNPay IPN] Error updating payment status:', updateError);
+        return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
       }
     } catch (error) {
       console.error('💥 [VNPay IPN] Processing error:', error);
-      return { RspCode: '99', Message: 'Unknown error' };
+      return res.status(200).json({ RspCode: '99', Message: 'Unknown error' });
     }
   }
 
@@ -406,7 +437,19 @@ export class PaymentController {
     @Body('paymentStatus') paymentStatus: PaymentStatusEnum,
   ) {
     try {
+      // ✅ Update payment status
       const updatedPayment = await this.paymentService.updateStatus(id, paymentStatus);
+      
+      // ✅ If payment is marked as PAID, also update appointment status to SCHEDULED
+      if (paymentStatus === 'PAID' && updatedPayment.appointmentId) {
+        try {
+          await this.appointmentService.updateStatus(updatedPayment.appointmentId, 'SCHEDULED');
+          console.log('📅 [Admin] Appointment status updated to SCHEDULED for appointment:', updatedPayment.appointmentId);
+        } catch (appointmentError) {
+          console.error('💥 [Admin] Error updating appointment status:', appointmentError);
+        }
+      }
+      
       return {
         message: 'Cập nhật trạng thái payment thành công',
         code: 200,
@@ -417,6 +460,95 @@ export class PaymentController {
         message: error?.message || 'Lỗi khi cập nhật trạng thái payment',
         code: 500,
         data: null,
+      };
+    }
+  }
+
+  @Post('vnpay/manual-update')
+  @Public()
+  @ApiOperation({ summary: 'Manual update VNPay payment status from return URL' })
+  async vnpayManualUpdate(@Body() body: any) {
+    console.log('🔄 [VNPay Manual Update] Received request:', body);
+    
+    try {
+      const { appointmentId, vnp_TxnRef, vnp_ResponseCode, vnp_Amount, vnp_TransactionNo, vnp_BankCode, vnp_PayDate } = body;
+
+      if (!appointmentId || !vnp_TxnRef || !vnp_ResponseCode) {
+        return {
+          success: false,
+          message: 'Missing required parameters',
+        };
+      }
+
+      console.log('🎯 [VNPay Manual Update] Processing for appointment:', appointmentId);
+
+      try {
+        // ✅ Find payment record more efficiently by appointmentId and method
+        const paymentRecord = await this.paymentService.findPaymentByAppointmentAndMethod(appointmentId, PaymentMethodEnum.VNPAY);
+        console.log('🔍 [VNPay Manual Update] Found payment record:', paymentRecord ? 'YES' : 'NO');
+
+        if (paymentRecord && paymentRecord.paymentStatus === 'PENDING') {
+          // Update payment status based on responseCode
+          if (vnp_ResponseCode === '00') {
+            // ✅ Update payment status to PAID
+            await this.paymentService.updateStatus(paymentRecord.paymentId, 'PAID');
+            console.log('💰 [VNPay Manual Update] Payment marked as PAID for appointment:', appointmentId);
+            
+            // ✅ Update appointment status to SCHEDULED
+            try {
+              await this.appointmentService.updateStatus(appointmentId, 'SCHEDULED');
+              console.log('📅 [VNPay Manual Update] Appointment status updated to SCHEDULED for appointment:', appointmentId);
+            } catch (appointmentError) {
+              console.error('💥 [VNPay Manual Update] Error updating appointment status:', appointmentError);
+            }
+
+            return {
+              success: true,
+              message: 'Payment and appointment status updated successfully',
+              paymentId: paymentRecord.paymentId,
+              appointmentId: appointmentId,
+            };
+          } else {
+            await this.paymentService.updateStatus(paymentRecord.paymentId, 'UNPAID');
+            console.log('❌ [VNPay Manual Update] Payment marked as UNPAID for appointment:', appointmentId);
+            
+            return {
+              success: false,
+              message: 'Payment failed',
+              paymentId: paymentRecord.paymentId,
+              appointmentId: appointmentId,
+            };
+          }
+        } else {
+          if (!paymentRecord) {
+            console.log('⚠️ [VNPay Manual Update] No payment record found for appointment:', appointmentId);
+            return {
+              success: false,
+              message: 'Payment record not found',
+            };
+          } else {
+            console.log('⚠️ [VNPay Manual Update] Payment already processed. Current status:', paymentRecord.paymentStatus);
+            return {
+              success: true,
+              message: 'Payment already processed',
+              paymentStatus: paymentRecord.paymentStatus,
+            };
+          }
+        }
+      } catch (updateError) {
+        console.error('💥 [VNPay Manual Update] Error updating payment status:', updateError);
+        return {
+          success: false,
+          message: 'Error updating payment status',
+          error: updateError.message,
+        };
+      }
+    } catch (error) {
+      console.error('💥 [VNPay Manual Update] Processing error:', error);
+      return {
+        success: false,
+        message: 'Processing error',
+        error: error.message,
       };
     }
   }

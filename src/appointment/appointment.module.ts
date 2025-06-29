@@ -30,5 +30,6 @@ import { UserModule } from 'src/user/user.module';
       provide: Redis,
       useFactory: () => new Redis(process.env.REDIS_URL || 'redis://localhost:6379'),
     },],
+  exports: [AppointmentService, NotificationService, FollowUpService, FeedbackService],
 })
 export class AppointmentModule { }
