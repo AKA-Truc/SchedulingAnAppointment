@@ -1,98 +1,311 @@
+# Hospital Appointment Scheduling - Backend API
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive NestJS backend API for hospital appointment scheduling system with advanced features including real-time chat, video consultation, payment integration, and multi-database support.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## description
+- 🏥 **Hospital & Doctor Management**: Complete CRUD operations with certification management
+- 📅 **Appointment Scheduling**: Advanced booking system with time slot management
+- 💰 **Payment Integration**: VNPay and MoMo payment gateways
+- 💬 **Real-time Chat**: WebSocket-based messaging system
+- 🎥 **Video Consultation**: WebRTC signaling for telemedicine
+- 📧 **Email Notifications**: Automated appointment reminders and confirmations
+- 🔐 **Authentication**: JWT-based auth with Google OAuth integration
+- 📊 **Analytics Dashboard**: Comprehensive reporting and analytics
+- 🗃️ **Multi-Database**: PostgreSQL + MongoDB + Redis support
+- ☁️ **Cloud Storage**: Cloudinary integration for media management
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📋 Prerequisites
 
-## Project setup
+Before running this application, make sure you have the following installed:
 
-```bash
-$ npm install
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
+- **PostgreSQL** (v13 or higher)
+- **MongoDB** (v5 or higher)
+- **Redis** (v6 or higher)
+
+## 🛠️ Environment Setup
+
+Create a `.env` file in the root directory with the following configuration:
+
+```env
+# Server Configuration
+PORT=3000
+FRONTEND_URL="http://localhost:4000"
+
+# Database Configuration
+DATABASE_URL="postgresql://postgres:123456@localhost:32768/postgres"
+MONGODB_URL="mongodb://localhost:27017/mydb?retryWrites=true"
+REDIS_URL=redis://localhost:6379
+
+# JWT Authentication
+JWT_ACCESS_TOKEN_SECRET=1111
+JWT_REFRESH_TOKEN_SECRET=2222
+JWT_ACCESS_TOKEN_EXPIRATION=1d
+JWT_REFRESH_TOKEN_EXPIRATION=7d
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID==""
+GOOGLE_CLIENT_SECRET=""
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/redirect
+
+# VNPay Payment Configuration (Sandbox)
+VNPAY_TMN_CODE=""
+VNPAY_HASH_SECRET=""
+VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNPAY_RETURN_URL=http://localhost:4000/payment-success
+
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME=""
+CLOUDINARY_API_KEY=""
+CLOUDINARY_API_SECRET=""
+
+# Email Configuration (Gmail SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=""
+SMTP_PASSWORD=""
 ```
 
-## Compile and run the project
+## 🗄️ Database Setup
 
+### PostgreSQL Setup
 ```bash
-# development
-$ npm run start
+# Install PostgreSQL and create database
+createdb postgres
 
-# watch mode
-$ npm run start:dev
+# Run Prisma migrations
+npx prisma migrate dev --name init --schema=prisma/postgre/schema.prisma
+npx prisma generate --schema=prisma/postgre/schema.prisma
 
-# production mode
-$ npm run start:prod
+# Open Prisma Studio
+npx prisma studio --schema=prisma/postgre/schema.prisma
 ```
 
-## Run tests
-
+### MongoDB Setup
 ```bash
-# unit tests
-$ npm run test
+# Make sure MongoDB is running
+mongod
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Generate Prisma client for MongoDB
+npx prisma generate --schema=prisma/mongo/schema.prisma
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### Redis Setup
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Install and start Redis
+redis-server
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🚀 Installation & Running
 
-## Resources
+```bash
+# Install dependencies
+npm install
 
-Check out a few resources that may come in handy when working with NestJS:
+# Development mode
+npm run start:dev
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Production mode
+npm run start:prod
 
-## Support
+# Watch mode
+npm run start
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Reset database (if needed)
+npx prisma migrate reset --schema=prisma/postgre/schema.prisma
+```
 
-## Stay in touch
+## 📚 API Documentation
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Once the server is running, visit:
+- **Swagger UI**: http://localhost:3000/api
+- **API Endpoints**: http://localhost:3000
 
-## License
+### Key API Endpoints
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+🔐 Authentication
+POST /auth/login
+POST /auth/register
+GET  /auth/google
+POST /auth/refresh
+
+🏥 Hospitals
+GET    /hospital
+POST   /hospital
+PUT    /hospital/:id
+DELETE /hospital/:id
+
+👨‍⚕️ Doctors
+GET    /doctor
+POST   /doctor
+PUT    /doctor/:id
+DELETE /doctor/:id
+
+📅 Appointments
+GET    /appointment
+POST   /appointment
+PUT    /appointment/:id
+DELETE /appointment/:id
+
+💰 Payments
+POST /payment/vnpay/create
+POST /payment/vnpay/return
+POST /payment/momo/create
+
+💬 Chat
+WebSocket: /chat
+GET  /chat/conversations
+POST /chat/send
+
+👤 Patient Profiles
+GET    /patient-profile
+POST   /patient-profile
+PUT    /patient-profile/:id
+DELETE /patient-profile/:id
+```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## 🏗️ Project Structure
+
+```
+src/
+├── app.module.ts              # Main application module
+├── main.ts                    # Application entry point
+├── auth/                      # Authentication module
+│   ├── strategies/            # Passport strategies
+│   ├── guards/               # Auth guards
+│   └── decorators/           # Custom decorators
+├── appointment/              # Appointment management
+├── doctor/                   # Doctor management
+├── hospital/                 # Hospital management
+├── chat/                     # Real-time messaging
+├── payment/                  # Payment processing
+├── patient-profile/          # Patient management
+├── email/                    # Email services
+├── cloudinary/              # Media upload
+├── prisma/                  # Database services
+├── common/                  # Shared utilities
+└── config/                  # Configuration files
+
+prisma/
+├── postgre/                 # PostgreSQL schema
+└── mongo/                   # MongoDB schema
+```
+
+## 🔌 WebSocket Events
+
+### Chat Events
+```typescript
+// Client to Server
+'join-conversation'    // Join a chat room
+'send-message'        // Send a message
+'leave-conversation'  // Leave a chat room
+
+// Server to Client
+'new-message'         // Receive new message
+'user-joined'         // User joined conversation
+'user-left'          // User left conversation
+```
+
+### Video Call Events
+```typescript
+// WebRTC Signaling
+'offer'              // WebRTC offer
+'answer'             // WebRTC answer
+'ice-candidate'      // ICE candidate
+'call-ended'         // Call termination
+```
+
+## 💳 Payment Integration
+
+### VNPay Configuration
+1. Register at [VNPay Sandbox](https://sandbox.vnpayment.vn/)
+2. Get TMN Code and Hash Secret
+3. Configure return URL in environment variables
+
+### MoMo Configuration
+1. Register at [MoMo Developer](https://developers.momo.vn/)
+2. Get Partner Code and Access Key
+3. Set up webhook endpoints
+
+## 📧 Email Templates
+
+Email templates are located in `src/email/templates/`:
+- `appointment-confirmation.template.html`
+- `appointment-reminder.html`
+- `follow-up-reminder.html`
+
+## 🔐 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Rate Limiting**: API rate limiting to prevent abuse
+- **CORS**: Cross-origin resource sharing configuration
+- **Input Validation**: DTOs with class-validator
+- **Password Hashing**: bcrypt for password security
+- **Role-based Access**: Guards for different user roles
+
+## 🌐 Deployment
+
+### Production Deployment
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm run start:prod
+```
+
+### Environment Variables for Production
+Update the following for production:
+- `DATABASE_URL`: Production PostgreSQL URL
+- `MONGODB_URL`: Production MongoDB URL
+- `REDIS_URL`: Production Redis URL
+- `FRONTEND_URL`: Production frontend URL
+- `VNPAY_*`: Production VNPay credentials
+- `CLOUDINARY_*`: Production Cloudinary settings
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check the code comments and API documentation
+- **Issues**: Create an issue on GitHub for bug reports
+- **Email**: Contact the development team for urgent issues
+
+## 🔗 Related Projects
+
+- **Frontend**: [Hospital Appointment UI](../scheduling_an_appointment_ui)
+- **Mobile App**: Coming soon...
+
+---
+
+**Built with ❤️ using NestJS, Prisma, and modern web technologies**
