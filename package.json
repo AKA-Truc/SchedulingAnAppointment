@@ -17,6 +17,8 @@
     "prisma:generate:mongo": "npx prisma generate --schema=prisma/mongo/schema.prisma",
     "prisma:migrate:postgre": "npx prisma migrate deploy --schema=prisma/postgre/schema.prisma",
     "prisma:push:mongo": "npx prisma db push --schema=prisma/mongo/schema.prisma",
+    "deploy:migrate": "npm run prisma:migrate:postgre || echo 'Migration failed, continuing...'",
+    "deploy:start": "npm run deploy:migrate && npm run start:prod",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

@@ -22,10 +22,12 @@ import { RolesGuard } from './auth/guard/roles.guard';
 
 @Module({
   imports: [
-    RedisModule.forRoot({
-      type: 'single',
-      url: 'redis://localhost:6379',
-    }),
+    ...(process.env.REDIS_URL ? [
+      RedisModule.forRoot({
+        type: 'single',
+        url: process.env.REDIS_URL,
+      })
+    ] : []),
     ChatModule,
     UserModule,
     PrismaModule,
