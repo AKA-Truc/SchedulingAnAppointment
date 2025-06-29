@@ -15,7 +15,7 @@ export class ServicesController {
         return this.service.create(dto);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
     @Public()
     @Get()
     @ApiQuery({ name: 'page', required: false, example: 1 })

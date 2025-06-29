@@ -1,0 +1,12 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+startCommand = "npm run prisma:migrate:postgre && npm run start:prod"
+
+[env]
+NODE_VERSION = "20"
+NPM_CONFIG_PRODUCTION = "false" 

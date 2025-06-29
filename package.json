@@ -5,8 +5,18 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
-    "build": "nest build",
+    "build": "npm run prisma:generate && nest build",
+    "postinstall": "npm run prisma:generate",
+    "prisma:generate": "npx prisma generate --schema=prisma/postgre/schema.prisma && npx prisma generate --schema=prisma/mongo/schema.prisma",
+    "prisma:generate:postgre": "npx prisma generate --schema=prisma/postgre/schema.prisma",
+    "prisma:generate:mongo": "npx prisma generate --schema=prisma/mongo/schema.prisma",
+    "prisma:migrate:postgre": "npx prisma migrate deploy --schema=prisma/postgre/schema.prisma",
+    "prisma:push:mongo": "npx prisma db push --schema=prisma/mongo/schema.prisma",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
