@@ -1,266 +1,43 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/mongodb"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("MONGODB_URL")
 }
 
-model User {
-  userId             Int                @id @default(autoincrement())
-  fullName           String
-  email              String             @unique
-  phone              String
-  address            String?
-  dateOfBirth        DateTime?
-  nationalId         String?
-  ethnicity          String?
-  password           String
-  role               RoleEnum
-  gender             GenderEnum
-  createdAt          DateTime           @default(now())
-  avatar             String?
-  isActive           Boolean
-  appointments       Appointment[]
-  doctor             Doctor?
-  notifications      Notification[]
-  patientProfile     PatientProfile?
-  tokens             Token[]
+model Conversation {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  user1    Int
+  user2    Int
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([user1, user2])
 }
 
-model Token {
-  tokenId          Int      @id @default(autoincrement())
-  accessToken      String
-  refreshToken     String
-  userId           Int
-  createdAt        DateTime @default(now())
-  accessExpiresAt  DateTime
-  refreshExpiresAt DateTime
-  user             User     @relation(fields: [userId], references: [userId])
-}
+model Message {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  fromUser  Int
+  toUser    Int
+  content   String
+  timestamp DateTime  @default(now())
+  read      Boolean   @default(false)
+  readAt    DateTime?
 
-model Doctor {
-  doctorId          Int              @id @default(autoincrement())
-  userId            Int              @unique
-  specialtyId       Int
-  hospitalId        Int
-  rating            Float?
-  bio               String?
-  yearsOfExperience String?
-  education         String?
-  clinic            String?
-  slotCapacity      Int              @default(5)
-  achievements      Achievement[]
-  appointments      Appointment[]
-  certifications    Certification[]
-  hospital          Hospital         @relation(fields: [hospitalId], references: [hospitalId])
-  specialty         Specialty        @relation(fields: [specialtyId], references: [specialtyId])
-  user              User             @relation(fields: [userId], references: [userId])
-  schedules         DoctorSchedule[]
-}
+  conversationId String       @db.ObjectId
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 
-model PatientProfile {
-  profileId         Int     @id @default(autoincrement())
-  userId            Int     @unique
-  insurance         String?
-  allergies         String?
-  chronicDiseases   String?
-  obstetricHistory  String?
-  surgicalHistory   String?
-  familyHistory     String?
-  socialHistory     String?
-  medicationHistory String?
-  user              User    @relation(fields: [userId], references: [userId])
-}
-
-model Specialty {
-  specialtyId Int      @id @default(autoincrement())
-  name        String
-  description String
-  doctors     Doctor[]
-}
-
-model Hospital {
-  hospitalId     Int           @id @default(autoincrement())
-  name           String
-  address        String
-  phone          String
-  description    String
-  email          String
-  establishYear  Int
-  logo           String
-  workScheduling String
-  type           String
-  website        String?
-  certificates   String?
-  gallery        String?
-  latitude       Float?
-  longitude      Float?
-  rating         Float?
-  reviews        Int?
-  totalBeds      Int?
-  totalNurses    Int?
-  verified       Boolean?      @default(true)
-  achievements   Achievement[]
-  doctors        Doctor[]
-}
-
-model Appointment {
-  appointmentId Int              @id @default(autoincrement())
-  doctorId      Int
-  userId        Int
-  serviceId     Int
-  scheduledTime DateTime
-  createdAt     DateTime          @default(now())
-  note          String?
-  status        AppointmentStatus
-  doctor        Doctor            @relation(fields: [doctorId], references: [doctorId])
-  service       Service           @relation(fields: [serviceId], references: [serviceId])
-  user          User              @relation(fields: [userId], references: [userId])
-  feedback      Feedback?
-  followUps     FollowUp[]
-  notifications Notification[]
-  payments      Payment[]
-}
-
-model Service {
-  serviceId   Int           @id @default(autoincrement())
-  name        String
-  price       Int
-  duration    String?
-  highlighted Boolean?      @default(false)
-  description String[]
-  calender    String
-  appointment Appointment[]
-}
-
-model Feedback {
-  feedbackId    Int         @id @default(autoincrement())
-  appointmentId Int         @unique
-  rating        Int
-  comment       String
-  createdAt     DateTime    @default(now())
-  appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
-}
-
-
-model DoctorSchedule {
-  scheduleId Int    @id @default(autoincrement())
-  doctorId   Int
-  dayOfWeek  Int
-  startTime  String
-  endTime    String
-  doctor     Doctor @relation(fields: [doctorId], references: [doctorId])
-}
-
-model Payment {
-  paymentId     Int               @id @default(autoincrement())
-  appointmentId Int
-  price         Float
-  paymentMethod PaymentMethodEnum
-  paymentStatus PaymentStatusEnum
-  createdAt     DateTime          @default(now())
-  appointment   Appointment       @relation(fields: [appointmentId], references: [appointmentId])
-}
-
-model FollowUp {
-  followUpId    Int         @id @default(autoincrement())
-  appointmentId Int
-  nextDate      DateTime
-  reason        String
-  createdAt     DateTime    @default(now())
-  appointment   Appointment @relation(fields: [appointmentId], references: [appointmentId])
-}
-
-model Achievement {
-  achievementId Int       @id @default(autoincrement())
-  title         String
-  description   String?
-  dateAchieved  DateTime?
-  doctorId      Int?
-  hospitalId    Int?
-  doctor        Doctor?   @relation(fields: [doctorId], references: [doctorId])
-  hospital      Hospital? @relation(fields: [hospitalId], references: [hospitalId])
-}
-
-model Certification {
-  certificationId Int    @id @default(autoincrement())
-  fileUrl         String
-  doctorId        Int
-  doctor          Doctor @relation(fields: [doctorId], references: [doctorId])
-}
-
-model Notification {
-  notificationId Int              @id @default(autoincrement())
-  userId         Int
-  appointmentId  Int?
-  type           NotificationType
-  title          String
-  content        String
-  remindAt       DateTime
-  sent           Boolean          @default(false)
-  isRead         Boolean          @default(false)
-  createdAt      DateTime         @default(now())
-  scheduledTime  DateTime
-  appointment    Appointment?      @relation(fields: [appointmentId], references: [appointmentId])
-  user           User             @relation(fields: [userId], references: [userId])
-}
-
-
-enum NotificationType {
-  APPOINTMENT
-  FOLLOW_UP
-  VACCINE
-  CUSTOM
+  @@index([conversationId])
+  @@index([toUser, read]) // Tối ưu truy vấn tin nhắn chưa đọc
 }
 
 enum RoleEnum {
-  ADMIN
-  DOCTOR
   USER
-}
-
-enum PaymentMethodEnum {
-  CASH
-  CARD
-  BANK_TRANSFER
-  MOMO
-}
-
-enum PaymentStatusEnum {
-  PAID
-  UNPAID
-  PENDING
-}
-
-enum GenderEnum {
-  Male
-  Female
-  Other
-}
-
-enum AppointmentStatus {
-  SCHEDULED
-  CANCELLED
-  COMPLETED
-  RESCHEDULED
-  PENDING
-}
-
-enum ConsentTypeEnum {
-  TREATMENT
-  DATA_SHARING
-  RESEARCH
-  EMERGENCY_CARE
-  TELEHEALTH
-  MEDICATION
-  PROCEDURE
-}
-
-enum ConsentStatusEnum {
-  GRANTED
-  DENIED
-  WITHDRAWN
-  EXPIRED
+  DOCTOR
+  ADMIN
 }

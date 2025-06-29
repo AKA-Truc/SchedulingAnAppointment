@@ -11,7 +11,7 @@ import { FileInterceptor, FilesInterceptor, AnyFilesInterceptor } from '@nestjs/
 import { HospitalService } from './services/hospital.service';
 import { CreateHospital, UpdateHospital } from './DTO';
 import { ApiTags, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { ReviewHospitalService } from './services/reviewHospital.service';
+// import { ReviewHospitalService } from './services/reviewHospital.service';
 import { RoleEnum } from 'prisma/generated/mongodb';
 import { Hospital } from '@prisma/client';
 import { Public } from 'src/auth/guard/auth.guard';
@@ -26,7 +26,7 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 export class HospitalController {
   constructor(
     private readonly hospitalService: HospitalService,
-    private readonly reviewService: ReviewHospitalService,
+    // private readonly reviewService: ReviewHospitalService,
     private readonly achievementService: AchievementHospitalService,
     private readonly dashboardService: DashboardHospitalService,
     private readonly cloudinaryService: CloudinaryService,
@@ -44,7 +44,7 @@ export class HospitalController {
       data: stats,
     };
   }
-  
+
   @Public()
   @Get('search/:searchString')
   async searchHospitals(
@@ -95,7 +95,7 @@ export class HospitalController {
       console.log('🏥 Creating hospital with data:', data);
       const hospital = await this.hospitalService.createHospital(data);
       console.log('✅ Hospital created:', hospital);
-      
+
       return {
         message: 'Hospital created successfully',
         code: 201,
@@ -438,81 +438,81 @@ export class HospitalController {
   }
 
   // REVIEW HOSPITAL ====================================================
-  @Post('review')
-  async createReview(
-    @Param('hospitalId', ParseIntPipe) hospitalId: number,
-    @Body()
-    body: {
-      comment: string;
-      rating: number;
-      userId: number;
-      role: RoleEnum;
-    },
-  ) {
-    const review = await this.reviewService.createReview({
-      ...body,
-      hospitalId,
-    });
+  // @Post('review')
+  // async createReview(
+  //   @Param('hospitalId', ParseIntPipe) hospitalId: number,
+  //   @Body()
+  //   body: {
+  //     comment: string;
+  //     rating: number;
+  //     userId: number;
+  //     role: RoleEnum;
+  //   },
+  // ) {
+  //   const review = await this.reviewService.createReview({
+  //     ...body,
+  //     hospitalId,
+  //   });
 
-    return {
-      message: 'Review created successfully',
-      data: review,
-    };
-  }
+  //   return {
+  //     message: 'Review created successfully',
+  //     data: review,
+  //   };
+  // }
 
-  @Get('review')
-  async getHospitalReviews(@Param('hospitalId', ParseIntPipe) hospitalId: number) {
-    const reviews = await this.reviewService.getHospitalReviews(hospitalId);
+  // @Get('review')
+  // async getHospitalReviews(@Param('hospitalId', ParseIntPipe) hospitalId: number) {
+  //   const reviews = await this.reviewService.getHospitalReviews(hospitalId);
 
-    return {
-      message: 'Reviews fetched successfully',
-      data: reviews,
-    };
-  }
+  //   return {
+  //     message: 'Reviews fetched successfully',
+  //     data: reviews,
+  //   };
+  // }
 
-  @Post('review/:parentReviewId/reply')
-  async replyToReview(
-    @Param('hospitalId', ParseIntPipe) hospitalId: number,
-    @Param('parentReviewId') parentReviewId: string,
-    @Body()
-    body: {
-      comment: string;
-      rating: number;
-      userId: number;
-      role: RoleEnum;
-    },
-  ) {
-    const reply = await this.reviewService.replyToReview(parentReviewId, {
-      ...body,
-      hospitalId,
-    });
+  // @Post('review/:parentReviewId/reply')
+  // async replyToReview(
+  //   @Param('hospitalId', ParseIntPipe) hospitalId: number,
+  //   @Param('parentReviewId') parentReviewId: string,
+  //   @Body()
+  //   body: {
+  //     comment: string;
+  //     rating: number;
+  //     userId: number;
+  //     role: RoleEnum;
+  //   },
+  // ) {
+  //   const reply = await this.reviewService.replyToReview(parentReviewId, {
+  //     ...body,
+  //     hospitalId,
+  //   });
 
-    return {
-      message: 'Reply added successfully',
-      data: reply,
-    };
-  }
+  //   return {
+  //     message: 'Reply added successfully',
+  //     data: reply,
+  //   };
+  // }
 
-  @Post('review/:reviewId/flag')
-  async flagReview(
-    @Param('reviewId') reviewId: string,
-    @Body() body: { reason: string },
-  ) {
-    const result = await this.reviewService.flagReview(reviewId, body.reason);
-    return {
-      message: 'Review flagged',
-      data: result,
-    };
-  }
+  // @Post('review/:reviewId/flag')
+  // async flagReview(
+  //   @Param('reviewId') reviewId: string,
+  //   @Body() body: { reason: string },
+  // ) {
+  //   const result = await this.reviewService.flagReview(reviewId, body.reason);
+  //   return {
+  //     message: 'Review flagged',
+  //     data: result,
+  //   };
+  // }
 
-  @Delete('review/:reviewId')
-  async deleteReview(@Param('reviewId') reviewId: string) {
-    const deleted = await this.reviewService.deleteReview(reviewId);
-    return {
-      message: 'Review deleted',
-      data: deleted,
-    };
-  }
+  // @Delete('review/:reviewId')
+  // async deleteReview(@Param('reviewId') reviewId: string) {
+  //   const deleted = await this.reviewService.deleteReview(reviewId);
+  //   return {
+  //     message: 'Review deleted',
+  //     data: deleted,
+  //   };
+  // }
 
   // ACHIEVEMENT HOSPITAL ==============================================
 
@@ -690,7 +690,7 @@ export class HospitalController {
   }
 
   // ============= New Combined Endpoints =============
-  
+
   @Post('create-with-media')
   @UseInterceptors(AnyFilesInterceptor())
   @ApiConsumes('multipart/form-data')
@@ -711,13 +711,13 @@ export class HospitalController {
         website: { type: 'string', description: 'Hospital website' },
         latitude: { type: 'number', description: 'Latitude coordinate' },
         longitude: { type: 'number', description: 'Longitude coordinate' },
-        
+
         // File upload fields
         logoFile: { type: 'string', format: 'binary', description: 'Logo image file' },
-        galleryFiles: { 
-          type: 'array', 
+        galleryFiles: {
+          type: 'array',
           items: { type: 'string', format: 'binary' },
-          description: 'Gallery image files' 
+          description: 'Gallery image files'
         },
         imageType: {
           type: 'string',
@@ -734,7 +734,7 @@ export class HospitalController {
     try {
       console.log('Received files:', files?.map(f => ({ fieldname: f.fieldname, filename: f.originalname })));
       console.log('Received hospitalData:', hospitalData);
-      
+
       // Clean and parse hospital data from FormData
       const cleanHospitalData = {
         name: hospitalData.name,
@@ -750,9 +750,9 @@ export class HospitalController {
         latitude: hospitalData.latitude ? parseFloat(hospitalData.latitude) : undefined,
         longitude: hospitalData.longitude ? parseFloat(hospitalData.longitude) : undefined,
       };
-      
+
       console.log('Cleaned hospital data:', cleanHospitalData);
-      
+
       // Separate logo and gallery files
       const logoFile = files?.find(file => file.fieldname === 'logoFile');
       const galleryFiles = files?.filter(file => file.fieldname === 'galleryFiles') || [];
@@ -768,7 +768,7 @@ export class HospitalController {
 
       // Upload gallery images if provided
       if (galleryFiles.length > 0) {
-        const galleryUploadPromises = galleryFiles.map(file => 
+        const galleryUploadPromises = galleryFiles.map(file =>
           this.cloudinaryService.uploadHospitalGallery(file, 0, hospitalData.imageType || 'facility')
         );
         const galleryUploadResults = await Promise.all(galleryUploadPromises);
@@ -816,11 +816,11 @@ export class HospitalController {
         website: { type: 'string', description: 'Hospital website' },
         latitude: { type: 'number', description: 'Latitude coordinate' },
         longitude: { type: 'number', description: 'Longitude coordinate' },
-        
+
         // File upload fields
         logoFile: { type: 'string', format: 'binary', description: 'New logo image file' },
-        galleryFiles: { 
-          type: 'array', 
+        galleryFiles: {
+          type: 'array',
           items: { type: 'string', format: 'binary' },
           description: 'New gallery image files'
         },
@@ -840,10 +840,10 @@ export class HospitalController {
     try {
       console.log('Update - Received files:', files?.map(f => ({ fieldname: f.fieldname, filename: f.originalname })));
       console.log('Update - Received hospitalData:', hospitalData);
-      
+
       // Clean and parse hospital data from FormData
       const cleanHospitalData: any = {};
-      
+
       if (hospitalData.name) cleanHospitalData.name = hospitalData.name;
       if (hospitalData.address) cleanHospitalData.address = hospitalData.address;
       if (hospitalData.phone) cleanHospitalData.phone = hospitalData.phone;
@@ -856,9 +856,9 @@ export class HospitalController {
       if (hospitalData.website) cleanHospitalData.website = hospitalData.website;
       if (hospitalData.latitude) cleanHospitalData.latitude = parseFloat(hospitalData.latitude);
       if (hospitalData.longitude) cleanHospitalData.longitude = parseFloat(hospitalData.longitude);
-      
+
       console.log('Update - Cleaned hospital data:', cleanHospitalData);
-      
+
       // Separate logo and gallery files
       const logoFile = files?.find(file => file.fieldname === 'logoFile');
       const galleryFiles = files?.filter(file => file.fieldname === 'galleryFiles') || [];
@@ -874,7 +874,7 @@ export class HospitalController {
 
       // Upload new gallery images if provided
       if (galleryFiles.length > 0) {
-        const galleryUploadPromises = galleryFiles.map(file => 
+        const galleryUploadPromises = galleryFiles.map(file =>
           this.cloudinaryService.uploadHospitalGallery(file, hospitalId, hospitalData.imageType || 'facility')
         );
         const galleryUploadResults = await Promise.all(galleryUploadPromises);
