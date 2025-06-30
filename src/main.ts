@@ -8,7 +8,8 @@ async function bootstrap() {
   try {
     console.log('🚀 Starting Hospital Appointment API...');
     console.log('📋 Environment:', process.env.NODE_ENV || 'development');
-    console.log('🔗 Database URL:', process.env.DATABASE_URL ? 'Connected' : 'Not configured');
+    console.log('🔗 PostgreSQL:', process.env.DATABASE_URL ? 'Connected' : 'Not configured');
+    console.log('🍃 MongoDB:', process.env.MONGODB_URL ? 'Connected' : 'Not configured');
     console.log('🔴 Redis URL:', process.env.REDIS_URL ? 'Connected' : 'Not configured');
     
     const app = await NestFactory.create(AppModule, {
