@@ -88,11 +88,11 @@ export class AuthController {
             const response = await this.authService.googleLogin(req.user);
             
             // Redirect to frontend callback page with tokens
-            const callbackUrl = `http://localhost:4000/auth/google-callback?token=${response.accessToken}&refreshToken=${response.refreshToken}`;
+            const callbackUrl = `${process.env.FRONTEND_URL}/auth/google-callback?token=${response.accessToken}&refreshToken=${response.refreshToken}`;
             res.redirect(callbackUrl);
         } catch (error) {
             // Redirect to login page with error
-            const errorUrl = `http://localhost:4000/auth/login?error=${encodeURIComponent(error.message || 'Google login failed')}`;
+            const errorUrl = `${process.env.FRONTEND_URL}/auth/login?error=${encodeURIComponent(error.message || 'Google login failed')}`;
             res.redirect(errorUrl);
         }
     }

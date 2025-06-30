@@ -124,8 +124,8 @@ npx prisma migrate reset --schema=prisma/postgre/schema.prisma
 ## 📚 API Documentation
 
 Once the server is running, visit:
-- **Swagger UI**: http://localhost:3000/api
-- **API Endpoints**: http://localhost:3000
+- **Swagger UI**: https://bookingserver.devtri.xyz/api
+- **API Endpoints**: https://bookingserver.devtri.xyz/docs
 
 ### Key API Endpoints
 
