@@ -11,7 +11,7 @@ import { AppointmentModule } from './appointment/appointment.module';
 import { PaymentModule } from './payment/payment.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { SignalingModule } from './video/signaling.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { ApplicationInitService } from './config/application.init.service';
 import { APP_GUARD } from '@nestjs/core';
@@ -22,12 +22,27 @@ import { RolesGuard } from './auth/guard/roles.guard';
 
 @Module({
   imports: [
-    ...(process.env.REDIS_URL ? [
-      RedisModule.forRoot({
-        type: 'single',
-        url: process.env.REDIS_URL,
-      })
-    ] : []),
+    // Configure Redis globally with proper fallback
+    RedisModule.forRootAsync({
+      useFactory: () => {
+        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+        console.log('[Redis Config] Environment REDIS_URL:', process.env.REDIS_URL ? 'Set' : 'Not set');
+        console.log('[Redis Config] Using Redis URL:', redisUrl);
+        
+        return {
+          type: 'single',
+          url: redisUrl,
+          options: {
+            maxRetriesPerRequest: 3,
+            lazyConnect: true,
+            keepAlive: 30000,
+            connectTimeout: 10000,
+            commandTimeout: 5000,
+            retryDelayOnFailover: 100,
+          }
+        };
+      },
+    }),
     ChatModule,
     UserModule,
     PrismaModule,

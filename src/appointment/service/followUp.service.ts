@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmailService } from 'src/email/email.service';
 import { CreateFollowUp, UpdateFeedback } from '../DTO';
@@ -15,12 +15,22 @@ enum ReminderOffset {
 
 @Injectable()
 export class FollowUpService {
+    private readonly logger = new Logger(FollowUpService.name);
 
     constructor(
         private prisma: PrismaService, 
         @InjectRedis() private readonly redis: Redis,
         private emailService: EmailService,
     ) {}
+
+    private async safeRedisOperation<T>(operation: () => Promise<T>, fallback?: T): Promise<T | null> {
+        try {
+            return await operation();
+        } catch (error) {
+            this.logger.warn(`Redis operation failed: ${error.message}. Continuing without Redis.`);
+            return fallback || null;
+        }
+    }
 
     async createFollowUp(dto: CreateFollowUp) {
         const appointment = await this.prisma.appointment.findUnique({
@@ -103,11 +113,13 @@ export class FollowUpService {
                 scheduledTime: dbNotification.scheduledTime.toISOString(),
             };
 
-            await this.redis.zadd(
-                `notifications:${appointment.userId}`,
-                remindAtTimestamp,
-                JSON.stringify(redisNotification),
-            );
+            await this.safeRedisOperation(async () => {
+                await this.redis.zadd(
+                    `notifications:${appointment.userId}`,
+                    remindAtTimestamp,
+                    JSON.stringify(redisNotification),
+                );
+            });
 
             console.log(`[FollowUp] Created single follow-up notification for appointment ${appointment.appointmentId}, remind at: ${remindAt.toISOString()}`);
         } else {
