@@ -22,12 +22,16 @@ import { RolesGuard } from './auth/guard/roles.guard';
 
 @Module({
   imports: [
-    ...(process.env.REDIS_URL ? [
-      RedisModule.forRoot({
-        type: 'single',
-        url: process.env.REDIS_URL,
-      })
-    ] : []),
+    // Configure Redis globally with proper fallback
+    RedisModule.forRoot({
+      type: 'single',
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      // Add error handling and retry configuration
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+      keepAlive: 30000,
+    }),
     ChatModule,
     UserModule,
     PrismaModule,

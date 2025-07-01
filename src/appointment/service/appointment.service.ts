@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { EmailService } from 'src/email/email.service';
@@ -33,12 +34,23 @@ function getTimeLeftText(from: Date, to: Date): string {
 
 @Injectable()
 export class AppointmentService {
+    private readonly logger = new Logger(AppointmentService.name);
+
     constructor(
         private prisma: PrismaService,
         @InjectRedis() private readonly redis: Redis,
         private readonly emailService: EmailService,
         private readonly notificationGateway: NotificationGateway,
     ) { }
+
+    private async safeRedisOperation<T>(operation: () => Promise<T>, fallback?: T): Promise<T | null> {
+        try {
+            return await operation();
+        } catch (error) {
+            this.logger.warn(`Redis operation failed: ${error.message}. Continuing without Redis.`);
+            return fallback || null;
+        }
+    }
 
     private async scheduleNotificationsForAppointment(data: CreateAppointment, appointmentId: number) {
         const scheduledTime = new Date(data.scheduledTime).getTime();
@@ -88,11 +100,14 @@ export class AppointmentService {
             scheduledTime: dbNotification.scheduledTime.toISOString(),
         };
 
-        await this.redis.zadd(
-            `notifications:${data.userId}`,
-            remindAtTimestamp,
-            JSON.stringify(redisNotification),
-        );
+        // Use safe Redis operation
+        await this.safeRedisOperation(async () => {
+            await this.redis.zadd(
+                `notifications:${data.userId}`,
+                remindAtTimestamp,
+                JSON.stringify(redisNotification),
+            );
+        });
 
         console.log(`[Schedule] Created single notification for appointment ${appointmentId}, remind at: ${remindAt.toISOString()}`);
     }
@@ -395,19 +410,21 @@ export class AppointmentService {
         });
 
         for (const notify of notifications) {
-            // Xoá Redis
-            await this.redis.zrem(
-                `notifications:${notify.userId}`,
-                JSON.stringify({
-                    id: notify.notificationId,
-                    userId: notify.userId,
-                    title: notify.title,
-                    content: notify.content,
-                    remindAt: notify.remindAt.toISOString(),
-                    type: notify.type,
-                    scheduledTime: notify.scheduledTime.toISOString(),
-                })
-            );
+            // Xoá Redis with safe operation
+            await this.safeRedisOperation(async () => {
+                await this.redis.zrem(
+                    `notifications:${notify.userId}`,
+                    JSON.stringify({
+                        id: notify.notificationId,
+                        userId: notify.userId,
+                        title: notify.title,
+                        content: notify.content,
+                        remindAt: notify.remindAt.toISOString(),
+                        type: notify.type,
+                        scheduledTime: notify.scheduledTime.toISOString(),
+                    })
+                );
+            });
 
             //Xoá DB
             await this.prisma.notification.delete({
