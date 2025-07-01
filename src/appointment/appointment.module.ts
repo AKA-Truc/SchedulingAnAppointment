@@ -8,6 +8,7 @@ import { NotificationWorker } from './service/notification.worker';
 import { NotificationGateway } from './service/notification.gateway';
 import { EmailService } from 'src/email/email.service';
 import { MailModule } from 'src/email/email.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UserService } from 'src/user/user.service';
@@ -16,6 +17,7 @@ import { UserModule } from 'src/user/user.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
+    RedisModule,
     PrismaModule,
     MailModule,
     UserModule

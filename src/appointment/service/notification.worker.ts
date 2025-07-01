@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Redis } from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationGateway } from './notification.gateway';
 import { EmailService } from 'src/email/email.service';
@@ -8,7 +9,7 @@ import { EmailService } from 'src/email/email.service';
 @Injectable()
 export class NotificationWorker {
   constructor(
-    private readonly redis: Redis,
+    @InjectRedis() private readonly redis: Redis,
     private readonly prisma: PrismaService,
     private readonly gateway: NotificationGateway,
     private readonly emailService: EmailService,
