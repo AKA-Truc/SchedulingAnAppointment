@@ -27,10 +27,13 @@ import { RolesGuard } from './auth/guard/roles.guard';
       type: 'single',
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       // Add error handling and retry configuration
-      retryDelayOnFailover: 100,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true,
-      keepAlive: 30000,
+      options: {
+        maxRetriesPerRequest: 3,
+        lazyConnect: true,
+        keepAlive: 30000,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+      }
     }),
     ChatModule,
     UserModule,
