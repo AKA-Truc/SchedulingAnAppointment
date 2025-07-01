@@ -22,6 +22,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { ConfigService } from '@nestjs/config';
 
 import { Roles } from 'src/auth/guard/roles.guard';
+import { Public } from 'src/auth/guard/auth.guard';
 
 @ApiTags('Doctor')
 @Controller('doctor')
@@ -36,7 +37,8 @@ export class DoctorController {
         private readonly doctorScheduleService: DoctorScheduleService,
     ) { }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get top 3 rated doctors' })
     @Get('/top-rated')
     getTopRatedDoctors() {
@@ -44,7 +46,7 @@ export class DoctorController {
     } k
 
     // ──────── Doctor CRUD ────────
-    @Roles('ADMIN', 'USER', "DOCTOR")
+    // @Roles('ADMIN', 'USER', "DOCTOR")
     @Get('/by-specialty/:specialtyId')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -114,7 +116,8 @@ export class DoctorController {
         return this.specialtyService.findAll(page, limit);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 6 })
@@ -176,7 +179,8 @@ export class DoctorController {
         return this.doctorService.getDoctorPerformanceCurrentMonth(id);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Filter' })
     @Get('/filter/doctor')
     @ApiQuery({ name: 'specialty', required: false })
@@ -276,7 +280,8 @@ export class DoctorController {
         });
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get certification by ID' })
     @Get('/certification/:id')
     findCertification(@Param('id', ParseIntPipe) id: number) {
@@ -340,7 +345,8 @@ export class DoctorController {
         return this.specialtyService.create(dto);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get specialty by ID' })
     @Get('/specialty/:id')
     findSpecialty(@Param('id', ParseIntPipe) id: number) {
@@ -372,7 +378,8 @@ export class DoctorController {
         return this.doctorScheduleService.create(dto);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    // @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get doctor schedule by ID' })
     @Get('/doctorSchedule/:id')
     findDoctorSchedule(@Param('id', ParseIntPipe) id: number) {
