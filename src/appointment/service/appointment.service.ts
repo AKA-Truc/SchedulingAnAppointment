@@ -131,7 +131,7 @@ export class AppointmentService {
                 serviceId: data.serviceId,
                 scheduledTime: data.scheduledTime,
                 note: data.note,
-                status: AppointmentStatus.PENDING,
+                status: data.status || AppointmentStatus.PENDING,
             },
             include: {
                 doctor: {
