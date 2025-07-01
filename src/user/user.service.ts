@@ -11,35 +11,40 @@ export class UserService {
 
     //create
     async createUser(data: CreateUserDto): Promise<User> {
-        const existingUser = await this.prisma.user.findFirst({
-            where: {
-                OR: [
-                    { email: data.email },
-                    { phone: data.phone },
-                    // { isActive: true },
-                ],
-            },
+        // Kiểm tra email trùng trước
+        const existingEmailUser = await this.prisma.user.findUnique({
+            where: { email: data.email }
         });
 
-        if (existingUser) {
-            if (existingUser.isActive) {
-                // Nếu user đã active, kiểm tra cụ thể email hay phone trùng
-                if (existingUser.email === data.email) {
-                    throw new BadRequestException('Email này đã được đăng ký và đang hoạt động. Vui lòng sử dụng email khác hoặc đăng nhập.');
-                }
-
-                if (existingUser.phone === data.phone) {
-                    throw new BadRequestException('Số điện thoại này đã được sử dụng bởi tài khoản khác. Vui lòng sử dụng số điện thoại khác.');
-                }
-
-                throw new BadRequestException('Tài khoản này đã tồn tại và đang hoạt động. Vui lòng đăng nhập.');
+        if (existingEmailUser) {
+            if (existingEmailUser.isActive) {
+                throw new BadRequestException('Email này đã được đăng ký và đang hoạt động. Vui lòng sử dụng email khác hoặc đăng nhập.');
             } else {
-                // Nếu chưa active, xóa user cũ để tạo mới
+                // Nếu email chưa active, xóa user cũ
                 try {
-                    await this.deleteUser(existingUser.userId);
+                    await this.deleteUser(existingEmailUser.userId);
                 } catch (deleteError) {
-                    console.error('Error deleting inactive user:', deleteError);
-                    throw new BadRequestException('Có lỗi xảy ra khi xử lý tài khoản cũ. Vui lòng thử lại.');
+                    console.error('Error deleting inactive user with email:', deleteError);
+                    throw new BadRequestException('Email này đã từng được đăng ký nhưng chưa xác thực. Vui lòng sử dụng email khác hoặc liên hệ hỗ trợ.');
+                }
+            }
+        }
+
+        // Kiểm tra phone trùng
+        const existingPhoneUser = await this.prisma.user.findFirst({
+            where: { phone: data.phone }
+        });
+
+        if (existingPhoneUser) {
+            if (existingPhoneUser.isActive) {
+                throw new BadRequestException('Số điện thoại này đã được sử dụng bởi tài khoản khác. Vui lòng sử dụng số điện thoại khác.');
+            } else {
+                // Nếu phone chưa active, xóa user cũ
+                try {
+                    await this.deleteUser(existingPhoneUser.userId);
+                } catch (deleteError) {
+                    console.error('Error deleting inactive user with phone:', deleteError);
+                    throw new BadRequestException('Số điện thoại này đã từng được đăng ký nhưng chưa xác thực. Vui lòng sử dụng số điện thoại khác hoặc liên hệ hỗ trợ.');
                 }
             }
         }
@@ -179,12 +184,32 @@ export class UserService {
             throw new NotFoundException(`User with ID ${id} not found`);
         }
 
-        await this.prisma.token.deleteMany({
-            where: { userId: id },
-        });
+        // Sử dụng transaction để đảm bảo tính nhất quán
+        return await this.prisma.$transaction(async (prisma) => {
+            // Xóa tất cả related data trước khi xóa user
+            await prisma.token.deleteMany({
+                where: { userId: id },
+            });
 
-        return this.prisma.user.delete({
-            where: { userId: id },
+            // Xóa patient profile nếu có
+            await prisma.patientProfile.deleteMany({
+                where: { userId: id },
+            });
+
+            // Xóa appointments nếu có
+            await prisma.appointment.deleteMany({
+                where: { userId: id },
+            });
+
+            // Xóa doctor profile nếu có
+            await prisma.doctor.deleteMany({
+                where: { userId: id },
+            });
+
+            // Cuối cùng xóa user
+            return await prisma.user.delete({
+                where: { userId: id },
+            });
         });
     }
 

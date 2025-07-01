@@ -69,7 +69,16 @@ export class AuthService {
 
             return {
                 message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
-                success: true
+                code: 201,
+                success: true,
+                data: {
+                    accountId: user.userId.toString(),
+                    email: user.email,
+                    fullName: user.fullName,
+                    role: user.role,
+                    status: user.isActive,
+                    createdAt: user.createdAt.toISOString()
+                }
             };
         } catch (error) {
             // Handle specific user creation errors that come from userService
