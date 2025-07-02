@@ -227,4 +227,46 @@ export class SpecialtyService {
             message: 'Specialty deleted successfully.',
         };
     }
+
+    // Lấy top chuyên khoa theo số lượng bác sĩ (phổ biến nhất)
+    async getTopSpecialtiesByDoctorCount(limit = 6): Promise<{
+        message: string;
+        code: number;
+        data: {
+            id: string;
+            name: string;
+            description: string;
+            doctorCount: number;
+        }[];
+    }> {
+        const specialtiesWithCount = await this.prisma.specialty.findMany({
+            include: {
+                _count: {
+                    select: { doctors: true },
+                },
+            },
+            orderBy: {
+                doctors: {
+                    _count: 'desc'
+                }
+            },
+            take: limit,
+        });
+
+        // Chỉ lấy những specialty có ít nhất 1 doctor
+        const data = specialtiesWithCount
+            .filter(specialty => specialty._count.doctors > 0)
+            .map(specialty => ({
+                id: specialty.specialtyId.toString(),
+                name: specialty.name,
+                description: specialty.description,
+                doctorCount: specialty._count.doctors,
+            }));
+
+        return {
+            message: "Top specialties retrieved successfully",
+            code: 200,
+            data,
+        };
+    }
 }
