@@ -113,7 +113,11 @@ export class HospitalService {
     const hospital = await this.prisma.hospital.findUnique({
       where: { hospitalId: id },
       include: {
-        doctors: true,
+        doctors: {
+          include: {
+            specialty: true,
+          },
+        },
         achievements: true,
       },
     });
@@ -122,7 +126,19 @@ export class HospitalService {
       throw new NotFoundException(`Hospital with ID ${id} not found`);
     }
 
-    return hospital;
+    // Add computed fields for frontend
+    const enrichedHospital = {
+      ...hospital,
+      totalDoctors: hospital.doctors.length,
+      totalBeds: hospital.totalBeds || null,
+      totalNurses: hospital.totalNurses || null,
+      rating: hospital.rating || 4.0,
+      reviews: hospital.reviews || 0,
+      verified: hospital.verified || true,
+      specialties: hospital.doctors.map(d => d.specialty?.name).filter(Boolean),
+    };
+
+    return enrichedHospital;
   }
 
   async filterHospital(
