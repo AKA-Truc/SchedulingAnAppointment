@@ -451,7 +451,7 @@ export class HospitalService {
 
     const createData: any = {
       ...hospitalData,
-      ...(logoUrl && { logo: logoUrl }),
+      logo: logoUrl || '', // Use uploaded logo or empty string as fallback
       ...(galleryUrls && galleryUrls.length > 0 && { 
         gallery: JSON.stringify(galleryUrls) 
       }),
@@ -490,10 +490,16 @@ export class HospitalService {
       }
     }
 
+    // Exclude logo from hospitalData to handle it separately
+    const { logo: _, ...hospitalDataWithoutLogo } = hospitalData;
     const updateData: any = {
-      ...hospitalData,
-      ...(logoUrl && { logo: logoUrl }),
+      ...hospitalDataWithoutLogo,
     };
+
+    // Only update logo if a new logo file was uploaded
+    if (logoUrl) {
+      updateData.logo = logoUrl;
+    }
 
     // Handle gallery images - append to existing or replace
     if (galleryUrls && galleryUrls.length > 0) {

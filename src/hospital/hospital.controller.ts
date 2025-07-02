@@ -711,6 +711,10 @@ export class HospitalController {
         website: { type: 'string', description: 'Hospital website' },
         latitude: { type: 'number', description: 'Latitude coordinate' },
         longitude: { type: 'number', description: 'Longitude coordinate' },
+        totalBeds: { type: 'number', description: 'Total beds' },
+        totalNurses: { type: 'number', description: 'Total nurses' },
+        rating: { type: 'number', description: 'Rating' },
+        verified: { type: 'boolean', description: 'Verified' },
 
         // File upload fields
         logoFile: { type: 'string', format: 'binary', description: 'Logo image file' },
@@ -744,11 +748,15 @@ export class HospitalController {
         email: hospitalData.email,
         establishYear: parseInt(hospitalData.establishYear) || new Date().getFullYear(),
         type: hospitalData.type,
-        logo: hospitalData.logo || '',
+        logo: '', // Will be overridden by logoUrl if provided
         workScheduling: hospitalData.workScheduling,
         website: hospitalData.website || undefined,
         latitude: hospitalData.latitude ? parseFloat(hospitalData.latitude) : undefined,
         longitude: hospitalData.longitude ? parseFloat(hospitalData.longitude) : undefined,
+        totalBeds: hospitalData.totalBeds ? parseInt(hospitalData.totalBeds) : undefined,
+        totalNurses: hospitalData.totalNurses ? parseInt(hospitalData.totalNurses) : undefined,
+        rating: hospitalData.rating ? parseFloat(hospitalData.rating) : undefined,
+        verified: hospitalData.verified === 'true' || hospitalData.verified === true,
       };
 
       console.log('Cleaned hospital data:', cleanHospitalData);
@@ -816,6 +824,10 @@ export class HospitalController {
         website: { type: 'string', description: 'Hospital website' },
         latitude: { type: 'number', description: 'Latitude coordinate' },
         longitude: { type: 'number', description: 'Longitude coordinate' },
+        totalBeds: { type: 'number', description: 'Total beds' },
+        totalNurses: { type: 'number', description: 'Total nurses' },
+        rating: { type: 'number', description: 'Rating' },
+        verified: { type: 'boolean', description: 'Verified' },
 
         // File upload fields
         logoFile: { type: 'string', format: 'binary', description: 'New logo image file' },
@@ -851,11 +863,15 @@ export class HospitalController {
       if (hospitalData.email) cleanHospitalData.email = hospitalData.email;
       if (hospitalData.establishYear) cleanHospitalData.establishYear = parseInt(hospitalData.establishYear);
       if (hospitalData.type) cleanHospitalData.type = hospitalData.type;
-      if (hospitalData.logo) cleanHospitalData.logo = hospitalData.logo;
+      // Note: We don't include logo here since it will be handled by logoUrl parameter
       if (hospitalData.workScheduling) cleanHospitalData.workScheduling = hospitalData.workScheduling;
       if (hospitalData.website) cleanHospitalData.website = hospitalData.website;
       if (hospitalData.latitude) cleanHospitalData.latitude = parseFloat(hospitalData.latitude);
       if (hospitalData.longitude) cleanHospitalData.longitude = parseFloat(hospitalData.longitude);
+      if (hospitalData.totalBeds) cleanHospitalData.totalBeds = parseInt(hospitalData.totalBeds);
+      if (hospitalData.totalNurses) cleanHospitalData.totalNurses = parseInt(hospitalData.totalNurses);
+      if (hospitalData.rating) cleanHospitalData.rating = parseFloat(hospitalData.rating);
+      if (hospitalData.verified !== undefined) cleanHospitalData.verified = hospitalData.verified === 'true' || hospitalData.verified === true;
 
       console.log('Update - Cleaned hospital data:', cleanHospitalData);
 

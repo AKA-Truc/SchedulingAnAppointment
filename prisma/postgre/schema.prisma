@@ -89,7 +89,7 @@ model Hospital {
   description    String
   email          String
   establishYear  Int
-  logo           String
+  logo           String?
   workScheduling String
   type           String
   website        String?
