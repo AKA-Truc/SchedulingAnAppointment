@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPip
 import { AuthService } from "./auth.service";
 import { LoginUserDto } from "./DTO/LoginUser.dto";
 import { AuthGuard as JwtAuthGuard, Public } from './guard/auth.guard';
+import { SendOTPDto } from "./DTO/SendOTP.dto";
 // import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 
 
@@ -12,6 +13,7 @@ import { RefreshTokenDto } from "src/user/DTO/RefreshToken.dto";
 import { RegisterDTO } from "./DTO/Register.dto";
 import { GoogleAuthGuard } from "./guard/google-auth.guard";
 import { CreateUserDto } from "src/user/DTO";
+import { VerifyOtpDto } from "./DTO/VerifyOtp.dto";
 
 
 @Controller('auth')
@@ -39,6 +41,18 @@ export class AuthController {
         return this.authService.verifyEmail(token);
     }
 
+    @Public()
+    @Post('send-otp')
+    async sendOTP(@Body() body: SendOTPDto) {
+        return this.authService.sendCode(body.email);
+    }
+
+
+    @Public()
+    @Post('verify-otp')
+    async verifyOTP(@Body() body: VerifyOtpDto) {
+        return this.authService.verifyCode(body.email, body.code);
+    }
 
     @Post('logout')
     async logout(@Req() req, @Body() body: LogoutDto) {

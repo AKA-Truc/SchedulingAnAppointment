@@ -133,4 +133,31 @@ export class EmailService {
     `,
     });
   }
+
+  async sendResetCode(email: string, code: string) {
+    const html = `
+      <html>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f2f2f2;">
+          <table role="presentation" style="width: 100%; height: 50vh; background-color: #f2f2f2; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 20px;">
+                <div style="background-color: #fff; padding: 30px; max-width: 320px; width: 100%; text-align: center; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                  <h1 style="font-size: 24px; color: #333; margin-bottom: 15px;">Mã Xác Thực</h1>
+                  <p>Đây là mã OTP quên mật khẩu của bạn:</p>
+                  <div style="background-color: #f8f8f8; padding: 15px; font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #3676CA; margin: 20px 0; user-select: none;">${code}</div>
+                  <p style="font-size: 14px; color: #666; line-height: 1.5;">Nếu bạn không phải là người gửi yêu cầu này, hãy đổi mật khẩu tài khoản ngay lập tức để tránh việc bị truy cập trái phép.</p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Mã xác thực đặt lại mật khẩu',
+      html,
+    });
+  }
 }
