@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe, UseInterceptors, UploadedFile, ParseFilePipeBuilder, FileValidator, FileTypeValidator, BadRequestException } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto, UpdateUserDto } from './DTO';
+import { CreateUserDto, ForgotPasswordDto, UpdatePasswordDto, UpdateUserDto } from './DTO';
 import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { Public } from 'src/auth/guard/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -87,6 +87,22 @@ export class UserController {
         @Body() updateUserDto: UpdateUserDto,
     ) {
         return this.userService.updateUser(id, updateUserDto);
+    }
+
+    @ApiOperation({ summary: 'Update user password' })
+    @Put(':email/password')
+    async updateUserPassword(
+        @Param('email') email: string,
+        @Body() updatePasswordDto: UpdatePasswordDto,
+    ) {
+        return this.userService.updatePassword(email, updatePasswordDto);
+    }
+
+    @Public()
+    @ApiOperation({ summary: 'Forgot password' })
+    @Post('forgot-password')
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        return this.userService.forgotPassword(forgotPasswordDto.email, forgotPasswordDto.newPassword);
     }
 
     @Delete(':id')

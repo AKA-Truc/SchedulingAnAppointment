@@ -4,6 +4,7 @@ import { CreateUserDto, UpdateUserDto } from './DTO';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt'
 import { use } from 'passport';
+import { UpdatePasswordDto } from './DTO/UpdatePassword';
 
 @Injectable()
 export class UserService {
@@ -171,6 +172,54 @@ export class UserService {
         return this.prisma.user.update({
             where: { userId: id },
             data: dto,
+        });
+    }
+
+    //update password
+    async updatePassword(email: string, updatePassword: UpdatePasswordDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: email },
+            select: {
+                userId: true,
+                password: true,
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with ID ${email} not found`);
+        }
+
+        // Kiểm tra mật khẩu hiện tại
+        const isPasswordValid = await bcrypt.compare(updatePassword.currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new BadRequestException('Current password is incorrect');
+        }
+
+        // Mã hóa mật khẩu mới
+        const hashedNewPassword = await bcrypt.hash(updatePassword.newPassword, 10);
+
+        return this.prisma.user.update({
+            where: { email: email },
+            data: { password: hashedNewPassword },
+        });
+    }
+
+    //forgot password
+    async forgotPassword(email: string, newPassword: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: email },
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with email ${email} not found`);
+        }
+
+        // Mã hóa mật khẩu mới
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+        return this.prisma.user.update({
+            where: { email: email },
+            data: { password: hashedNewPassword },
         });
     }
 

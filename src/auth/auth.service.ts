@@ -9,11 +9,13 @@ import { RegisterDTO } from "./DTO/Register.dto";
 import { UserService } from "src/user/user.service";
 import { EmailService } from "src/email/email.service";
 import { CreateUserDto } from "src/user/DTO";
-import { use } from "passport";
+import { Redis } from 'ioredis';
+import { InjectRedis } from "@nestjs-modules/ioredis";
 
 @Injectable()
 export class AuthService {
     constructor(
+        @InjectRedis() private readonly redis: Redis,
         private readonly prismaService: PrismaService,
         private readonly userService: UserService,
         private readonly jwtService: JwtService,
@@ -117,6 +119,34 @@ export class AuthService {
         return { message: 'Tài khoản đã được xác thực thành công.' };
     }
 
+     async sendCode(email: string) {
+        const user = await this.prismaService.user.findUnique({ where: { email } });
+
+        if (!user) {
+            throw new NotFoundException(`User with email ${email} not found`);
+        }
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+        await this.redis.set(`reset-code:${email}`, code, 'EX', 900); // Lưu mã xác thực vào Redis với thời gian hết hạn 15 phút
+
+        await this.emailService.sendResetCode(email, code);
+
+        return { message: 'Reset code has been sent to your email.' };
+    }
+
+    async verifyCode(email: string, code: string) {
+        const storedCode = await this.redis.get(`reset-code:${email}`);
+        if (!storedCode) {
+            throw new BadRequestException('Mã xác thực không hợp lệ hoặc đã hết hạn');
+        }
+        if (storedCode !== code) {
+            throw new BadRequestException('Mã xác thực không chính xác');
+        }
+        // Xóa mã xác thực sau khi xác minh thành công
+        await this.redis.del(`reset-code:${email}`);
+        return { message: 'Mã xác thực hợp lệ' };
+    }
 
     async logout(userReq: any, refreshToken: string) {
         const user = await this.getMyProfile(userReq);

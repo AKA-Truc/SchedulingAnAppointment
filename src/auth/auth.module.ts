@@ -8,9 +8,11 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MailModule } from "src/email/email.module";
 import { EmailService } from "src/email/email.service";
 import { GoogleStrategy } from "./strategy/google.strategy";
+import { RedisModule } from '@nestjs-modules/ioredis';
 
 @Module({
   imports: [
+    RedisModule,
     UserModule,
     MailModule,
     ConfigModule,
