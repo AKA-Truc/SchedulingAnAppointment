@@ -130,6 +130,16 @@ export class DoctorController {
         return this.specialtyService.getSpecialtiesByHospitalId(hospitalId, page, limit);
     }
 
+    @Public()
+    @ApiOperation({ summary: 'Get top specialties by doctor count (most popular)' })
+    @ApiQuery({ name: 'limit', required: false, example: 6 })
+    @Get('/specialty/top/by-doctor-count')
+    getTopSpecialtiesByDoctorCount(
+        @Query('limit', ParseIntPipe) limit = 6,
+    ) {
+        return this.specialtyService.getTopSpecialtiesByDoctorCount(limit);
+    }
+
     @Roles('ADMIN', 'DOCTOR', 'USER')
     @ApiOperation({ summary: 'Get all achievements (paginated)' })
     @Get('/achievement')

@@ -113,7 +113,11 @@ export class HospitalService {
     const hospital = await this.prisma.hospital.findUnique({
       where: { hospitalId: id },
       include: {
-        doctors: true,
+        doctors: {
+          include: {
+            specialty: true,
+          },
+        },
         achievements: true,
       },
     });
@@ -122,7 +126,19 @@ export class HospitalService {
       throw new NotFoundException(`Hospital with ID ${id} not found`);
     }
 
-    return hospital;
+    // Add computed fields for frontend
+    const enrichedHospital = {
+      ...hospital,
+      totalDoctors: hospital.doctors.length,
+      totalBeds: hospital.totalBeds || null,
+      totalNurses: hospital.totalNurses || null,
+      rating: hospital.rating || 4.0,
+      reviews: hospital.reviews || 0,
+      verified: hospital.verified || true,
+      specialties: hospital.doctors.map(d => d.specialty?.name).filter(Boolean),
+    };
+
+    return enrichedHospital;
   }
 
   async filterHospital(
@@ -435,7 +451,7 @@ export class HospitalService {
 
     const createData: any = {
       ...hospitalData,
-      ...(logoUrl && { logo: logoUrl }),
+      logo: logoUrl || '', // Use uploaded logo or empty string as fallback
       ...(galleryUrls && galleryUrls.length > 0 && { 
         gallery: JSON.stringify(galleryUrls) 
       }),
@@ -474,10 +490,16 @@ export class HospitalService {
       }
     }
 
+    // Exclude logo from hospitalData to handle it separately
+    const { logo: _, ...hospitalDataWithoutLogo } = hospitalData;
     const updateData: any = {
-      ...hospitalData,
-      ...(logoUrl && { logo: logoUrl }),
+      ...hospitalDataWithoutLogo,
     };
+
+    // Only update logo if a new logo file was uploaded
+    if (logoUrl) {
+      updateData.logo = logoUrl;
+    }
 
     // Handle gallery images - append to existing or replace
     if (galleryUrls && galleryUrls.length > 0) {
