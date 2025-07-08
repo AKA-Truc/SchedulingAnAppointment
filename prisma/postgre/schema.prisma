@@ -79,7 +79,7 @@ model Specialty {
   name        String
   description String
   doctors     Doctor[]
-}
+}np
 
 model Hospital {
   hospitalId     Int           @id @default(autoincrement())
