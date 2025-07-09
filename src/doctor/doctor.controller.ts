@@ -381,6 +381,13 @@ export class DoctorController {
     }
 
     // ──────── Doctor Schedule CRUD ────────
+    @ApiOperation({ summary: 'Get all schedules by doctor ID' })
+    @Get('/doctorSchedule/doctor/:doctorId')
+    getSchedulesByDoctorId(@Param('doctorId', ParseIntPipe) doctorId: number) {
+        return this.doctorScheduleService.getAllByDoctorId(doctorId);
+    }
+
+
     @Roles('ADMIN', 'DOCTOR')
     @ApiOperation({ summary: 'Create a new doctor schedule' })
     @Post('/doctorSchedule')

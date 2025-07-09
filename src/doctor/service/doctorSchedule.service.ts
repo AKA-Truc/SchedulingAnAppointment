@@ -158,4 +158,20 @@ export class DoctorScheduleService {
             message: 'Doctor schedule deleted successfully.',
         };
     }
+
+    async getAllByDoctorId(doctorId: number) {
+        await this.ensureDoctorExists(doctorId);
+
+        const schedules = await this.prisma.doctorSchedule.findMany({
+            where: { doctorId },
+            orderBy: { dayOfWeek: 'asc' },
+        });
+
+        return {
+            message: 'Request successfully handled',
+            code: 200,
+            data: schedules,
+        };
+    }
+
 }
