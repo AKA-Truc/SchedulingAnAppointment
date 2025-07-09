@@ -47,6 +47,7 @@ export class DoctorController {
 
     // ──────── Doctor CRUD ────────
     // @Roles('ADMIN', 'USER', "DOCTOR")
+    @Public()
     @Get('/by-specialty/:specialtyId')
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 10 })
@@ -104,7 +105,7 @@ export class DoctorController {
         return this.doctorScheduleService.findAll(page, limit);
     }
 
-    @Roles('ADMIN', 'DOCTOR', 'USER')
+    @Public()
     @ApiOperation({ summary: 'Get all specialties (paginated)' })
     @ApiQuery({ name: 'page', required: false, example: 1 })
     @ApiQuery({ name: 'limit', required: false, example: 30 })
