@@ -51,7 +51,7 @@ export class SpecialtyService {
         message: string;
         code: number;
         data: {
-            id: string;
+            specialtyId: string;
             name: string;
             description: string;
             doctorCount: number;
@@ -82,7 +82,7 @@ export class SpecialtyService {
         const totalPages = Math.ceil(totalCount / limit);
 
         const data = specialtiesWithCount.map(specialty => ({
-            id: specialty.specialtyId.toString(),
+            specialtyId: specialty.specialtyId.toString(),
             name: specialty.name,
             description: specialty.description,
             doctorCount: specialty._count.doctors,
